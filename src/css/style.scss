@@ -25,6 +25,26 @@ body {
     padding-bottom: 10px;
     width: 65%;
     margin: 0 auto;
+
+    @media (max-width: 350px) {
+        width: 90%;
+    }
+
+    @media (min-width: 351px) {
+        width: 70%;
+    }
+
+    @media (min-width: 500px) {
+        width: 60%;
+    }
+
+    @media (min-width: 670px) {
+        width: 40%;
+    }
+
+    @media (min-width: 900px) {
+        width: 30%;
+    }
 }
 
 .card {
