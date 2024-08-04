@@ -67,8 +67,32 @@ function render_board() {
 
 function create_card(_card_value) {
     let card = document.createElement('div');
-    card.innerHTML = _card_value;
+    let vallabel = document.createElement('p');
+    let before_label = document.createElement('p');
+    let after_label = document.createElement('p');
+    before_label.innerHTML = _card_value;
+    before_label.classList.add('before-label');
+    after_label.classList.add('after-label');
+    after_label.innerHTML = _card_value;
+    vallabel.innerHTML = _card_value;
+    vallabel.classList.add('val-label')
+    card.appendChild(vallabel);
+    card.appendChild(before_label);
+    card.appendChild(after_label);
     card.classList.add('card');
+    if(_card_value > 0 && _card_value < 5) {
+        card.classList.add('green');
+    }else if(_card_value >= 5 && _card_value < 9) {
+        card.classList.add('yellow');
+    }else if(_card_value >= 9 && _card_value <= 12) {
+        card.classList.add('red');
+    }else if(_card_value == 0) {
+        card.classList.add('lightblue');
+    }else if(_card_value == -1) {
+        card.classList.add('blue');
+    }else if(_card_value == -2) {
+        card.classList.add('blue');
+    }
 
     return card;
 }

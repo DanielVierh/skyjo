@@ -23,7 +23,7 @@ body {
     gap: 10px;
     justify-content: center;
     padding-bottom: 20px;
-    width: 60%;
+    width: 65%;
     margin: 0 auto;
 
     .card {
@@ -39,6 +39,62 @@ body {
         align-items: center;
         font-size: 1.6rem;
         font-weight: bold;
+        border-radius: 3px;
+        position: relative;
+
+        .before-label {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            font-size: 1rem;
+            background-color: white;
+            color: black;
+            width: 20px;
+            height: 15px;
+            border-radius: 20px;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .after-label {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            font-size: 1rem;
+            background-color: white;
+            color: black;
+            width: 20px;
+            height: 15px;
+            border-radius: 20px;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(-180deg);
+        }
+
+        .val-label {
+           text-shadow: 0 0 10px white;
+        }
+
+        &.green {
+            background-color: green;
+        }
+        &.yellow {
+            background-color: yellow;
+        }
+        &.red {
+            background-color: red;
+        }
+        &.lightblue {
+            background-color: aqua;
+        }
+        &.blue {
+            background-color: blue;
+            color: white;
+        }
     }
     
 }

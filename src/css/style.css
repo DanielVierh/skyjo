@@ -23,7 +23,7 @@ body {
   gap: 10px;
   justify-content: center;
   padding-bottom: 20px;
-  width: 60%;
+  width: 65%;
   margin: 0 auto;
 }
 .my-board .card {
@@ -39,4 +39,56 @@ body {
   align-items: center;
   font-size: 1.6rem;
   font-weight: bold;
+  border-radius: 3px;
+  position: relative;
+}
+.my-board .card .before-label {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  font-size: 1rem;
+  background-color: white;
+  color: black;
+  width: 20px;
+  height: 15px;
+  border-radius: 20px;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.my-board .card .after-label {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  font-size: 1rem;
+  background-color: white;
+  color: black;
+  width: 20px;
+  height: 15px;
+  border-radius: 20px;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(-180deg);
+}
+.my-board .card .val-label {
+  text-shadow: 0 0 10px white;
+}
+.my-board .card.green {
+  background-color: green;
+}
+.my-board .card.yellow {
+  background-color: yellow;
+}
+.my-board .card.red {
+  background-color: red;
+}
+.my-board .card.lightblue {
+  background-color: aqua;
+}
+.my-board .card.blue {
+  background-color: blue;
+  color: white;
 }/*# sourceMappingURL=style.css.map */
