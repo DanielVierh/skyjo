@@ -1,5 +1,5 @@
 :root {
-  --main-color: blue;
+  --table-color: rgb(38, 38, 38);
 }
 
 * {
@@ -9,7 +9,7 @@
 }
 
 body {
-  background-color: lightblue;
+  background-color: var(--table-color);
   font-family: sans-serif;
 }
 
@@ -38,10 +38,22 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: bold;
   border-radius: 3px;
   position: relative;
+  overflow: hidden;
+}
+.card::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(60deg, rgba(68, 76, 247, 0.4666666667) 25%, transparent 25.5%, transparent 75%, rgba(68, 76, 247, 0.4666666667) 75%, rgba(68, 76, 247, 0.4666666667)), linear-gradient(60deg, rgba(68, 76, 247, 0.4666666667) 25%, transparent 25.5%, transparent 75%, rgba(68, 76, 247, 0.4666666667) 75%, rgba(68, 76, 247, 0.4666666667));
+  background-size: 30px 15px;
+  background-position: 0 0, 0 0, 18px 32px, 18px 32px, 0 0, 18px 32px;
+  opacity: 0.2;
+  z-index: 3;
 }
 .card .before-label {
   position: absolute;
@@ -85,6 +97,7 @@ body {
 }
 .card.red {
   background-color: red;
+  z-index: 4;
 }
 .card.lightblue {
   background-color: aqua;
@@ -103,9 +116,17 @@ body {
 }
 .card.covered::after {
   content: "SKYJO";
+  position: absolute;
   transform: rotate(45deg);
-  font-size: 0.6rem;
-  z-index: 2;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  z-index: 20;
+  background: transparent;
+  color: white;
+  opacity: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .card.covered::before {
   content: "";
