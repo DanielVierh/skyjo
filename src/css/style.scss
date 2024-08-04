@@ -22,7 +22,7 @@ body {
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-    padding-bottom: 10px;
+    padding-bottom: 20px;
     width: 65%;
     margin: 0 auto;
 
@@ -179,4 +179,17 @@ body {
     }
 
 
+}
+
+.point-label {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.25);
+    padding: 3px;
+    font-size: .8rem;
+
+    &.player1 {
+        position: fixed;
+        bottom: 0;
+        left: 10px;
+    }
 }

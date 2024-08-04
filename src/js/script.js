@@ -1,4 +1,5 @@
 const myBoard = document.getElementById('myBoard');
+const point_label = document.getElementById('point_label');
 
 const all_card_with_amount = {
     '-2': 5,
@@ -19,12 +20,14 @@ const all_card_with_amount = {
 };
 
 let cardStack = [];
+let player1_cards = [];
 
 window.onload = init();
 
 function init() {
     create_card_stack();
     render_board();
+    count_points()
 }
 
 
@@ -52,10 +55,13 @@ function shuffleArray(array) {
 function render_board() {
     let counter = 1;
 
+
+    //* Create cards for player 1
+    //TODO - Remove from cardStack
     for(let i = 0; i < cardStack.length; i++) {
         if(counter <= 12) {
             const card = create_card(cardStack[i]);
-
+            player1_cards.push(cardStack[i])
             myBoard.appendChild(card);
             counter++;
         }else {
@@ -100,4 +106,14 @@ function create_card(_card_value) {
     }
 
     return card;
+}
+
+function count_points() {
+    let points_player1 = 0;
+
+    for(let i = 0; i < player1_cards.length; i++) {
+        points_player1 = points_player1 += parseInt(player1_cards[i]);
+    }
+
+    point_label.innerHTML = `${points_player1} Punkte`;
 }
