@@ -54,8 +54,6 @@ function shuffleArray(array) {
 //*ANCHOR - Render 
 function render_board() {
     let counter = 1;
-
-
     //* Create cards for player 1
     //TODO - Remove from cardStack
     for(let i = 0; i < cardStack.length; i++) {
@@ -71,7 +69,7 @@ function render_board() {
 }
 
 
-function create_card(_card_value) {
+function create_card(_card_value, card_holder) {
     let card = document.createElement('div');
     let vallabel = document.createElement('p');
     let before_label = document.createElement('p');
