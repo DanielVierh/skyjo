@@ -70,6 +70,10 @@ body {
         display: flex;
         justify-content: center;
         align-items: center;
+
+        &.underlined {
+            text-decoration: underline;
+       }
     }
 
     .after-label {
@@ -87,10 +91,18 @@ body {
         justify-content: center;
         align-items: center;
         transform: rotate(-180deg);
+
+        &.underlined {
+            text-decoration: underline;
+       }
     }
 
     .val-label {
        text-shadow: 0 0 10px white;
+
+       &.underlined {
+            text-decoration: underline;
+       }
     }
 
     &.green {

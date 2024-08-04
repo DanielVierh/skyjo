@@ -70,6 +70,9 @@ body {
   justify-content: center;
   align-items: center;
 }
+.card .before-label.underlined {
+  text-decoration: underline;
+}
 .card .after-label {
   position: absolute;
   bottom: 3px;
@@ -86,8 +89,14 @@ body {
   align-items: center;
   transform: rotate(-180deg);
 }
+.card .after-label.underlined {
+  text-decoration: underline;
+}
 .card .val-label {
   text-shadow: 0 0 10px white;
+}
+.card .val-label.underlined {
+  text-decoration: underline;
 }
 .card.green {
   background-color: green;

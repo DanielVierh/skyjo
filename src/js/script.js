@@ -73,6 +73,11 @@ function create_card(_card_value) {
     before_label.innerHTML = _card_value;
     before_label.classList.add('before-label');
     after_label.classList.add('after-label');
+    if(_card_value == 6 || _card_value == 9) {
+        vallabel.classList.add('underlined')
+        before_label.classList.add('underlined')
+        after_label.classList.add('underlined')
+    }
     after_label.innerHTML = _card_value;
     vallabel.innerHTML = _card_value;
     vallabel.classList.add('val-label')
