@@ -22,11 +22,12 @@ body {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  padding-bottom: 20px;
+  padding-bottom: 10px;
   width: 65%;
   margin: 0 auto;
 }
-.my-board .card {
+
+.card {
   flex: 1 20%;
   background-color: #f0f0f0;
   text-align: center;
@@ -42,7 +43,7 @@ body {
   border-radius: 3px;
   position: relative;
 }
-.my-board .card .before-label {
+.card .before-label {
   position: absolute;
   top: 3px;
   left: 3px;
@@ -57,7 +58,7 @@ body {
   justify-content: center;
   align-items: center;
 }
-.my-board .card .after-label {
+.card .after-label {
   position: absolute;
   bottom: 3px;
   right: 3px;
@@ -73,22 +74,45 @@ body {
   align-items: center;
   transform: rotate(-180deg);
 }
-.my-board .card .val-label {
+.card .val-label {
   text-shadow: 0 0 10px white;
 }
-.my-board .card.green {
+.card.green {
   background-color: green;
 }
-.my-board .card.yellow {
+.card.yellow {
   background-color: yellow;
 }
-.my-board .card.red {
+.card.red {
   background-color: red;
 }
-.my-board .card.lightblue {
+.card.lightblue {
   background-color: aqua;
 }
-.my-board .card.blue {
+.card.blue {
   background-color: blue;
   color: white;
+}
+.card.covered {
+  position: relative;
+  color: white;
+  background: linear-gradient(green, red);
+  margin: 10px;
+  min-width: 54px;
+  min-height: 80px;
+}
+.card.covered::after {
+  content: "SKYJO";
+  transform: rotate(45deg);
+  font-size: 0.6rem;
+  z-index: 2;
+}
+.card.covered::before {
+  content: "";
+  position: absolute;
+  background: linear-gradient(to right, yellow, blue);
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  opacity: 0.4;
 }/*# sourceMappingURL=style.css.map */
