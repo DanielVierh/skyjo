@@ -1,5 +1,7 @@
 :root {
     --table-color: rgb(38, 38, 38);
+    --card-width: 52px;
+    --card-height: 65px;
 }
 
 * {
@@ -9,52 +11,32 @@
 }
 
 body {
-    background-color: var( --table-color);
+    background-color: var(--table-color);
     font-family: sans-serif;
 }
 
 .my-board {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    padding-bottom: 20px;
-    width: 65%;
-    margin: 0 auto;
+    // position: fixed;
+    // bottom: 0;
+    // left: 0;
+    // right: 0;
+    // display: flex;
+    // flex-wrap: wrap;
+    // gap: 10px;
+    // justify-content: center;
+    // align-items: center;
+    // padding-bottom: 20px;
+    // width: 65%;
+    // margin: 0 auto;
 
-    @media (max-width: 350px) {
-        width: 90%;
-    }
-
-    @media (min-width: 351px) {
-        width: 70%;
-    }
-
-    @media (min-width: 500px) {
-        width: 60%;
-    }
-
-    @media (min-width: 670px) {
-        width: 40%;
-    }
-
-    @media (min-width: 900px) {
-        width: 30%;
-    }
 }
 
 .card {
-    flex: 1 20%;
     background-color: #f0f0f0;
     text-align: center;
     border: 1px solid black;
-    flex-grow: 0;
-    aspect-ratio: 9/16;
-    max-height: 80px;
+    height: var(--card-height);
+    width: var(--card-width);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -69,7 +51,7 @@ body {
         position: absolute;
         width: 100%;
         height: 100%;
-        background-image:  linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(60deg, #444CF777 25%, transparent 25.5%, transparent 75%, #444CF777 75%, #444CF777), linear-gradient(60deg, #444CF777 25%, transparent 25.5%, transparent 75%, #444CF777 75%, #444CF777);
+        background-image: linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(60deg, #444CF777 25%, transparent 25.5%, transparent 75%, #444CF777 75%, #444CF777), linear-gradient(60deg, #444CF777 25%, transparent 25.5%, transparent 75%, #444CF777 75%, #444CF777);
         background-size: 30px 15px;
         background-position: 0 0, 0 0, 18px 32px, 18px 32px, 0 0, 18px 32px;
         opacity: .2;
@@ -93,7 +75,7 @@ body {
 
         &.underlined {
             text-decoration: underline;
-       }
+        }
     }
 
     .after-label {
@@ -114,42 +96,44 @@ body {
 
         &.underlined {
             text-decoration: underline;
-       }
+        }
     }
 
     .val-label {
-       text-shadow: 0 0 10px white;
+        text-shadow: 0 0 10px white;
 
-       &.underlined {
+        &.underlined {
             text-decoration: underline;
-       }
+        }
     }
 
     &.green {
         background-color: green;
     }
+
     &.yellow {
         background-color: yellow;
     }
+
     &.red {
         background-color: red;
-        z-index: 4;
     }
+
     &.lightblue {
         background-color: aqua;
     }
+
     &.blue {
         background-color: blue;
         color: white;
     }
-    
+
     &.covered {
+        width: var(--card-width);
+        height: var(--card-height);
         position: relative;
         color: white;
         background: linear-gradient(green, red);
-        margin: 10px;
-        min-width: 54px;
-        min-height: 80px;
 
 
         &::after {
@@ -159,18 +143,18 @@ body {
             font-size: .8rem;
             letter-spacing: 2px;
             z-index: 20;
-           background: transparent;
-           color: white;
-           opacity: 1;
-           display: flex;
-           justify-content: center;
-           align-items: center;
+            background: transparent;
+            color: white;
+            opacity: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         &::before {
             content: '';
             position: absolute;
-            background: linear-gradient( to right, yellow, blue);
+            background: linear-gradient(to right, yellow, blue);
             width: 100%;
             height: 100%;
             z-index: 1000;
@@ -192,5 +176,27 @@ body {
         position: fixed;
         bottom: 0;
         left: 10px;
+    }
+}
+
+.gridfield {
+    display: grid;
+    grid-template-columns: repeat(4, var(--card-width));
+    grid-template-rows: var(--card-height) var(--card-height) var(--card-height);
+    background-color: rgba(251, 251, 251, 0.113);
+    width: 100vw;
+    height: 250px;
+    gap: 12px;
+    justify-content: center;
+    align-content: center;
+    margin: 0 auto;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+
+    .grid-card {
+        grid-column: span 1;
     }
 }

@@ -56,11 +56,11 @@ function render_board() {
     let counter = 1;
     //* Create cards for player 1
     //TODO - Remove from cardStack
-    for(let i = 0; i < cardStack.length; i++) {
+    for(let i = 1; i < cardStack.length + 1; i++) {
         if(counter <= 12) {
-            const card = create_card(cardStack[i]);
+            const card = document.getElementById(`player1_card_${i}`)
+            create_card(cardStack[i], card);
             player1_cards.push(cardStack[i])
-            myBoard.appendChild(card);
             counter++;
         }else {
             break;
@@ -69,8 +69,14 @@ function render_board() {
 }
 
 
-function create_card(_card_value, card_holder) {
-    let card = document.createElement('div');
+function create_card(_card_value, _card) {
+    const data_status = _card.getAttribute('data-status');
+    if(data_status === 'covered') {
+        return
+    }else {
+        _card.classList.remove('covered')
+    }
+
     let vallabel = document.createElement('p');
     let before_label = document.createElement('p');
     let after_label = document.createElement('p');
@@ -85,25 +91,23 @@ function create_card(_card_value, card_holder) {
     after_label.innerHTML = _card_value;
     vallabel.innerHTML = _card_value;
     vallabel.classList.add('val-label')
-    card.appendChild(vallabel);
-    card.appendChild(before_label);
-    card.appendChild(after_label);
-    card.classList.add('card');
+    _card.appendChild(vallabel);
+    _card.appendChild(before_label);
+    _card.appendChild(after_label);
+    _card.classList.add('card');
     if(_card_value > 0 && _card_value < 5) {
-        card.classList.add('green');
+        _card.classList.add('green');
     }else if(_card_value >= 5 && _card_value < 9) {
-        card.classList.add('yellow');
+        _card.classList.add('yellow');
     }else if(_card_value >= 9 && _card_value <= 12) {
-        card.classList.add('red');
+        _card.classList.add('red');
     }else if(_card_value == 0) {
-        card.classList.add('lightblue');
+        _card.classList.add('lightblue');
     }else if(_card_value == -1) {
-        card.classList.add('blue');
+        _card.classList.add('blue');
     }else if(_card_value == -2) {
-        card.classList.add('blue');
+        _card.classList.add('blue');
     }
-
-    return card;
 }
 
 function count_points() {

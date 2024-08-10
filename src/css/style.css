@@ -1,5 +1,7 @@
 :root {
   --table-color: rgb(38, 38, 38);
+  --card-width: 52px;
+  --card-height: 65px;
 }
 
 * {
@@ -13,53 +15,12 @@ body {
   font-family: sans-serif;
 }
 
-.my-board {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  padding-bottom: 20px;
-  width: 65%;
-  margin: 0 auto;
-}
-@media (max-width: 350px) {
-  .my-board {
-    width: 90%;
-  }
-}
-@media (min-width: 351px) {
-  .my-board {
-    width: 70%;
-  }
-}
-@media (min-width: 500px) {
-  .my-board {
-    width: 60%;
-  }
-}
-@media (min-width: 670px) {
-  .my-board {
-    width: 40%;
-  }
-}
-@media (min-width: 900px) {
-  .my-board {
-    width: 30%;
-  }
-}
-
 .card {
-  flex: 1 20%;
   background-color: #f0f0f0;
   text-align: center;
   border: 1px solid black;
-  flex-grow: 0;
-  aspect-ratio: 9/16;
-  max-height: 80px;
+  height: var(--card-height);
+  width: var(--card-width);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -131,7 +92,6 @@ body {
 }
 .card.red {
   background-color: red;
-  z-index: 4;
 }
 .card.lightblue {
   background-color: aqua;
@@ -141,12 +101,11 @@ body {
   color: white;
 }
 .card.covered {
+  width: var(--card-width);
+  height: var(--card-height);
   position: relative;
   color: white;
   background: linear-gradient(green, red);
-  margin: 10px;
-  min-width: 54px;
-  min-height: 80px;
 }
 .card.covered::after {
   content: "SKYJO";
@@ -183,4 +142,24 @@ body {
   position: fixed;
   bottom: 0;
   left: 10px;
+}
+
+.gridfield {
+  display: grid;
+  grid-template-columns: repeat(4, var(--card-width));
+  grid-template-rows: var(--card-height) var(--card-height) var(--card-height);
+  background-color: rgba(251, 251, 251, 0.113);
+  width: 100vw;
+  height: 250px;
+  gap: 12px;
+  justify-content: center;
+  align-content: center;
+  margin: 0 auto;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.gridfield .grid-card {
+  grid-column: span 1;
 }/*# sourceMappingURL=style.css.map */
