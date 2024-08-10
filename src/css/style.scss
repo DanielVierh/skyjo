@@ -208,3 +208,32 @@ body {
     background-color: rgba(0, 149, 255, 0.2);
 
 }
+
+.decision-modal {
+    display: none;
+
+    &.active {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: lightblue;
+        padding: 50px;
+        z-index: 99999;
+        border-radius: 8px;
+
+        .option {
+            background-color: black;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+    }
+}
