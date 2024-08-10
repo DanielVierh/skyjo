@@ -85,7 +85,7 @@ window.onload = init();
 
 function init() {
     create_player();
-    create_card_stack();
+    create_card();
     give_player_cards(player1);
     give_player_cards(player2);
     //render_board();
@@ -95,7 +95,7 @@ function init() {
 
 
 //*ANCHOR - Create Stack
-function create_card_stack() {
+function create_card() {
     for (let key in all_cards) {
         for (let i = 0; i < all_cards[key]; i++) {
             const card = new Card(key, 'stack', true)
@@ -125,7 +125,7 @@ function give_player_cards(_player) {
 
 
 //* 
-function create_card(_card, _cardSlot) {
+function discover_card(_card, _cardSlot) {
     const data_status = _card.covered;
     if (data_status === false) {
         return
@@ -188,10 +188,15 @@ cards.forEach((card) => {
 
         if(player === 'player1') {
              player_card = player1.cards[card_index][0];
+             discover_card(player_card, card_slot_id);
+             player1.cards[card_index][0].covered = false;
+             console.log(player1);
+
         }else {
             player_card = player2.cards[card_index][0];
+            discover_card(player_card, card_slot_id);
+            player2.cards[card_index][0].covered = false;
         }
-        create_card(player_card, card_slot_id)
     })
 })
 
