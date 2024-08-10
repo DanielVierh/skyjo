@@ -1,5 +1,8 @@
 const myBoard = document.getElementById('myBoard');
 const point_label = document.getElementById('point_label');
+const cards = document.querySelectorAll('.card');
+let player1;
+let player2;
 
 const all_card_with_amount = {
     '-2': 5,
@@ -19,6 +22,16 @@ const all_card_with_amount = {
     '12': 10,
 };
 
+class Player {
+    constructor(name, playerNumber) {
+        this.name = name;
+        this.card = [];
+        this.points = 0;
+        this.firstRound = true;
+        this.playerNumber = playerNumber
+    }
+}
+
 let cardStack = [];
 let player1_cards = [];
 
@@ -27,7 +40,8 @@ window.onload = init();
 function init() {
     create_card_stack();
     render_board();
-    count_points()
+    //count_points();
+    create_player();
 }
 
 
@@ -56,13 +70,13 @@ function render_board() {
     let counter = 1;
     //* Create cards for player 1
     //TODO - Remove from cardStack
-    for(let i = 1; i < cardStack.length + 1; i++) {
-        if(counter <= 12) {
+    for (let i = 1; i < cardStack.length + 1; i++) {
+        if (counter <= 12) {
             const card = document.getElementById(`player1_card_${i}`)
             create_card(cardStack[i], card);
             player1_cards.push(cardStack[i])
             counter++;
-        }else {
+        } else {
             break;
         }
     }
@@ -71,9 +85,9 @@ function render_board() {
 
 function create_card(_card_value, _card) {
     const data_status = _card.getAttribute('data-status');
-    if(data_status === 'covered') {
+    if (data_status === 'covered') {
         return
-    }else {
+    } else {
         _card.classList.remove('covered')
     }
 
@@ -83,7 +97,7 @@ function create_card(_card_value, _card) {
     before_label.innerHTML = _card_value;
     before_label.classList.add('before-label');
     after_label.classList.add('after-label');
-    if(_card_value == 6 || _card_value == 9) {
+    if (_card_value == 6 || _card_value == 9) {
         vallabel.classList.add('underlined')
         before_label.classList.add('underlined')
         after_label.classList.add('underlined')
@@ -95,17 +109,17 @@ function create_card(_card_value, _card) {
     _card.appendChild(before_label);
     _card.appendChild(after_label);
     _card.classList.add('card');
-    if(_card_value > 0 && _card_value < 5) {
+    if (_card_value > 0 && _card_value < 5) {
         _card.classList.add('green');
-    }else if(_card_value >= 5 && _card_value < 9) {
+    } else if (_card_value >= 5 && _card_value < 9) {
         _card.classList.add('yellow');
-    }else if(_card_value >= 9 && _card_value <= 12) {
+    } else if (_card_value >= 9 && _card_value <= 12) {
         _card.classList.add('red');
-    }else if(_card_value == 0) {
+    } else if (_card_value == 0) {
         _card.classList.add('lightblue');
-    }else if(_card_value == -1) {
+    } else if (_card_value == -1) {
         _card.classList.add('blue');
-    }else if(_card_value == -2) {
+    } else if (_card_value == -2) {
         _card.classList.add('blue');
     }
 }
@@ -113,9 +127,34 @@ function create_card(_card_value, _card) {
 function count_points() {
     let points_player1 = 0;
 
-    for(let i = 0; i < player1_cards.length; i++) {
+    for (let i = 0; i < player1_cards.length; i++) {
         points_player1 = points_player1 += parseInt(player1_cards[i]);
     }
 
     point_label.innerHTML = `${points_player1} Punkte`;
+}
+
+
+//* Click Event for cards
+
+cards.forEach((card) => {
+    card.addEventListener('click', () => {
+        console.log(card);
+    })
+})
+
+function create_player() {
+    for (let i = 1; i <= 2; i++) {
+        // const playername = window.prompt(`Name für Spieler ${i} eingeben:`)
+        const playername = "Player"
+        if (playername !== '') {
+            if (i === 1) {
+                player1 = new Player(playername, i);
+            } else {
+                player2 = new Player(playername, i);
+            }
+        }
+    }
+    console.log(player1);
+    console.log(player2);
 }
