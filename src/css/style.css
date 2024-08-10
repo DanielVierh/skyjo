@@ -15,9 +15,16 @@ body {
   font-family: sans-serif;
 }
 
-.my-board {
+.p1-board {
   position: fixed;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.p2-board {
+  position: fixed;
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
 }
