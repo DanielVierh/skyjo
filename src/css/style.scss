@@ -25,6 +25,16 @@ body {
     &.active {
         box-shadow: 0 0 30px white, inset 0 0 25px white;
     }
+
+    &.deactivated {
+        &::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 99999;
+        }
+    }
 }
 
 .p2-board {
@@ -36,6 +46,16 @@ body {
     
     &.active {
         box-shadow: 0 0 30px white, inset 0 0 25px white;
+    }
+
+    &.deactivated {
+        &::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 99999;
+        }
     }
 
 }

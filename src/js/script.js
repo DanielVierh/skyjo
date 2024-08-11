@@ -42,6 +42,7 @@ let player2;
 let cardStack = [];
 let ablageStack = [];
 let currentPlayer = 'player1';
+let action_Amount = 1;
 
 
 //*ANCHOR - Player Class
@@ -52,11 +53,15 @@ class Player {
         this.cards = [];
         this.points = 0;
         this.firstRound = true;
-        this.playerNumber = playerNumber
+        this.playerNumber = playerNumber;
+        this.first_two_cards = {
+            discovered: 0,
+            sum: 0,
+        };
     }
 }
 
-class Card{
+class Card {
     constructor(value, place, covered = false) {
         this.value = value;
         this.place = place;
@@ -190,13 +195,24 @@ cards.forEach((card) => {
         const player = card.getAttribute("data-player");
         let player_card
 
-        if(player === 'player1') {
-             player_card = player1.cards[card_index][0];
-             discover_card(player_card, card_slot_id);
-             player1.cards[card_index][0].covered = false;
-             console.log(player1);
+        if (player === 'player1') {
+            player_card = player1.cards[card_index][0];
+            if (player1.firstRound && player1.first_two_cards.discovered <= 1) {
+                player1.first_two_cards.discovered++;
+                player1.first_two_cards.sum = player1.first_two_cards.sum += parseInt(player_card.value);
+                if (player1.first_two_cards.discovered === 2) {
+                    player1.firstRound = false;
+                    setTimeout(() => {
+                        currentPlayer = 'player2';
+                        show_current_player();
+                    }, 200);
+                }
+            }
+            discover_card(player_card, card_slot_id);
+            player1.cards[card_index][0].covered = false;
+            console.log(player1);
 
-        }else {
+        } else {
             player_card = player2.cards[card_index][0];
             discover_card(player_card, card_slot_id);
             player2.cards[card_index][0].covered = false;
@@ -225,9 +241,26 @@ function create_player() {
 
 //*ANCHOR - Show current player
 function show_current_player() {
-    if(currentPlayer === 'player1') {
-        player1Board.classList.add('active')
-    }else {
-        player2Board.classList.add('active')
+    if (currentPlayer === 'player1') {
+        player2Board.classList.remove('active');
+        player2Board.classList.add('deactivated');
+        player1Board.classList.remove('deactivated');
+        player1Board.classList.add('active');
+
+        if (player1.firstRound === true) {
+            //* First Round
+            alert(`${currentPlayer} decke 2 Karten auf`)
+        }
+
+    } else {
+        player1Board.classList.remove('active');
+        player1Board.classList.add('deactivated');
+        player2Board.classList.remove('deactivated');
+        player2Board.classList.add('active');
+
+        if (player2.firstRound === true) {
+            //* First Round
+            alert(`${currentPlayer} decke 2 Karten auf`)
+        }
     }
 }
