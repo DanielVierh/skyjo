@@ -20,6 +20,10 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
+  border-radius: 12px 12px 0 0;
+}
+.p1-board.active {
+  box-shadow: 0 0 30px white, inset 0 0 25px white;
 }
 
 .p2-board {
@@ -27,6 +31,10 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
+  border-radius: 0 0 12px 12px;
+}
+.p2-board.active {
+  box-shadow: 0 0 30px white, inset 0 0 25px white;
 }
 
 .card {
@@ -184,6 +192,7 @@ body {
   align-items: center;
   gap: 0 80px;
   width: 100%;
+  max-width: 400px;
   height: 100px;
   background-color: rgba(0, 149, 255, 0.2);
 }

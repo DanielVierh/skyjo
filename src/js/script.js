@@ -35,10 +35,13 @@
 const myBoard = document.getElementById('myBoard');
 const point_label = document.getElementById('point_label');
 const cards = document.querySelectorAll('.card');
+const player1Board = document.getElementById('p1Board');
+const player2Board = document.getElementById('p2Board');
 let player1;
 let player2;
 let cardStack = [];
 let ablageStack = [];
+let currentPlayer = 'player1';
 
 
 //*ANCHOR - Player Class
@@ -88,6 +91,7 @@ function init() {
     create_card();
     give_player_cards(player1);
     give_player_cards(player2);
+    show_current_player()
     //render_board();
 
     //count_points();
@@ -218,3 +222,12 @@ function create_player() {
     console.log(player2);
 }
 
+
+//*ANCHOR - Show current player
+function show_current_player() {
+    if(currentPlayer === 'player1') {
+        player1Board.classList.add('active')
+    }else {
+        player2Board.classList.add('active')
+    }
+}
