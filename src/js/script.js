@@ -43,6 +43,7 @@ let cardStack = [];
 let ablageStack = [];
 let currentPlayer = 'player1';
 let action_Amount = 1;
+let ki_player = true;
 
 
 //*ANCHOR - Player Class
@@ -133,13 +134,13 @@ function give_player_cards(_player) {
 }
 
 
-//* 
+//* The actual visual discovery of the card
 function discover_card(_card, _cardSlot) {
     const data_status = _card.covered;
     if (data_status === false) {
         return
     } else {
-        document.getElementById(_cardSlot).classList.remove('covered')
+        document.getElementById(_cardSlot).classList.remove('covered');
     }
 
     let vallabel = document.createElement('p');
@@ -189,36 +190,54 @@ function count_points() {
 //* Click Event for cards
 
 cards.forEach((card) => {
-    card.addEventListener('click', () => {
-        const card_slot_id = card.id;
-        const card_index = card.getAttribute("data-index");
-        const player = card.getAttribute("data-player");
-        let player_card
-
-        if (player === 'player1') {
-            player_card = player1.cards[card_index][0];
-            if (player1.firstRound && player1.first_two_cards.discovered <= 1) {
-                player1.first_two_cards.discovered++;
-                player1.first_two_cards.sum = player1.first_two_cards.sum += parseInt(player_card.value);
-                if (player1.first_two_cards.discovered === 2) {
-                    player1.firstRound = false;
-                    setTimeout(() => {
-                        currentPlayer = 'player2';
-                        show_current_player();
-                    }, 200);
-                }
-            }
-            discover_card(player_card, card_slot_id);
-            player1.cards[card_index][0].covered = false;
-            console.log(player1);
-
-        } else {
-            player_card = player2.cards[card_index][0];
-            discover_card(player_card, card_slot_id);
-            player2.cards[card_index][0].covered = false;
-        }
+    card.addEventListener('click', () => {        
+       card_discover(card)
     })
 })
+
+function card_discover(card) {
+
+    const card_slot_id = card.id;
+    const card_index = card.getAttribute("data-index");
+    const player = card.getAttribute("data-player");
+    let player_card
+
+    if (player === 'player1') {
+        player_card = player1.cards[card_index][0];
+        if (player1.firstRound && player1.first_two_cards.discovered <= 1) {
+            player1.first_two_cards.discovered++;
+            player1.first_two_cards.sum = player1.first_two_cards.sum += parseInt(player_card.value);
+            if (player1.first_two_cards.discovered === 2) {
+                player1.firstRound = false;
+                setTimeout(() => {
+                    currentPlayer = 'player2';
+                    show_current_player();
+                }, 200);
+            }
+        }
+        discover_card(player_card, card_slot_id);
+        player1.cards[card_index][0].covered = false;
+        document.getElementById(card_slot_id).setAttribute('data-status', 'discovered')
+        console.log(player1);
+
+    } else {
+        player_card = player2.cards[card_index][0];
+        if (player2.firstRound && player2.first_two_cards.discovered <= 1) {
+            player2.first_two_cards.discovered++;
+            player2.first_two_cards.sum = player2.first_two_cards.sum += parseInt(player_card.value);
+            if (player2.first_two_cards.discovered === 2) {
+                player2.firstRound = false;
+                setTimeout(() => {
+                    currentPlayer = 'player1';
+                    show_current_player();
+                }, 200);
+            }
+        }
+        discover_card(player_card, card_slot_id);
+        player2.cards[card_index][0].covered = false;
+        document.getElementById(card_slot_id).setAttribute('data-status', 'discovered')
+    }
+}
 
 //*ANCHOR - Create Player 
 
@@ -257,10 +276,42 @@ function show_current_player() {
         player1Board.classList.add('deactivated');
         player2Board.classList.remove('deactivated');
         player2Board.classList.add('active');
+        let moves = 1;
 
         if (player2.firstRound === true) {
+            moves = 2;
             //* First Round
             alert(`${currentPlayer} decke 2 Karten auf`)
+
+            if(ki_player) {
+                console.log('ki');
+                    //* First Round
+
+                    //*Checks if card is covered or not
+                    //* Fill available cards into array
+                    //* Shuffle it and discoveres two cards
+
+                    const player2_cards = document.querySelectorAll('.player2-card');
+                    let available_cards = [];
+
+                    for (let i = 0; i < player2_cards.length; i++) {
+                        const p2_card = player2_cards[i];
+                        const card_status = p2_card.getAttribute('data-status');
+                        
+                        if(card_status === 'covered'){
+                            available_cards.push(p2_card);
+                        }
+                    }
+                    available_cards = shuffleArray(available_cards);
+                    
+                    for(let i = 1; i <= moves; i++) {
+                        //* Take and Remove random card
+                        const randomCard = available_cards[Math.floor(Math.random() * available_cards.length)];
+                        available_cards.splice(randomCard, 1);
+                        //* Discover
+                        card_discover(randomCard);
+                    }
+            }
         }
     }
 }
