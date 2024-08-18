@@ -150,14 +150,22 @@ function give_player_cards(_player) {
 
 
 //* The actual visual discovery of the card
-function discover_card(_card, _cardSlot) {
+function discover_card(_card, _cardSlot, ignoreStatus = false) {
+    console.log('Öhm, discover card', _card, '_cardSlot', _cardSlot);
+    
     const data_status = _card.covered;
-    if (data_status === false) {
+    if (data_status === false && ignoreStatus === false) {
         return
     } else {
-        document.getElementById(_cardSlot).classList.remove('covered');
+        try {
+            document.getElementById(_cardSlot).classList.remove('covered');
+        } catch (error) {
+            console.log(error);
+            
+        }
+       
     }
-
+    document.getElementById(_cardSlot).innerHTML = ''
     let vallabel = document.createElement('p');
     let before_label = document.createElement('p');
     let after_label = document.createElement('p');
@@ -345,10 +353,64 @@ function show_current_player() {
             }
         }else {
             //* Not first Round
-
-            //*KI
+            ablageStack.push(new Card(1,'stack',false))
+            //*KI Move
             if(ki_player) {
-                console.log('KI, not first Round');
+
+                //* get all discovered card indexes
+                const player2_cards = document.querySelectorAll('.player2-card');
+                let discovered_cards = [];
+
+                for (let i = 0; i < player2_cards.length; i++) {
+                    const p2_card = player2_cards[i];
+                    const card_status = p2_card.getAttribute('data-status');
+                    const card_index = p2_card.getAttribute('data-index');
+                    
+                    if(card_status === 'discovered'){
+                        const discovered_card_with_index = {
+                            card: player2.cards[card_index],
+                            index: card_index
+                        };
+                        discovered_cards.push(discovered_card_with_index);
+                    }
+                }
+                console.log(discovered_cards);
+                
+                let took_action = false;
+                //* Check ablagestapel
+                const card_on_ablage = ablageStack[0];
+                console.log('card_on_ablage', card_on_ablage );
+                
+                if(card_on_ablage !== undefined) {
+                    for (let i = 0; i < discovered_cards.length; i++) {
+                        const card = discovered_cards[i].card[0];
+                        const index = parseInt(discovered_cards[i].index);
+                        console.log('index', index);
+                        
+                        console.log('card', card);
+                        
+                        if(parseInt(card_on_ablage.value) < parseInt(card.value)) {
+                            //* Change ablagecard with card
+                            
+                            const cardAblage_to_p2 = ablageStack.splice(0, 1);
+                            const cardP2_to_ablage = player2.cards[index];
+
+                            ablageStack.push(cardP2_to_ablage[0]);
+                            player2.cards[index] = cardAblage_to_p2;
+
+                            console.log('ablage', ablageStack);
+                            console.log('p2', player2);
+                            
+                            discover_card(ablageStack[0], 'player_card_ablage', true);
+                            discover_card(player2.cards[index][0], `player2_card_${index}`, true)
+                            
+                            took_action = true;
+                            break;
+                        }
+                    }
+                }
+
+
 
                 
             }
