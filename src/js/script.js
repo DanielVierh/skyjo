@@ -29,6 +29,18 @@
  * 
  * Runde 1
  * 
+ * -Man Zieht vom Nachziehstapel oder vom Ablagestapel
+ * -Wenn man Karte vom Ablagestapel zieht, kann man entscheiden,
+ * ob man diese durch eine aufgedeckte Karte tauscht oder durch
+ * eine verdeckte Karte oder die Karte auf den Ablagestapel
+ * ablegt und dafür eine noch nicht aufgedeckte Karte aufdeckt.
+ * 
+ * Für KI heißt das, Check 1, Karte von Ablegestapel mit aufgedeckten
+ * abgleichen. Wenn Karte niedgiger, mit höchster wechseln
+ * 
+ * Wenn Karte höher, vom Stapel nehmen. Wenn Karte höher als die
+ * aufgedeckten, dann ablegen und random eine nicht aufgedeckte 
+ * aufdecken
  * 
  * 
  * 
