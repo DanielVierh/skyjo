@@ -27,6 +27,9 @@
  * -Bei diesem Zug kann keine Karte aus dem Stack gezogen werden
  * -Der Spieler mit der höheren Punktzahl beginnt
  * 
+ * Runde 1
+ * 
+ * 
  * 
  * 
  * 
@@ -218,7 +221,6 @@ function card_discover(card) {
         discover_card(player_card, card_slot_id);
         player1.cards[card_index][0].covered = false;
         document.getElementById(card_slot_id).setAttribute('data-status', 'discovered')
-        console.log(player1);
 
     } else {
         player_card = player2.cards[card_index][0];
@@ -284,7 +286,7 @@ function show_current_player() {
             alert(`${currentPlayer} decke 2 Karten auf`)
 
             if(ki_player) {
-                console.log('ki');
+                console.log('ki, first Round');
                     //* First Round
 
                     //*Checks if card is covered or not
@@ -311,6 +313,32 @@ function show_current_player() {
                         //* Discover
                         card_discover(randomCard);
                     }
+    
+                    //* Decision, who starts
+                    setTimeout(() => {
+                        const sum_of_first_two_p1 = player1.first_two_cards.sum;
+                        const sum_of_first_two_p2 = player2.first_two_cards.sum;
+    
+                        if(sum_of_first_two_p1 > sum_of_first_two_p2) {
+                            alert('Player 1 beginnt');
+                            currentPlayer = 'player1';
+                            show_current_player();
+                        }else {
+                            alert('Player 2 beginnt');
+                            currentPlayer = 'player2';
+                            show_current_player();
+                        }
+                    }, 1000);
+
+            }
+        }else {
+            //* Not first Round
+
+            //*KI
+            if(ki_player) {
+                console.log('KI, not first Round');
+
+                
             }
         }
     }
