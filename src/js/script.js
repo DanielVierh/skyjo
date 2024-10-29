@@ -310,7 +310,7 @@ function show_current_player() {
         if (player2.firstRound === true) {
             moves = 2;
             //* First Round
-            show_info_modal('player2', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.',7000)
+            show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.',7000)
 
             if (ki_player) {
                 console.log('ki, first Round');
@@ -351,7 +351,7 @@ function show_current_player() {
                         currentPlayer = 'player1';
                         show_current_player();
                     } else {
-                        show_info_modal('player2', 'Spieler 2 begint','',5000);
+                        show_info_modal('player1', 'Spieler 2 begint','',5000);
                         currentPlayer = 'player2';
                         show_current_player();
                     }

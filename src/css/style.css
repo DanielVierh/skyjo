@@ -251,6 +251,7 @@ body {
   border-radius: 15px;
   box-shadow: 0 0 35px white;
   width: 95%;
+  max-width: 600px;
 }
 .modal.active.modal-action {
   transform: translate(-50%, -50%) rotate(180deg);
