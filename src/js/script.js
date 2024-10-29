@@ -149,7 +149,6 @@ function give_player_cards(_player) {
     }
 }
 
-
 //* The actual visual discovery of the card
 function discover_card(_card, _cardSlot, ignoreStatus = false) {
     console.log('Öhm, discover card', _card, '_cardSlot', _cardSlot);
@@ -162,9 +161,7 @@ function discover_card(_card, _cardSlot, ignoreStatus = false) {
             document.getElementById(_cardSlot).classList.remove('covered');
         } catch (error) {
             console.log(error);
-
         }
-
     }
     document.getElementById(_cardSlot).innerHTML = ''
     let vallabel = document.createElement('p');
