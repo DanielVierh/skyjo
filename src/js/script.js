@@ -347,11 +347,11 @@ function show_current_player() {
                     const sum_of_first_two_p2 = player2.first_two_cards.sum;
 
                     if (sum_of_first_two_p1 > sum_of_first_two_p2) {
-                        alert('Player 1 beginnt');
+                        show_info_modal('player1', 'Spieler 1 begint','',5000);
                         currentPlayer = 'player1';
                         show_current_player();
                     } else {
-                        alert('Player 2 beginnt');
+                        show_info_modal('player2', 'Spieler 2 begint','',5000);
                         currentPlayer = 'player2';
                         show_current_player();
                     }
