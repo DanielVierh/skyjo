@@ -112,9 +112,11 @@ function init() {
     create_cards();
     give_player_cards(player1);
     give_player_cards(player2);
-    show_current_player()
+    //show_current_player();
+    
+    
+    //*DEBUG
     //render_board();
-
     //count_points();
 }
 
@@ -145,7 +147,6 @@ function give_player_cards(_player) {
     for (let i = 0; i < 12; i++) {
         const card = cardStack.splice(i, 1);
         _player.cards.push(card);
-        console.log('Cards', card[0].value, _player.name);
     }
 }
 
@@ -470,22 +471,12 @@ function show_current_player() {
                         
                         discover_card(ablageStack[0], 'player_card_ablage', true);
                         discover_card(randomCard, `player2_card_${randomCardIndex}`, true)
-
-
                     }
-
                     
                         //* put card from ki board to ablage and discover one random card
 
-                    
-
                     console.log('KI will take a card from stack');
-
                 }
-
-
-
-
             }
         }
     }
