@@ -270,7 +270,7 @@ body {
     }
 }
 
-.modal-action {
+.modal {
     display: none;
 
     &.active {
@@ -278,27 +278,39 @@ body {
         position: fixed;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%) rotate(180deg);
-        background-color: #f0f0f0;
-        color: black;
+        transform: translate(-50%, -50%);
         padding: 30px;
         border-radius: 15px;
         box-shadow: 0 0 35px white;
         width: 95%;
-        z-index: 9999;
-    
-        .action-button {
-            background-color: black;
-            color: white;
-            margin: 15px 0;
-            padding: 15px 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            box-shadow: inset 0 0 15px white;
-            cursor: pointer;
+
+
+        &.modal-action {
+            transform: translate(-50%, -50%) rotate(180deg);
+            z-index: 9999;
+            background-color: #f0f0f0;
+            color: black;
+
+            .action-button {
+                background-color: black;
+                color: white;
+                margin: 15px 0;
+                padding: 15px 20px;
+                border-radius: 8px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                box-shadow: inset 0 0 15px white;
+                cursor: pointer;
+            }
+        }
+
+        &.modal-info {
+            background-color: lightblue;
+            color: black;
+            z-index: 99999;
+            transform: translate(-50%, -50%) rotate(180deg);
         }
     
         &.p1 {

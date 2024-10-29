@@ -52,6 +52,9 @@ const point_label = document.getElementById('point_label');
 const cards = document.querySelectorAll('.card');
 const player1Board = document.getElementById('p1Board');
 const player2Board = document.getElementById('p2Board');
+const action_modal = document.getElementById('action_modal');
+const info_modal = document.getElementById('info_modal');
+
 let player1;
 let player2;
 let cardStack = [];
@@ -112,7 +115,7 @@ function init() {
     create_cards();
     give_player_cards(player1);
     give_player_cards(player2);
-    //show_current_player();
+    show_current_player();
     
     
     //*DEBUG
@@ -289,7 +292,12 @@ function show_current_player() {
 
         if (player1.firstRound === true) {
             //* First Round
-            alert(`${currentPlayer} decke 2 Karten auf`)
+            show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.',7000)
+        }else {
+            //* NOT first round
+            console.log('P1 - NOT first Round');
+            action_modal.classList.add('active');
+            // action_modal.classList.add('p1');
         }
 
     } else {
@@ -302,7 +310,7 @@ function show_current_player() {
         if (player2.firstRound === true) {
             moves = 2;
             //* First Round
-            alert(`${currentPlayer} decke 2 Karten auf`)
+            show_info_modal('player2', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.',7000)
 
             if (ki_player) {
                 console.log('ki, first Round');
@@ -419,7 +427,7 @@ function show_current_player() {
                     }
                 }else {
                     //TODO - delete else
-                    console.log('Card on ablage is undedined');
+                    console.log('Card on ablage is undefined');
                 }
 
                 //* Take card from stack
@@ -480,4 +488,28 @@ function show_current_player() {
             }
         }
     }
+}
+
+
+//* Info Modal
+function show_info_modal(player, headline, text, countdown) {
+    const modal_info_headline = document.getElementById('modal_info_headline');
+    const modal_info_text = document.getElementById('modal_info_text');
+
+    info_modal.classList.add('active');
+
+    //* rotation class
+    if(player === 'player1') {
+        info_modal.classList.add('p1');
+    }else {
+        info_modal.classList.remove('p1');
+    }
+
+    modal_info_headline.innerHTML = headline;
+    modal_info_text.innerHTML = text;
+
+    setTimeout(() => {
+        info_modal.classList.remove('active');
+    }, countdown);
+
 }
