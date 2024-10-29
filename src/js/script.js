@@ -109,7 +109,7 @@ window.onload = init();
 
 function init() {
     create_player();
-    create_card();
+    create_cards();
     give_player_cards(player1);
     give_player_cards(player2);
     show_current_player()
@@ -120,7 +120,7 @@ function init() {
 
 
 //*ANCHOR - Create Stack
-function create_card() {
+function create_cards() {
     for (let key in all_cards) {
         for (let i = 0; i < all_cards[key]; i++) {
             const card = new Card(key, 'stack', true)
