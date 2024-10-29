@@ -255,7 +255,7 @@ body {
 .modal.active.modal-action {
   transform: translate(-50%, -50%) rotate(180deg);
   z-index: 9999;
-  background-color: #f0f0f0;
+  background-color: rgba(240, 240, 240, 0.8039215686);
   color: black;
 }
 .modal.active.modal-action .action-button {
