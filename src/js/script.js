@@ -500,7 +500,10 @@ function show_info_modal(player, headline, text, countdown) {
 
     //* rotation class
     if(player === 'player1') {
-        info_modal.classList.add('p1');
+        if(!info_modal.classList.contains('p1')) {
+            console.log('p1 hinzugefügt');
+            info_modal.classList.add('p1');
+        }
     }else {
         info_modal.classList.remove('p1');
     }
