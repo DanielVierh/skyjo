@@ -133,7 +133,6 @@ function create_cards() {
         }
     }
     cardStack = shuffleArray(cardStack)
-    console.log('cardStack', cardStack.length, cardStack);
 }
 
 //*ANCHOR - Shuffle
@@ -155,8 +154,6 @@ function give_player_cards(_player) {
 
 //* The actual visual discovery of the card
 function discover_card(_card, _cardSlot, ignoreStatus = false) {
-    console.log('Öhm, discover card', _card, '_cardSlot', _cardSlot);
-
     const data_status = _card.covered;
     if (data_status === false && ignoreStatus === false) {
         return
@@ -277,8 +274,6 @@ function create_player() {
             }
         }
     }
-    console.log(player1);
-    console.log(player2);
 }
 
 
@@ -295,9 +290,7 @@ function show_current_player() {
             show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.',7000)
         }else {
             //* NOT first round
-            console.log('P1 - NOT first Round');
             action_modal.classList.add('active');
-            // action_modal.classList.add('p1');
         }
 
     } else {
@@ -313,7 +306,6 @@ function show_current_player() {
             show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.',7000)
 
             if (ki_player) {
-                console.log('ki, first Round');
                 //* First Round
 
                 //*Checks if card is covered or not
@@ -392,7 +384,6 @@ function show_current_player() {
                         covered_cards.push(covered_card_with_index);
                     }
                 }
-                console.log(discovered_cards);
 
                 let took_action = false;
                 //* Check ablagestapel
@@ -402,9 +393,6 @@ function show_current_player() {
                     for (let i = 0; i < discovered_cards.length; i++) {
                         const card = discovered_cards[i].card[0];
                         const index = parseInt(discovered_cards[i].index);
-                        console.log('index', index);
-
-                        console.log('card', card);
 
                         //* Change ablagecard with card
                         if (parseInt(card_on_ablage.value) < parseInt(card.value)) {
@@ -415,9 +403,6 @@ function show_current_player() {
                             ablageStack.push(cardP2_to_ablage[0]);
                             player2.cards[index] = cardAblage_to_p2;
 
-                            console.log('ablage', ablageStack);
-                            console.log('p2', player2);
-
                             discover_card(ablageStack[0], 'player_card_ablage', true);
                             discover_card(player2.cards[index][0], `player2_card_${index}`, true)
 
@@ -427,14 +412,12 @@ function show_current_player() {
                     }
                 }else {
                     //TODO - delete else
-                    console.log('Card on ablage is undefined');
                 }
 
                 //* Take card from stack
 
                 if (took_action === false) {
                     const card_in_ki_hand = cardStack.splice(0, 1);
-                    console.log('card_in_ki_hand', card_in_ki_hand[0].value);
 
                     //* -if value <= 4 change with a hiegher number of ki board or with a random unvovered card 
                     if(card_in_ki_hand[0].value <= 4) {
@@ -450,9 +433,6 @@ function show_current_player() {
                                 ablageStack.push(cardP2_to_ablage[0]);
                                 player2.cards[index] = cardInHand_to_P2;
     
-                                console.log('cardP2_to_ablage', cardP2_to_ablage);
-                                console.log('p2', player2);
-    
                                 discover_card(ablageStack[0], 'player_card_ablage', true);
                                 discover_card(player2.cards[index][0], `player2_card_${index}`, true)
     
@@ -460,30 +440,23 @@ function show_current_player() {
                                 break;
                             }
                         }
-                        console.log('Wohl nichts gefunden');
                         
                     }else if(card_in_ki_hand[0].value >= 5) {
                         //TODO - check, if there is the same card discovered in a column, but over the value of 4
 
                         //* -if not, and if value >4 put card to ablage and turn one card from ki board
-                        console.log('card >= 5 ');
                         const cardInHand_to_P2 = card_in_ki_hand;
                         ablageStack.push(cardInHand_to_P2[0]);
 
                         const randomNumb = Math.random() * covered_cards.length;
                         const randomCard = covered_cards[randomNumb].card[0];
                         const randomCardIndex = covered_cards[randomNumb].index;
-                        console.log('randomCard', randomCard, ' randomCardIndex', randomCardIndex);
-                        
-                        console.log(random_covered_card);
                         
                         discover_card(ablageStack[0], 'player_card_ablage', true);
                         discover_card(randomCard, `player2_card_${randomCardIndex}`, true)
                     }
                     
                         //* put card from ki board to ablage and discover one random card
-
-                    console.log('KI will take a card from stack');
                 }
             }
         }
@@ -501,7 +474,6 @@ function show_info_modal(player, headline, text, countdown) {
     //* rotation class
     if(player === 'player1') {
         if(!info_modal.classList.contains('p1')) {
-            console.log('p1 hinzugefügt');
             info_modal.classList.add('p1');
         }
     }else {
