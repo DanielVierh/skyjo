@@ -66,6 +66,7 @@ let ablageStack = [];
 let currentPlayer = 'player1';
 let action_Amount = 1;
 let ki_player = true;
+let pause_Game = false;
 
 
 //*ANCHOR - Player Class
@@ -123,8 +124,7 @@ function init() {
     
     
     //*DEBUG
-    //render_board();
-    //count_points();
+    count_points();
 }
 
 
@@ -211,14 +211,20 @@ function set_attributes_to_Card(card_id, card_value) {
     }
 }
 
+//* ANCHOR - Count Points Function
+
 function count_points() {
     let points_player1 = 0;
+    let points_player2 = 0;
 
-    for (let i = 0; i < player1.cards.length; i++) {
-        points_player1 = points_player1 += parseInt(player1.cards[i]);
+    for (let i = 0; i < player1.cards.length; i++) {        
+        points_player1 = points_player1 += parseInt(player1.cards[i][0].value);
+    }
+    for (let i = 0; i < player2.cards.length; i++) {        
+        points_player2 = points_player2 += parseInt(player2.cards[i][0].value);
     }
 
-    point_label.innerHTML = `${points_player1} Punkte`;
+    console.log(`P1: ${points_player1} Punkte || P2: ${points_player2} Punkte `);
 }
 
 
@@ -507,7 +513,6 @@ function show_info_modal(player, headline, text, countdown) {
 btn_take_from_stack.addEventListener('click', ()=> {
     //* Take card from stack
     const card_from_stack = cardStack[0];
-    const card_action = document.getElementById('card_action');
 
     //* Hide Action Modal
     action_modal.classList.remove('active');
@@ -517,3 +522,4 @@ btn_take_from_stack.addEventListener('click', ()=> {
     set_attributes_to_Card('card_action', card_from_stack.value);
     
 })
+
