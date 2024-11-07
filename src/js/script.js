@@ -505,12 +505,14 @@ function show_info_modal(player, headline, text, countdown) {
 
 //* ANCHOR - Take card from stack
 btn_take_from_stack.addEventListener('click', ()=> {
+    //* Take card from stack
     const card_from_stack = cardStack[0];
     const card_action = document.getElementById('card_action');
 
+    //* Hide Action Modal
     action_modal.classList.remove('active');
+    //* Show Modal with card
     action_modal_card_from_stack.classList.add('active');    
-    card_action.classList.remove('invisible');
 
     set_attributes_to_Card('card_action', card_from_stack.value);
     

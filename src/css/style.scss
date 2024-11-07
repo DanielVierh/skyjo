@@ -81,10 +81,6 @@ body {
     position: relative;
     overflow: hidden;
 
-    &.invisible {
-        display: none;
-    }
-
     &::after {
         content: '';
         position: absolute;

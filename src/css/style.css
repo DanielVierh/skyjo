@@ -72,9 +72,6 @@ body {
   position: relative;
   overflow: hidden;
 }
-.card.invisible {
-  display: none;
-}
 .card::after {
   content: "";
   position: absolute;
