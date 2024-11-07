@@ -43,7 +43,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     border-radius: 0 0 12px 12px;
-    
+
     &.active {
         box-shadow: 0 0 30px white, inset 0 0 25px white;
     }
@@ -320,9 +320,24 @@ body {
             z-index: 99999;
             transform: translate(-50%, -50%) rotate(180deg);
         }
-    
+
         &.p1 {
             transform: translate(-50%, -50%) rotate(0deg);
         }
+    }
+}
+
+.disable-area {
+    display: none;
+
+    &.active {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: transparent;
+        z-index: 99999999;
     }
 }

@@ -286,4 +286,18 @@ body {
 }
 .modal.active.p1 {
   transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.disable-area {
+  display: none;
+}
+.disable-area.active {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  z-index: 99999999;
 }/*# sourceMappingURL=style.css.map */
