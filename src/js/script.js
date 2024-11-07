@@ -321,8 +321,8 @@ async function show_current_player() {
 
         if (player1.firstRound === true) {
             //* First Round
-            show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.', 5000);
-            await wait(5000);
+            show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.', 4000);
+            await wait(4000);
         } else {
             //* NOT first round
             await wait(5000);
@@ -377,12 +377,12 @@ async function show_current_player() {
                 const sum_of_first_two_p2 = player2.first_two_cards.sum;
 
                 if (sum_of_first_two_p1 > sum_of_first_two_p2) {
-                    show_info_modal('player1', 'Spieler 1 begint', '', 5000);
+                    show_info_modal('player1', 'Du beginnst', '', 3000);
                     await wait(5000);
                     currentPlayer = 'player1';
                     show_current_player();
                 } else {
-                    show_info_modal('player1', 'Spieler 2 begint', '', 5000);
+                    show_info_modal('player1', 'Der Computer begint', '', 3000);
                     await wait(5000);
                     currentPlayer = 'player2';
                     show_current_player();
@@ -435,7 +435,8 @@ async function show_current_player() {
 
                         //* Change ablagecard with card
                         if (parseInt(card_on_ablage.value) < parseInt(card.value)) {
-
+                            console.log('(parseInt(card_on_ablage.value) < parseInt(card.value)');
+                            
                             const cardAblage_to_p2 = ablageStack.splice(0, 1);
                             const cardP2_to_ablage = player2.cards[index];
 
@@ -443,9 +444,12 @@ async function show_current_player() {
                             player2.cards[index] = cardAblage_to_p2;
 
                             discover_card(ablageStack[0], 'player_card_ablage', true);
-                            discover_card(player2.cards[index][0], `player2_card_${index}`, true)
+                            discover_card(player2.cards[index][0], `player2_card_${index}`, true);
 
                             took_action = true;
+                            await wait(4000);
+                            currentPlayer = 'player1';
+                            show_current_player();
                             break;
                         }
                     }
@@ -459,6 +463,8 @@ async function show_current_player() {
                     const card_in_ki_hand = cardStack.splice(0, 1);
 
                     //* -if value <= 4 change with a hiegher number of ki board or with a random unvovered card 
+                    console.log('value <= 4');
+                    
                     if (card_in_ki_hand[0].value <= 4) {
                         for (let i = 0; i < discovered_cards.length; i++) {
                             const card = discovered_cards[i].card[0];
@@ -476,6 +482,9 @@ async function show_current_player() {
                                 discover_card(player2.cards[index][0], `player2_card_${index}`, true)
 
                                 took_action = true;
+                                await wait(4000);
+                                currentPlayer = 'player1';
+                                show_current_player();
                                 break;
                             }
                         }
@@ -484,6 +493,7 @@ async function show_current_player() {
                         //TODO - check, if there is the same card discovered in a column, but over the value of 4
 
                         //* -if not, and if value >4 put card to ablage and turn one card from ki board
+                        console.log('value >4 ');
                         const cardInHand_to_P2 = card_in_ki_hand;
                         ablageStack.push(cardInHand_to_P2[0]);
 
@@ -493,6 +503,9 @@ async function show_current_player() {
 
                         discover_card(ablageStack[0], 'player_card_ablage', true);
                         discover_card(randomCard, `player2_card_${randomCardIndex}`, true)
+                        await wait(4000);
+                        currentPlayer = 'player1';
+                        show_current_player();
                     }
 
                     //* put card from ki board to ablage and discover one random card
