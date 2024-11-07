@@ -51,6 +51,12 @@ body {
   z-index: 99999;
 }
 
+.card-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .card {
   background-color: #f0f0f0;
   text-align: center;
@@ -65,6 +71,9 @@ body {
   border-radius: 3px;
   position: relative;
   overflow: hidden;
+}
+.card.invisible {
+  display: none;
 }
 .card::after {
   content: "";

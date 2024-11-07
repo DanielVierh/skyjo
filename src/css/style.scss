@@ -60,6 +60,12 @@ body {
 
 }
 
+.card-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .card {
     background-color: #f0f0f0;
     text-align: center;
@@ -74,6 +80,10 @@ body {
     border-radius: 3px;
     position: relative;
     overflow: hidden;
+
+    &.invisible {
+        display: none;
+    }
 
     &::after {
         content: '';
@@ -126,6 +136,7 @@ body {
         &.underlined {
             text-decoration: underline;
         }
+
     }
 
     .val-label {
