@@ -322,6 +322,7 @@ async function show_current_player() {
         if (player1.firstRound === true) {
             //* First Round
             show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.', 5000);
+            await wait(5000);
         } else {
             //* NOT first round
             await wait(5000);
@@ -338,7 +339,7 @@ async function show_current_player() {
         if (player2.firstRound === true) {
             moves = 2;
             //* First Round
-            show_info_modal('player1', '2 Karten aufdecken', 'Computer deckt 2 der 12 Karten auf.', 5000)
+            show_info_modal('player1', 'Computer ist am zug', 'Computer deckt 2 der 12 Karten auf.', 5000)
 
             if (ki_player) {
                 //* First Round
