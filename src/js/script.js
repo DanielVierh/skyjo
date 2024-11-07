@@ -168,30 +168,33 @@ function discover_card(_card, _cardSlot, ignoreStatus = false) {
             console.log(error);
         }
     }
-    document.getElementById(_cardSlot).innerHTML = ''
-    let vallabel = document.createElement('p');
-    let before_label = document.createElement('p');
-    let after_label = document.createElement('p');
-    before_label.innerHTML = _card.value;
-    before_label.classList.add('before-label');
-    after_label.classList.add('after-label');
-    if (_card.value == 6 || _card.value == 9) {
-        vallabel.classList.add('underlined')
-        before_label.classList.add('underlined')
-        after_label.classList.add('underlined')
-    }
-    after_label.innerHTML = _card.value;
-    vallabel.innerHTML = _card.value;
-    vallabel.classList.add('val-label')
-    document.getElementById(_cardSlot).appendChild(vallabel);
-    document.getElementById(_cardSlot).appendChild(before_label);
-    document.getElementById(_cardSlot).appendChild(after_label);
-    document.getElementById(_cardSlot).classList.add('card');
+
 
     set_attributes_to_Card(_cardSlot, _card.value);
 }
 
 function set_attributes_to_Card(card_id, card_value) {
+
+    document.getElementById(card_id).innerHTML = ''
+    let vallabel = document.createElement('p');
+    let before_label = document.createElement('p');
+    let after_label = document.createElement('p');
+    before_label.innerHTML = card_value;
+    before_label.classList.add('before-label');
+    after_label.classList.add('after-label');
+    if (card_value == 6 || card_value == 9) {
+        vallabel.classList.add('underlined')
+        before_label.classList.add('underlined')
+        after_label.classList.add('underlined')
+    }
+    after_label.innerHTML = card_value;
+    vallabel.innerHTML = card_value;
+    vallabel.classList.add('val-label')
+    document.getElementById(card_id).appendChild(vallabel);
+    document.getElementById(card_id).appendChild(before_label);
+    document.getElementById(card_id).appendChild(after_label);
+    document.getElementById(card_id).classList.add('card');
+
     const card = document.getElementById(card_id);
     if (card_value > 0 && card_value < 5) {
         card.classList.add('green');
@@ -506,30 +509,9 @@ btn_take_from_stack.addEventListener('click', ()=> {
     const card_action = document.getElementById('card_action');
 
     action_modal.classList.remove('active');
-    action_modal_card_from_stack.classList.add('active');
-    
+    action_modal_card_from_stack.classList.add('active');    
     card_action.classList.remove('invisible');
-    card_action.innerHTML = ''
-    let vallabel = document.createElement('p');
-    let before_label = document.createElement('p');
-    let after_label = document.createElement('p');
-    before_label.innerHTML = card_from_stack.value;
-    before_label.classList.add('before-label');
-    after_label.classList.add('after-label');
-    if (card_from_stack.value == 6 || card_from_stack.value == 9) {
-        vallabel.classList.add('underlined')
-        before_label.classList.add('underlined')
-        after_label.classList.add('underlined')
-    }
-    after_label.innerHTML = card_from_stack.value;
-    vallabel.innerHTML = card_from_stack.value;
-    vallabel.classList.add('val-label')
-    card_action.appendChild(vallabel);
-    card_action.appendChild(before_label);
-    card_action.appendChild(after_label);
-    card_action.classList.add('card');
 
     set_attributes_to_Card('card_action', card_from_stack.value);
-    
     
 })
