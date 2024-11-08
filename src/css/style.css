@@ -71,6 +71,7 @@ body {
   border-radius: 3px;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 .card::after {
   content: "";
