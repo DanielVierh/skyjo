@@ -57,6 +57,7 @@ const action_modal_card_from_stack = document.getElementById('action_modal_card_
 const info_modal = document.getElementById('info_modal');
 const btn_take_from_stack = document.getElementById('btn_take_from_stack');
 const btn_swap_with_ablage = document.getElementById('btn_swap_with_ablage');
+const btn_swap_with_ablage_after_new = document.getElementById('btn_swap_with_ablage_after_new');
 
 
 let player1;
@@ -66,6 +67,7 @@ let ablageStack = [];
 let currentPlayer = 'player1';
 let action_Amount = 1;
 let ki_player = true;
+let current_card = [];
 
 
 //*ANCHOR - Player Class
@@ -134,10 +136,23 @@ function init() {
     give_player_cards(player1);
     give_player_cards(player2);
     show_current_player();
-
+    helper_show_cards()
 
     //*DEBUG
     count_points();
+}
+
+//*Helper func show cards
+function helper_show_cards() {
+    let output = ''
+    for(let i = 0; i < player1.cards.length; i++) {  
+        if(i > 0 && i % 4 === 0) {
+            output = output + '\n'
+        }      
+        output = output +  ' | ' + player1.cards[i][0].value;
+    }
+    console.log(output);
+    
 }
 
 
@@ -268,6 +283,11 @@ function card_discover(card) {
                     show_current_player();
                 }, 200);
             }
+        }else {
+            setTimeout(() => {
+                currentPlayer = 'player2';
+                show_current_player();
+            }, 200);
         }
         discover_card(player_card, card_slot_id);
         player1.cards[card_index][0].covered = false;
@@ -546,7 +566,11 @@ function show_info_modal(player, headline, text, countdown) {
 btn_take_from_stack.addEventListener('click', () => {
     //* Take card from stack
     const card_from_stack = cardStack[0];
-
+    card_from_stack.place = 'hand';
+    card_from_stack.covered = false;
+    current_card.push(card_from_stack);
+    console.log('Current Card', current_card);
+    
     //* Hide Action Modal
     action_modal.classList.remove('active');
     //* Show Modal with card
@@ -556,3 +580,15 @@ btn_take_from_stack.addEventListener('click', () => {
 
 })
 
+
+
+//* Put Card to ablage
+
+btn_swap_with_ablage_after_new.addEventListener('click', ()=> {
+    console.log(('btn_swap_with_ablage_after_new'));
+    const card = current_card.splice(0, 1);
+    ablageStack.push(card[0]);
+    discover_card(ablageStack[0], 'player_card_ablage', true);
+    action_modal_card_from_stack.classList.remove('active');
+    show_info_modal('player1', 'Eine Karte aufdecken', 'Du musst nun eine Deiner Karten aufdecken, indem du sie anklickst.',5000)
+})
