@@ -58,6 +58,7 @@ const info_modal = document.getElementById('info_modal');
 const btn_take_from_stack = document.getElementById('btn_take_from_stack');
 const btn_swap_with_ablage = document.getElementById('btn_swap_with_ablage');
 const btn_swap_with_ablage_after_new = document.getElementById('btn_swap_with_ablage_after_new');
+const btn_take_from_stack_after_new = document.getElementById('btn_take_from_stack_after_new');
 
 
 let player1;
@@ -68,6 +69,7 @@ let currentPlayer = 'player1';
 let action_Amount = 1;
 let ki_player = true;
 let current_card = [];
+let is_Swap = false;
 
 
 //*ANCHOR - Player Class
@@ -136,20 +138,23 @@ function init() {
     give_player_cards(player1);
     give_player_cards(player2);
     show_current_player();
-    helper_show_cards()
+    helper_show_cards(player1)
+    helper_show_cards(player2)
 
     //*DEBUG
     count_points();
 }
 
 //*Helper func show cards
-function helper_show_cards() {
+function helper_show_cards(player) {
+    console.log(player);
+    
     let output = ''
-    for(let i = 0; i < player1.cards.length; i++) {  
+    for(let i = 0; i < player.cards.length; i++) {  
         if(i > 0 && i % 4 === 0) {
             output = output + '\n'
         }      
-        output = output +  ' | ' + player1.cards[i][0].value;
+        output = output +  ' | ' + player.cards[i][0].value;
     }
     console.log(output);
     
@@ -186,6 +191,9 @@ function give_player_cards(_player) {
 
 //*ANCHOR - The actual visual discovery of the card
 function discover_card(_card, _cardSlot, ignoreStatus = false) {
+
+    console.log('discover_card Param:card', _card, ' cardslot: ', _cardSlot);
+    
     const data_status = _card.covered;
     if (data_status === false && ignoreStatus === false) {
         return
@@ -266,8 +274,8 @@ cards.forEach((card) => {
 
 function card_discover(card) {
 
-    const card_slot_id = card.id;
-    const card_index = card.getAttribute("data-index");
+    let card_slot_id = card.id;
+    let card_index = card.getAttribute("data-index");
     const player = card.getAttribute("data-player");
     let player_card
 
@@ -284,6 +292,14 @@ function card_discover(card) {
                 }, 200);
             }
         }else {
+            if(is_Swap) {
+                is_Swap = false;
+                console.log('SWAP');
+                ablageStack.push(card[0]);
+                setTimeout(() => {
+                    discover_card(current_card[0], card_slot_id, true);
+                }, 1000);
+            }
             setTimeout(() => {
                 currentPlayer = 'player2';
                 show_current_player();
@@ -591,4 +607,13 @@ btn_swap_with_ablage_after_new.addEventListener('click', ()=> {
     discover_card(ablageStack[0], 'player_card_ablage', true);
     action_modal_card_from_stack.classList.remove('active');
     show_info_modal('player1', 'Eine Karte aufdecken', 'Du musst nun eine Deiner Karten aufdecken, indem du sie anklickst.',5000)
+})
+
+
+btn_take_from_stack_after_new.addEventListener('click', ()=> {
+    action_modal_card_from_stack.classList.remove('active');
+    show_info_modal('player1', 'Karte wählen', 'Klicke auf die Karte, mit der getauscht werden soll', 5000);
+    is_Swap = true;
+    console.log(current_card);
+    
 })
