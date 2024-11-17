@@ -115,9 +115,7 @@ const all_cards = {
 };
 
 
-function wait(ms) {
-    console.log('wait for', ms);
-    
+function wait(ms) {    
     //* add area to disable cards etc.
     const disable_area = document.getElementById('disable_area');
     disable_area.classList.add('active');
@@ -190,10 +188,7 @@ function give_player_cards(_player) {
 }
 
 //*ANCHOR - The actual visual discovery of the card
-function discover_card(_card, _cardSlot, ignoreStatus = false) {
-
-    console.log('discover_card Param:card', _card, ' cardslot: ', _cardSlot);
-    
+function discover_card(_card, _cardSlot, ignoreStatus = false) {    
     const data_status = _card.covered;
     if (data_status === false && ignoreStatus === false) {
         return
@@ -204,7 +199,6 @@ function discover_card(_card, _cardSlot, ignoreStatus = false) {
             console.log(error);
         }
     }
-
 
     set_attributes_to_Card(_cardSlot, _card.value);
 }
@@ -232,6 +226,12 @@ function set_attributes_to_Card(card_id, card_value) {
     document.getElementById(card_id).classList.add('card');
 
     const card = document.getElementById(card_id);
+    card.classList.remove('green');
+    card.classList.remove('red');
+    card.classList.remove('yellow');
+    card.classList.remove('lightblue');
+    card.classList.remove('blue');
+
     if (card_value > 0 && card_value < 5) {
         card.classList.add('green');
     } else if (card_value >= 5 && card_value < 9) {
@@ -295,7 +295,13 @@ function card_discover(card) {
             if(is_Swap) {
                 is_Swap = false;
                 console.log('SWAP');
-                ablageStack.push(card[0]);
+                ablageStack = [];
+                ablageStack.push(player_card);
+                console.log('ablageStack', ablageStack);
+                
+                setTimeout(() => {
+                    discover_card(ablageStack[0], 'player_card_ablage', true);
+                }, 800);
                 setTimeout(() => {
                     discover_card(current_card[0], card_slot_id, true);
                 }, 1000);
@@ -358,10 +364,8 @@ async function show_current_player() {
         if (player1.firstRound === true) {
             //* First Round
             show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 der 12 Karten vor dir auf, indem du sie anklickst.', 4000);
-            await wait(4000);
         } else {
             //* NOT first round
-            await wait(5000);
             action_modal.classList.add('active');
         }
 
@@ -413,8 +417,6 @@ async function show_current_player() {
                 const sum_of_first_two_p2 = player2.first_two_cards.sum;
 
                 if (sum_of_first_two_p1 > sum_of_first_two_p2) {
-                    show_info_modal('player1', 'Du beginnst', '', 3000);
-                    await wait(5000);
                     currentPlayer = 'player1';
                     show_current_player();
                 } else {
@@ -511,6 +513,7 @@ async function show_current_player() {
                                 const cardInHand_to_P2 = card_in_ki_hand;
                                 const cardP2_to_ablage = player2.cards[index];
 
+                                ablageStack = [];
                                 ablageStack.push(cardP2_to_ablage[0]);
                                 player2.cards[index] = cardInHand_to_P2;
 
@@ -531,12 +534,16 @@ async function show_current_player() {
                         //* -if not, and if value >4 put card to ablage and turn one card from ki board
                         console.log('value >4 ');
                         const cardInHand_to_P2 = card_in_ki_hand;
+                        ablageStack = [];
                         ablageStack.push(cardInHand_to_P2[0]);
-
-                        const randomNumb = Math.random() * covered_cards.length;
+                        console.log(covered_cards, 'covered_cards');
+                        const randomNumb = parseInt(Math.random() * covered_cards.length);
+                        console.log('randomNumb', randomNumb);
+                        console.log('covered_cards[randomNumb].card[0]', covered_cards[randomNumb].card[0]);
                         const randomCard = covered_cards[randomNumb].card[0];
                         const randomCardIndex = covered_cards[randomNumb].index;
 
+                        
                         discover_card(ablageStack[0], 'player_card_ablage', true);
                         discover_card(randomCard, `player2_card_${randomCardIndex}`, true)
                         await wait(4000);
@@ -603,10 +610,11 @@ btn_take_from_stack.addEventListener('click', () => {
 btn_swap_with_ablage_after_new.addEventListener('click', ()=> {
     console.log(('btn_swap_with_ablage_after_new'));
     const card = current_card.splice(0, 1);
+    ablageStack = [];
     ablageStack.push(card[0]);
     discover_card(ablageStack[0], 'player_card_ablage', true);
     action_modal_card_from_stack.classList.remove('active');
-    show_info_modal('player1', 'Eine Karte aufdecken', 'Du musst nun eine Deiner Karten aufdecken, indem du sie anklickst.',5000)
+    show_info_modal('player1', 'Eine Karte aufdecken', 'Du musst nun eine Deiner Karten aufdecken, indem du sie anklickst.',3000)
 })
 
 
