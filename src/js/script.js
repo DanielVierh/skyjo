@@ -93,6 +93,9 @@ let ki_player = true;           // Spieler 2 ist KI
 let current_card = null;        // „in der Hand“
 let is_Swap = false;            // wenn true: nächster Click tauscht mit current_card
 let cards = [];                 // DOM-Kartenknoten; wird in init() gefüllt
+let gameEnded = false;
+let lastTurn = false;
+let closingPlayer = null;
 
 // --- KI-Tempo/Visual-Config ---
 const KI_DELAY = {
@@ -146,6 +149,62 @@ const all_cards = {
   '11': 10,
   '12': 10,
 };
+
+function hasAllCardsOpen(player) {
+    return player.cards.every(c => c === null || !c.covered);
+}
+
+function countPoints(player) {
+    let points = 0;
+    for (let i = 0; i < player.cards.length; i++) {
+        if (player.cards[i]) {
+            points += parseInt(player.cards[i].value);
+        }
+    }
+    return points;
+}
+
+function checkGameEnd() {
+    if (gameEnded) return;
+
+    const current = currentPlayer === "player1" ? player1 : player2;
+    const other = currentPlayer === "player1" ? player2 : player1;
+
+    // Falls alle Karten offen beim aktuellen Spieler
+    if (hasAllCardsOpen(current)) {
+        if (!lastTurn) {
+            // anderer Spieler bekommt noch einen Zug
+            lastTurn = true;
+            closingPlayer = current;
+            console.log(`${current.name} hat zugemacht! ${other.name} darf noch einen Zug machen.`);
+        } else {
+            // Spiel beenden
+            endGame();
+        }
+    }
+}
+
+function endGame() {
+    gameEnded = true;
+
+    let points1 = countPoints(player1);
+    let points2 = countPoints(player2);
+
+    // Sonderregel: Verdopplung falls Schließender nicht der Beste ist
+    if (closingPlayer) {
+        if (closingPlayer === player1 && points1 > points2) {
+            points1 *= 2;
+        } else if (closingPlayer === player2 && points2 > points1) {
+            points2 *= 2;
+        }
+    }
+
+    let winner = "Unentschieden";
+    if (points1 < points2) winner = player1.name;
+    else if (points2 < points1) winner = player2.name;
+
+    alert(`🎉 Spiel beendet!\n\n${player1.name}: ${points1} Punkte\n${player2.name}: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`);
+}
 
 // ==== Utils ====
 
@@ -849,4 +908,5 @@ function swap_card(a, b, c) {
 function end_turn() {
   current_player = (currentPlayer === 'player1') ? 'player2' : 'player1';
   show_current_player();
+  checkGameEnd();
 }
