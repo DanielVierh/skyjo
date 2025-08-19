@@ -61,6 +61,14 @@
  * - KI-Schritte mit Delays/„Animationen“ (KI_DELAY)
  * - Robuste Swaps (Spieler & KI), saubere DOM-Updates
  */
+/**
+ * Skyjo – vollständige, robuste Version mit
+ * - Ablagestapel-Kapselung
+ * - KI-Delays/„Animationen“
+ * - Vertikal-Triple-Entfernung (0/4/8, 1/5/9, 2/6/10, 3/7/11)
+ * - Null-sichere Punkte- & KI-Logik
+ * - swap_card / end_turn Dummy-Implementierungen
+ */
 
 const myBoard = document.getElementById('myBoard');
 const point_label = document.getElementById('point_label');
@@ -82,17 +90,17 @@ let cardStack = [];
 let ablageStack = [];           // Top-Karte liegt bei index 0
 let currentPlayer = 'player1';
 let ki_player = true;           // Spieler 2 ist KI
-let current_card = null;        // momentan „in der Hand“ (vom Stapel oder Ablage)
-let is_Swap = false;            // wenn true: nächster Card-Click tauscht mit current_card
+let current_card = null;        // „in der Hand“
+let is_Swap = false;            // wenn true: nächster Click tauscht mit current_card
 let cards = [];                 // DOM-Kartenknoten; wird in init() gefüllt
 
 // --- KI-Tempo/Visual-Config ---
 const KI_DELAY = {
-  think: 600,     // „Denken“-Pause
-  draw: 700,      // Ziehen vom Stapel
-  swap: 700,      // Tauschen
-  reveal: 600,    // Aufdecken
-  step: 400       // kleine Schritte zwischen UI-Updates
+  think: 700,
+  draw: 800,
+  swap: 800,
+  reveal: 650,
+  step: 400
 };
 
 // ==== Klassen ====
@@ -100,7 +108,7 @@ const KI_DELAY = {
 class Player {
   constructor(name, playerNumber) {
     this.name = name;
-    this.cards = []; // Array<Card>
+    this.cards = []; // Array<Card | null>
     this.points = 0;
     this.firstRound = true;
     this.playerNumber = playerNumber;
@@ -119,7 +127,7 @@ class Card {
   }
 }
 
-// ==== Kartendefinition (Anzahl je Wert) ====
+// ==== Kartendefinition ====
 
 const all_cards = {
   '-2': 5,
@@ -159,6 +167,7 @@ function shuffleArray(array) {
 }
 
 // DOM-Helfer
+
 function setSlotDiscovered(slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
@@ -170,6 +179,12 @@ function setSlotCovered(slotId) {
   if (!el) return;
   el.classList.add('covered');
   el.setAttribute('data-status', 'covered');
+}
+function setSlotRemoved(slotId) {
+  const el = document.getElementById(slotId);
+  if (!el) return;
+  el.classList.add('removed');
+  el.setAttribute('data-status', 'removed');
 }
 function highlightSlot(slotId, on = true) {
   const el = document.getElementById(slotId);
@@ -184,27 +199,40 @@ function clearCardUI(slotId) {
   host.classList.remove('green', 'red', 'yellow', 'lightblue', 'blue');
 }
 
+// Finde Board-Slot-Element per Spieler/Index (unterstützt zwei ID-Schemata)
+function getBoardSlotElement(playerNumber, index) {
+  const id1 = `player${playerNumber}_card_${index}`;
+  let el = document.getElementById(id1);
+  if (el) return el;
+  const id2 = `p${playerNumber}_card_${index}`; // Fallback
+  return document.getElementById(id2);
+}
+// Liefert die ID, wenn Element existiert
+function getBoardSlotId(playerNumber, index) {
+  const el = getBoardSlotElement(playerNumber, index);
+  return el ? el.id : null;
+}
+
 // Ablage-Helpers (verhindern Fehlerquellen)
 function topAblage() {
   return ablageStack[0] ?? null;
 }
 function putOnAblage(card) {
-  // Setzt die übergebene Karte als neue Top-Karte und aktualisiert UI
   ablageStack = [card];
   updateAblageUI();
 }
 function takeFromAblage() {
   if (!ablageStack.length) return null;
   const c = ablageStack.splice(0, 1)[0];
-  updateAblageUI(); // UI ggf. leeren
+  updateAblageUI();
   return c;
 }
 function updateAblageUI() {
   const slotId = 'player_card_ablage';
-  if (topAblage()) {
-    discover_card(topAblage(), slotId, true);
+  const top = topAblage();
+  if (top) {
+    discover_card(top, slotId, true);
   } else {
-    // Ablage leer → UI leeren/verdecken
     clearCardUI(slotId);
     setSlotCovered(slotId);
   }
@@ -266,7 +294,7 @@ function create_cards() {
 
 function give_player_cards(_player) {
   for (let i = 0; i < 12; i++) {
-    const card = cardStack.splice(0, 1)[0]; // immer oberste Karte
+    const card = cardStack.splice(0, 1)[0]; // oberste Karte
     card.place = 'board';
     card.covered = true;
     _player.cards.push(card);
@@ -279,13 +307,21 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj) return;
 
   if (!cardObj.covered && !ignoreStatus) {
-    // bereits aufgedeckt und nicht erzwungen → nichts tun
     return;
   }
 
   setSlotDiscovered(slotId);
   cardObj.covered = false;
   set_attributes_to_Card(slotId, cardObj.value);
+
+  // 👉 Nach jedem Aufdecken: Triple-Check für den betroffenen Spieler
+  // Nur Board-Slots prüfen (nicht Ablage)
+  const m = /^player([12])_card_(\d+)$/.exec(slotId) || /^p([12])_card_(\d+)$/.exec(slotId);
+  if (m) {
+    const pnum = parseInt(m[1], 10);
+    const player = (pnum === 1) ? player1 : player2;
+    check_and_remove_vertical_triples(player);
+  }
 }
 
 function set_attributes_to_Card(card_id, card_value) {
@@ -336,7 +372,7 @@ function set_attributes_to_Card(card_id, card_value) {
 // ==== Punkte (Debug) ====
 
 function count_points() {
-  const sum = (pl) => pl.cards.reduce((acc, c) => acc + parseInt(c.value, 10), 0);
+  const sum = (pl) => pl.cards.reduce((acc, c) => acc + (c ? parseInt(c.value, 10) : 0), 0);
   const p1 = sum(player1);
   const p2 = sum(player2);
   console.log(`P1: ${p1} Punkte || P2: ${p2} Punkte`);
@@ -364,7 +400,6 @@ function show_info_modal(player, headline, text, countdown) {
 
   info_modal.classList.add('active');
 
-  // Rotation/Position für Spieler 1
   if (player === 'player1') {
     if (!info_modal.classList.contains('p1')) {
       info_modal.classList.add('p1');
@@ -389,11 +424,9 @@ async function show_current_player() {
     player1Board?.classList.add('active');
 
     if (player1.firstRound) {
-      // Erste Runde Spieler 1: 2 Karten aufdecken
       show_info_modal('player1', '2 Karten aufdecken', 'Decke 2 deiner 12 Karten auf, indem du sie anklickst.', 4000);
       action_modal?.classList.remove('active');
     } else {
-      // Normale Runde: Aktion wählen
       current_card = null;
       is_Swap = false;
       action_modal?.classList.add('active');
@@ -405,12 +438,10 @@ async function show_current_player() {
     player2Board?.classList.add('active');
 
     if (player2.firstRound) {
-      // Erste Runde KI: 2 Karten zufällig aufdecken
       show_info_modal('player2', 'Computer ist am Zug', 'Computer deckt 2 seiner Karten auf.', 3000);
       await wait(KI_DELAY.think);
       await ki_discover_two_first_round();
 
-      // Wer beginnt? Höhere Summe beginnt.
       await wait(KI_DELAY.step);
       const p1sum = player1.first_two_cards.sum;
       const p2sum = player2.first_two_cards.sum;
@@ -427,7 +458,6 @@ async function show_current_player() {
       }
       show_current_player();
     } else {
-      // Normale KI-Runde
       await wait(KI_DELAY.think);
       await ki_take_turn();
       currentPlayer = 'player1';
@@ -442,25 +472,23 @@ function onCardClick(cardEl) {
   const meta = getPlayerAndIndexFromSlot(cardEl);
   if (!meta) return;
 
-  // Nur Eingaben von Spieler 1 zulassen, wenn Spieler 1 dran ist
+  // Nur wenn Spieler 1 dran ist
   if (meta.player === 'player1' && currentPlayer !== 'player1') return;
-  // KI-Karten sollen vom Spieler nicht anklickbar sein
   if (meta.player === 'player2') return;
 
   const { index, id } = meta;
   const pCard = player1.cards[index];
 
-  if (player1.firstRound) {
-    // Erste Runde: max. 2 Karten aufdecken
-    if (player1.first_two_cards.discovered >= 2) return;
+  if (!pCard && !is_Swap) return; // Slot entfernt
 
+  if (player1.firstRound) {
+    if (player1.first_two_cards.discovered >= 2) return;
     discover_card(pCard, id);
     player1.first_two_cards.discovered++;
     player1.first_two_cards.sum += parseInt(pCard.value, 10);
 
     if (player1.first_two_cards.discovered === 2) {
       player1.firstRound = false;
-      // Nächster ist Spieler 2 (erste Runde)
       setTimeout(() => {
         currentPlayer = 'player2';
         show_current_player();
@@ -469,15 +497,10 @@ function onCardClick(cardEl) {
     return;
   }
 
-  // Nicht erste Runde:
   if (is_Swap && current_card) {
-    // Spieler hat eine Karte in der Hand und klickt Ziel zum Tauschen
     const old = player1.cards[index];
+    if (old) putOnAblage(old);
 
-    // Alte Karte auf Ablage
-    putOnAblage(old);
-
-    // Neue Karte auf Board
     player1.cards[index] = current_card;
     player1.cards[index].place = 'board';
     player1.cards[index].covered = false;
@@ -485,11 +508,9 @@ function onCardClick(cardEl) {
     discover_card(player1.cards[index], id, true);
     setSlotDiscovered(id);
 
-    // Hand leeren, Swap-Phase beenden
     current_card = null;
     is_Swap = false;
 
-    // Zugende
     setTimeout(() => {
       currentPlayer = 'player2';
       action_modal?.classList.remove('active');
@@ -498,11 +519,9 @@ function onCardClick(cardEl) {
     return;
   }
 
-  // Ansonsten: normales Aufdecken (z. B. nach „lege gezogene Karte ab, decke eine Karte auf“)
-  if (pCard.covered) {
+  if (pCard && pCard.covered) {
     discover_card(pCard, id);
     setSlotDiscovered(id);
-    // Zugende
     setTimeout(() => {
       currentPlayer = 'player2';
       action_modal?.classList.remove('active');
@@ -514,17 +533,14 @@ function onCardClick(cardEl) {
 // ==== Buttons – Spieleraktionen ====
 
 function onTakeFromStack() {
-  // Karte vom Nachziehstapel ziehen (und entfernen)
   if (cardStack.length === 0) return;
   current_card = cardStack.splice(0, 1)[0];
   current_card.place = 'hand';
   current_card.covered = false;
 
-  // Aktionsauswahl schließen, Karte anzeigen
   action_modal?.classList.remove('active');
   action_modal_card_from_stack?.classList.add('active');
 
-  // Karte im Vorschau-Modal rendern
   set_attributes_to_Card('card_action', current_card.value);
 }
 
@@ -538,16 +554,12 @@ function onTakeFromAblage() {
   current_card.place = 'hand';
   current_card.covered = false;
 
-  // Aktionsauswahl schließen
   action_modal?.classList.remove('active');
-
-  // Spieler muss jetzt eine Board-Karte zum Tauschen wählen
   show_info_modal('player1', 'Karte wählen', 'Klicke die Karte an, mit der getauscht werden soll.', 3000);
   is_Swap = true;
 }
 
 function onDiscardDrawnAndRevealOne() {
-  // Gezogenes Blatt sofort auf Ablage legen, dann eine verdeckte Karte aufdecken
   if (!current_card) return;
   putOnAblage(current_card);
 
@@ -559,7 +571,6 @@ function onDiscardDrawnAndRevealOne() {
 }
 
 function onKeepDrawnAndSwap() {
-  // Gezogene Karte behalten → mit einer Board-Karte tauschen
   if (!current_card) return;
   action_modal_card_from_stack?.classList.remove('active');
   show_info_modal('player1', 'Karte wählen', 'Klicke auf die Karte, mit der getauscht werden soll.', 4000);
@@ -569,7 +580,6 @@ function onKeepDrawnAndSwap() {
 // ==== KI ====
 
 async function ki_discover_two_first_round() {
-  // Wähle 2 zufällige verdeckte KI-Karten
   const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
   const covered = p2Nodes.filter(n => n.getAttribute('data-status') === 'covered');
 
@@ -581,14 +591,19 @@ async function ki_discover_two_first_round() {
     const node = covered[i];
     const meta = getPlayerAndIndexFromSlot(node);
     if (!meta) continue;
-    const { index, id } = meta;
-    const card = player2.cards[index];
+    const { index } = meta;
 
-    highlightSlot(id, true);
+    // null-Schutz (entfernte Slots überspringen)
+    const slotId = getBoardSlotId(2, index);
+    if (!slotId) continue;
+    const card = player2.cards[index];
+    if (!card) continue;
+
+    highlightSlot(slotId, true);
     await wait(KI_DELAY.step);
-    discover_card(card, id, true);
-    setSlotDiscovered(id);
-    highlightSlot(id, false);
+    discover_card(card, slotId, true);
+    setSlotDiscovered(slotId);
+    highlightSlot(slotId, false);
 
     player2.first_two_cards.discovered++;
     player2.first_two_cards.sum += parseInt(card.value, 10);
@@ -600,11 +615,10 @@ async function ki_discover_two_first_round() {
 }
 
 async function ki_take_turn() {
-  // Sanity: KI hält niemals eine Spieler-Handkarte
   current_card = null;
   is_Swap = false;
 
-  // 1) Prüfe Ablagestapel: gibt es eine bessere Karte als eine bereits aufgedeckte?
+  // 1) Ablage nutzen?
   const ablage = topAblage();
   if (ablage) {
     const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
@@ -613,97 +627,97 @@ async function ki_take_turn() {
       if (n.getAttribute('data-status') === 'discovered') {
         const meta = getPlayerAndIndexFromSlot(n);
         if (!meta) continue;
+        const card = player2.cards[meta.index];
+        if (!card) continue; // entfernte Slots überspringen
         discovered.push({
           index: meta.index,
-          id: meta.id,
-          value: player2.cards[meta.index].value,
+          value: card.value,
         });
       }
     }
-    // Absteigend (höchste zuerst)
     discovered.sort((a, b) => b.value - a.value);
 
     for (const d of discovered) {
       if (ablage.value < d.value) {
-        // Swap: Ablage → Board, alte Boardkarte → Ablage
         await wait(KI_DELAY.think);
+        const boardSlotId = getBoardSlotId(2, d.index);
+        if (!boardSlotId) break;
+
         highlightSlot('player_card_ablage', true);
         await wait(KI_DELAY.step);
-        const abFromTop = takeFromAblage(); // exakt 1 Karte runternehmen
+        const abFromTop = takeFromAblage();
         highlightSlot('player_card_ablage', false);
-
-        if (!abFromTop) break; // (sollte nicht passieren)
+        if (!abFromTop) break;
 
         await wait(KI_DELAY.swap);
-        highlightSlot(d.id, true);
+        highlightSlot(boardSlotId, true);
 
         const oldCard = player2.cards[d.index];
         player2.cards[d.index] = abFromTop;
         player2.cards[d.index].place = 'board';
         player2.cards[d.index].covered = false;
 
-        putOnAblage(oldCard); // alte Karte auf Ablage (setzt UI korrekt)
-        discover_card(player2.cards[d.index], d.id, true);
-        setSlotDiscovered(d.id);
+        putOnAblage(oldCard);
+        discover_card(player2.cards[d.index], boardSlotId, true);
+        setSlotDiscovered(boardSlotId);
 
         await wait(KI_DELAY.step);
-        highlightSlot(d.id, false);
-        return; // KI-Zug beendet
+        highlightSlot(boardSlotId, false);
+        return;
       }
     }
   }
 
-  // 2) Sonst: Karte vom Nachziehstapel
+  // 2) Ziehen
   if (cardStack.length === 0) return;
   await wait(KI_DELAY.draw);
   const drawn = cardStack.splice(0, 1)[0];
   drawn.place = 'hand';
   drawn.covered = false;
 
-  // Kurze „zeige gezogene Karte“-Info
   show_info_modal('player2', 'KI zieht eine Karte', `Wert: ${drawn.value}`, 1200);
   await wait(KI_DELAY.step);
 
   if (drawn.value <= 4) {
-    // Versuche, gegen eine aufgedeckte, höhere Karte zu tauschen
     const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
     let discovered = [];
     for (const n of p2Nodes) {
       if (n.getAttribute('data-status') === 'discovered') {
         const meta = getPlayerAndIndexFromSlot(n);
         if (!meta) continue;
+        const card = player2.cards[meta.index];
+        if (!card) continue;
         discovered.push({
           index: meta.index,
-          id: meta.id,
-          value: player2.cards[meta.index].value,
+          value: card.value,
         });
       }
     }
-    // Höchste zuerst prüfen
     discovered.sort((a, b) => b.value - a.value);
 
     for (const d of discovered) {
       if (drawn.value < d.value) {
         await wait(KI_DELAY.swap);
-        highlightSlot(d.id, true);
+        const boardSlotId = getBoardSlotId(2, d.index);
+        if (!boardSlotId) break;
+        highlightSlot(boardSlotId, true);
 
-        // Tauschen: gezogene Karte auf Board, alte Karte auf Ablage
         const old = player2.cards[d.index];
         player2.cards[d.index] = drawn;
         player2.cards[d.index].place = 'board';
         player2.cards[d.index].covered = false;
 
         putOnAblage(old);
-        discover_card(player2.cards[d.index], d.id, true);
-        setSlotDiscovered(d.id);
+        discover_card(player2.cards[d.index], boardSlotId, true);
+        setSlotDiscovered(boardSlotId);
 
         await wait(KI_DELAY.step);
-        highlightSlot(d.id, false);
+        highlightSlot(boardSlotId, false);
         return;
       }
     }
 
-    // Keine bessere gefunden → ablegen & eine verdeckte Karte aufdecken
+    // keine sinnvolle Verbesserung → ablegen & verdeckte aufdecken
     await wait(KI_DELAY.swap);
     highlightSlot('player_card_ablage', true);
     putOnAblage(drawn);
@@ -713,7 +727,6 @@ async function ki_take_turn() {
     await ki_reveal_random_covered_one();
     return;
   } else {
-    // >=5 → auf Ablage und eine verdeckte Karte aufdecken
     await wait(KI_DELAY.swap);
     highlightSlot('player_card_ablage', true);
     putOnAblage(drawn);
@@ -729,18 +742,67 @@ async function ki_reveal_random_covered_one() {
   const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
   const covered = p2Nodes.filter(n => n.getAttribute('data-status') === 'covered');
   if (covered.length === 0) return;
-  const randIndex = Math.floor(Math.random() * covered.length);
-  const node = covered[randIndex];
+  const node = covered[Math.floor(Math.random() * covered.length)];
   const meta = getPlayerAndIndexFromSlot(node);
   if (!meta) return;
-  const { index, id } = meta;
+  const { index } = meta;
+
+  const slotId = getBoardSlotId(2, index);
+  if (!slotId) return;
+  const card = player2.cards[index];
+  if (!card) return;
 
   await wait(KI_DELAY.reveal);
-  highlightSlot(id, true);
-  discover_card(player2.cards[index], id, true);
-  setSlotDiscovered(id);
+  highlightSlot(slotId, true);
+  discover_card(card, slotId, true);
+  setSlotDiscovered(slotId);
   await wait(KI_DELAY.step);
-  highlightSlot(id, false);
+  highlightSlot(slotId, false);
+}
+
+// ==== Vertikal-Triple-Check & Entfernen ====
+
+function check_and_remove_vertical_triples(player) {
+  // Spalten-Indexgruppen
+  const columns = [
+    [0, 4, 8],
+    [1, 5, 9],
+    [2, 6, 10],
+    [3, 7, 11]
+  ];
+
+  for (const col of columns) {
+    const c0 = player.cards[col[0]];
+    const c1 = player.cards[col[1]];
+    const c2 = player.cards[col[2]];
+
+    // Bedingung: alle existieren, alle aufgedeckt, gleicher Wert
+    if (
+      c0 && c1 && c2 &&
+      !c0.covered && !c1.covered && !c2.covered &&
+      c0.value === c1.value && c1.value === c2.value
+    ) {
+      console.log(`🔥 Triple gefunden bei Spieler ${player.name}: Wert ${c0.value}`);
+
+      // Karten entfernen (nullen) und UI leeren (ID-Schema tolerant)
+      for (const idx of col) {
+        player.cards[idx] = null;
+
+        const slotId = getBoardSlotId(player.playerNumber, idx);
+        if (!slotId) continue; // kein DOM-Element gefunden → weiter
+        const el = document.getElementById(slotId);
+        if (!el) continue;
+
+        el.innerHTML = '';
+        setSlotRemoved(slotId);
+        // Optional: eine visuelle Info (z. B. „entfernt“)
+        // el.textContent = ''; // bewusst leer gelassen
+      }
+
+      // Punkte neu berechnen (optional)
+      count_points();
+    }
+  }
 }
 
 // ==== Hilfsanzeige in Konsole ====
@@ -749,7 +811,42 @@ function helper_show_cards(player) {
   let output = '';
   for (let i = 0; i < player.cards.length; i++) {
     if (i > 0 && i % 4 === 0) output += '\n';
-    output += ' | ' + player.cards[i].value;
+    output += ' | ' + (player.cards[i] ? player.cards[i].value : '∅');
   }
   console.log(`${player.name} (${player.playerNumber})\n${output}`);
+}
+
+// ==== Dummy-/Kompatibilitätsfunktionen, falls dein Code sie aufruft ====
+
+/**
+ * swap_card – universell:
+ *  - Variante A: swap_card(playerObj, boardIndex, newCard)
+ *  - Variante B (verhindert Fehler, macht aber nichts Sinnvolles): swap_card(a, b)
+ */
+function swap_card(a, b, c) {
+  if (arguments.length === 3) {
+    const player = a, boardIndex = b, newCard = c;
+    const old = player.cards[boardIndex];
+    if (old) putOnAblage(old);
+    player.cards[boardIndex] = newCard;
+    player.cards[boardIndex].place = 'board';
+    player.cards[boardIndex].covered = false;
+
+    const slotId = getBoardSlotId(player.playerNumber, boardIndex);
+    if (slotId) {
+      discover_card(player.cards[boardIndex], slotId, true);
+      setSlotDiscovered(slotId);
+    }
+    return;
+  }
+  // 2-Argumente: nichts tun, aber Fehler vermeiden
+  console.warn('swap_card(a,b) aufgerufen – erwartetes Muster ist swap_card(player, index, newCard). Aufruf ignoriert.');
+}
+
+/**
+ * end_turn – falls extern aufgerufen
+ */
+function end_turn() {
+  current_player = (currentPlayer === 'player1') ? 'player2' : 'player1';
+  show_current_player();
 }
