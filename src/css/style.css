@@ -285,6 +285,8 @@ body {
   transform: translate(-50%, -50%) rotate(180deg);
 }
 .modal.active.p1 {
+  top: 25%;
+  left: 50%;
   transform: translate(-50%, -50%) rotate(0deg);
 }
 
