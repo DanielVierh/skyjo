@@ -87,17 +87,19 @@ const btn_take_from_stack_after_new = document.getElementById('btn_take_from_sta
 let player1;
 let player2;
 let cardStack = [];
-let ablageStack = [];           // Top-Karte liegt bei index 0
+let ablageStack = [];           // Top-Karte bei Index 0
 let currentPlayer = 'player1';
 let ki_player = true;           // Spieler 2 ist KI
-let current_card = null;        // „in der Hand“
-let is_Swap = false;            // wenn true: nächster Click tauscht mit current_card
-let cards = [];                 // DOM-Kartenknoten; wird in init() gefüllt
-let gameEnded = false;
-let lastTurn = false;
-let closingPlayer = null;
+let current_card = null;        // gezogene/aus Ablage genommene Karte „in der Hand“
+let is_Swap = false;            // true: nächster Klick tauscht mit current_card
+let cards = [];                 // DOM-Karten; wird in init() gefüllt
 
-// --- KI-Tempo/Visual-Config ---
+// Spielende-Status
+let gameEnded = false;
+let lastTurn = false;           // wurde „zugemacht“, und der andere hat noch genau einen Zug
+let closingPlayer = null;       // wer hat zugemacht
+
+// KI-Tempo
 const KI_DELAY = {
   think: 700,
   draw: 800,
@@ -150,60 +152,94 @@ const all_cards = {
   '12': 10,
 };
 
+// ==== Spielende-Helfer ====
+
 function hasAllCardsOpen(player) {
-    return player.cards.every(c => c === null || !c.covered);
+  // alle Slots sind entweder entfernt (null) oder offen (!covered)
+  return player.cards.every(c => c === null || !c.covered);
 }
 
 function countPoints(player) {
-    let points = 0;
-    for (let i = 0; i < player.cards.length; i++) {
-        if (player.cards[i]) {
-            points += parseInt(player.cards[i].value);
-        }
+  let points = 0;
+  for (let i = 0; i < player.cards.length; i++) {
+    if (player.cards[i]) {
+      points += parseInt(player.cards[i].value, 10);
     }
-    return points;
-}
-
-function checkGameEnd() {
-    if (gameEnded) return;
-
-    const current = currentPlayer === "player1" ? player1 : player2;
-    const other = currentPlayer === "player1" ? player2 : player1;
-
-    // Falls alle Karten offen beim aktuellen Spieler
-    if (hasAllCardsOpen(current)) {
-        if (!lastTurn) {
-            // anderer Spieler bekommt noch einen Zug
-            lastTurn = true;
-            closingPlayer = current;
-            console.log(`${current.name} hat zugemacht! ${other.name} darf noch einen Zug machen.`);
-        } else {
-            // Spiel beenden
-            endGame();
-        }
-    }
+  }
+  return points;
 }
 
 function endGame() {
-    gameEnded = true;
+  if (gameEnded) return;
+  gameEnded = true;
 
-    let points1 = countPoints(player1);
-    let points2 = countPoints(player2);
+  let points1 = countPoints(player1);
+  let points2 = countPoints(player2);
 
-    // Sonderregel: Verdopplung falls Schließender nicht der Beste ist
-    if (closingPlayer) {
-        if (closingPlayer === player1 && points1 > points2) {
-            points1 *= 2;
-        } else if (closingPlayer === player2 && points2 > points1) {
-            points2 *= 2;
-        }
+  // Sonderregel: Wenn der Schließende NICHT die wenigsten Punkte hat → verdoppeln
+  if (closingPlayer) {
+    if (closingPlayer === player1 && points1 > points2) {
+      points1 *= 2;
+    } else if (closingPlayer === player2 && points2 > points1) {
+      points2 *= 2;
     }
+  }
 
-    let winner = "Unentschieden";
-    if (points1 < points2) winner = player1.name;
-    else if (points2 < points1) winner = player2.name;
+  let winner = "Unentschieden";
+  if (points1 < points2) winner = player1.name;
+  else if (points2 < points1) winner = player2.name;
 
-    alert(`🎉 Spiel beendet!\n\n${player1.name}: ${points1} Punkte\n${player2.name}: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`);
+  alert(`🎉 Spiel beendet!\n\n${player1.name}: ${points1} Punkte\n${player2.name}: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`);
+
+  // Optional: UI sperren
+  const disable_area = document.getElementById('disable_area');
+  if (disable_area) disable_area.classList.add('active');
+}
+
+// Einheitlicher Turn-Abschluss – MUSS am Ende JEDES ZUGES aufgerufen werden
+function end_of_turn(finished = null) {
+  if (gameEnded) return;
+
+  // Wer hat den Zug gerade beendet?
+  const finishedPlayer =
+    finished === 'player1' ? player1 :
+    finished === 'player2' ? player2 :
+    (currentPlayer === 'player1' ? player1 : player2);
+
+  const otherPlayer = (finishedPlayer === player1) ? player2 : player1;
+  const otherKey = (finishedPlayer === player1) ? 'player2' : 'player1';
+
+  // Hat der gerade beendende Spieler alle Karten offen/entfernt?
+  if (hasAllCardsOpen(finishedPlayer)) {
+    if (!lastTurn) {
+      // Er hat „zugemacht“ → anderer Spieler bekommt GENAU EINEN Zug
+      lastTurn = true;
+      closingPlayer = finishedPlayer;
+      currentPlayer = otherKey;
+      show_info_modal(otherKey, 'Letzter Zug', `${otherPlayer.name} hat jetzt einen letzten Zug.`, 2500);
+      show_current_player();
+      return;
+    } else {
+      // Es war bereits der letzte Zug → jetzt endet das Spiel
+      endGame();
+      return;
+    }
+  }
+
+  // Falls schon „lastTurn“ aktiv ist und nun der andere (nicht Schließender) fertig ist → Spielende
+  if (lastTurn && finishedPlayer !== closingPlayer) {
+    endGame();
+    return;
+  }
+
+  // Normaler Spielerwechsel
+  currentPlayer = otherKey;
+  show_current_player();
+}
+
+// (kompatibler Alias, falls dein Code irgendwo end_turn() aufruft)
+function end_turn() {
+  end_of_turn(currentPlayer);
 }
 
 // ==== Utils ====
@@ -272,7 +308,7 @@ function getBoardSlotId(playerNumber, index) {
   return el ? el.id : null;
 }
 
-// Ablage-Helpers (verhindern Fehlerquellen)
+// Ablage-Helpers
 function topAblage() {
   return ablageStack[0] ?? null;
 }
@@ -290,6 +326,7 @@ function updateAblageUI() {
   const slotId = 'player_card_ablage';
   const top = topAblage();
   if (top) {
+    // discover_card prüft via Regex, dass Ablage NICHT Triple-Check auslöst
     discover_card(top, slotId, true);
   } else {
     clearCardUI(slotId);
@@ -334,7 +371,7 @@ function init() {
   // DEBUG
   helper_show_cards(player1);
   helper_show_cards(player2);
-  count_points();
+  count_points_debug();
 }
 
 // ==== Setup: Kartenstapel erzeugen & austeilen ====
@@ -373,8 +410,7 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   cardObj.covered = false;
   set_attributes_to_Card(slotId, cardObj.value);
 
-  // 👉 Nach jedem Aufdecken: Triple-Check für den betroffenen Spieler
-  // Nur Board-Slots prüfen (nicht Ablage)
+  // 👉 Nach jedem Aufdecken: Triple-Check für den betroffenen Spieler (nicht für Ablage)
   const m = /^player([12])_card_(\d+)$/.exec(slotId) || /^p([12])_card_(\d+)$/.exec(slotId);
   if (m) {
     const pnum = parseInt(m[1], 10);
@@ -430,7 +466,7 @@ function set_attributes_to_Card(card_id, card_value) {
 
 // ==== Punkte (Debug) ====
 
-function count_points() {
+function count_points_debug() {
   const sum = (pl) => pl.cards.reduce((acc, c) => acc + (c ? parseInt(c.value, 10) : 0), 0);
   const p1 = sum(player1);
   const p2 = sum(player2);
@@ -476,6 +512,8 @@ function show_info_modal(player, headline, text, countdown) {
 // ==== Rundensteuerung ====
 
 async function show_current_player() {
+  if (gameEnded) return;
+
   if (currentPlayer === 'player1') {
     player2Board?.classList.remove('active');
     player2Board?.classList.add('deactivated');
@@ -488,7 +526,12 @@ async function show_current_player() {
     } else {
       current_card = null;
       is_Swap = false;
-      action_modal?.classList.add('active');
+      if (!lastTurn) {
+        action_modal?.classList.add('active');
+      } else {
+        // Im letzten Zug keine Wahlmodalitäten – Spieler führt genau einen Zug aus
+        action_modal?.classList.add('active');
+      }
     }
   } else {
     player1Board?.classList.remove('active');
@@ -508,19 +551,16 @@ async function show_current_player() {
       if (p1sum > p2sum) {
         currentPlayer = 'player1';
         show_info_modal('player1', 'Du beginnst', 'Du hattest die höhere Summe.', 1800);
+        show_current_player();
       } else {
         currentPlayer = 'player2';
         show_info_modal('player2', 'Computer beginnt', 'Er hatte die höhere Summe.', 1800);
         await wait(KI_DELAY.think);
-        await ki_take_turn();
-        currentPlayer = 'player1';
+        await ki_take_turn(); // ruft am Ende end_of_turn('player2')
       }
-      show_current_player();
     } else {
       await wait(KI_DELAY.think);
-      await ki_take_turn();
-      currentPlayer = 'player1';
-      show_current_player();
+      await ki_take_turn(); // ruft am Ende end_of_turn('player2')
     }
   }
 }
@@ -528,6 +568,8 @@ async function show_current_player() {
 // ==== Click auf Karten (vom Spieler 1) ====
 
 function onCardClick(cardEl) {
+  if (gameEnded) return;
+
   const meta = getPlayerAndIndexFromSlot(cardEl);
   if (!meta) return;
 
@@ -571,9 +613,8 @@ function onCardClick(cardEl) {
     is_Swap = false;
 
     setTimeout(() => {
-      currentPlayer = 'player2';
       action_modal?.classList.remove('active');
-      show_current_player();
+      end_of_turn('player1'); // <<<<<< Turn korrekt beenden (inkl. Spielende-Check)
     }, 250);
     return;
   }
@@ -582,9 +623,8 @@ function onCardClick(cardEl) {
     discover_card(pCard, id);
     setSlotDiscovered(id);
     setTimeout(() => {
-      currentPlayer = 'player2';
       action_modal?.classList.remove('active');
-      show_current_player();
+      end_of_turn('player1'); // <<<<<< Turn korrekt beenden
     }, 250);
   }
 }
@@ -592,7 +632,10 @@ function onCardClick(cardEl) {
 // ==== Buttons – Spieleraktionen ====
 
 function onTakeFromStack() {
+  if (gameEnded) return;
+  if (currentPlayer !== 'player1') return;
   if (cardStack.length === 0) return;
+
   current_card = cardStack.splice(0, 1)[0];
   current_card.place = 'hand';
   current_card.covered = false;
@@ -604,6 +647,9 @@ function onTakeFromStack() {
 }
 
 function onTakeFromAblage() {
+  if (gameEnded) return;
+  if (currentPlayer !== 'player1') return;
+
   const taken = takeFromAblage();
   if (!taken) {
     show_info_modal('player1', 'Ablagestapel leer', 'Es liegt noch keine Karte auf dem Ablagestapel.', 2000);
@@ -619,7 +665,10 @@ function onTakeFromAblage() {
 }
 
 function onDiscardDrawnAndRevealOne() {
+  if (gameEnded) return;
+  if (currentPlayer !== 'player1') return;
   if (!current_card) return;
+
   putOnAblage(current_card);
 
   current_card = null;
@@ -630,7 +679,10 @@ function onDiscardDrawnAndRevealOne() {
 }
 
 function onKeepDrawnAndSwap() {
+  if (gameEnded) return;
+  if (currentPlayer !== 'player1') return;
   if (!current_card) return;
+
   action_modal_card_from_stack?.classList.remove('active');
   show_info_modal('player1', 'Karte wählen', 'Klicke auf die Karte, mit der getauscht werden soll.', 4000);
   is_Swap = true;
@@ -652,7 +704,6 @@ async function ki_discover_two_first_round() {
     if (!meta) continue;
     const { index } = meta;
 
-    // null-Schutz (entfernte Slots überspringen)
     const slotId = getBoardSlotId(2, index);
     if (!slotId) continue;
     const card = player2.cards[index];
@@ -674,6 +725,8 @@ async function ki_discover_two_first_round() {
 }
 
 async function ki_take_turn() {
+  if (gameEnded) return;
+
   current_card = null;
   is_Swap = false;
 
@@ -687,7 +740,7 @@ async function ki_take_turn() {
         const meta = getPlayerAndIndexFromSlot(n);
         if (!meta) continue;
         const card = player2.cards[meta.index];
-        if (!card) continue; // entfernte Slots überspringen
+        if (!card) continue; // entfernte Slots
         discovered.push({
           index: meta.index,
           value: card.value,
@@ -722,61 +775,65 @@ async function ki_take_turn() {
 
         await wait(KI_DELAY.step);
         highlightSlot(boardSlotId, false);
-        return;
+
+        return end_of_turn('player2'); // <<<<<< Turn korrekt beenden
       }
     }
   }
 
   // 2) Ziehen
-  if (cardStack.length === 0) return;
-  await wait(KI_DELAY.draw);
-  const drawn = cardStack.splice(0, 1)[0];
-  drawn.place = 'hand';
-  drawn.covered = false;
+  if (cardStack.length > 0) {
+    await wait(KI_DELAY.draw);
+    const drawn = cardStack.splice(0, 1)[0];
+    drawn.place = 'hand';
+    drawn.covered = false;
 
-  show_info_modal('player2', 'KI zieht eine Karte', `Wert: ${drawn.value}`, 1200);
-  await wait(KI_DELAY.step);
+    show_info_modal('player2', 'KI zieht eine Karte', `Wert: ${drawn.value}`, 1200);
+    await wait(KI_DELAY.step);
 
-  if (drawn.value <= 4) {
-    const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
-    let discovered = [];
-    for (const n of p2Nodes) {
-      if (n.getAttribute('data-status') === 'discovered') {
-        const meta = getPlayerAndIndexFromSlot(n);
-        if (!meta) continue;
-        const card = player2.cards[meta.index];
-        if (!card) continue;
-        discovered.push({
-          index: meta.index,
-          value: card.value,
-        });
+    // 2a) Falls klein, versuche eine schlechtere aufgedeckte zu ersetzen
+    if (drawn.value <= 4) {
+      const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
+      let discovered = [];
+      for (const n of p2Nodes) {
+        if (n.getAttribute('data-status') === 'discovered') {
+          const meta = getPlayerAndIndexFromSlot(n);
+          if (!meta) continue;
+          const card = player2.cards[meta.index];
+          if (!card) continue;
+          discovered.push({
+            index: meta.index,
+            value: card.value,
+          });
+        }
+      }
+      discovered.sort((a, b) => b.value - a.value);
+
+      for (const d of discovered) {
+        if (drawn.value < d.value) {
+          await wait(KI_DELAY.swap);
+          const boardSlotId = getBoardSlotId(2, d.index);
+          if (!boardSlotId) break;
+          highlightSlot(boardSlotId, true);
+
+          const old = player2.cards[d.index];
+          player2.cards[d.index] = drawn;
+          player2.cards[d.index].place = 'board';
+          player2.cards[d.index].covered = false;
+
+          putOnAblage(old);
+          discover_card(player2.cards[d.index], boardSlotId, true);
+          setSlotDiscovered(boardSlotId);
+
+          await wait(KI_DELAY.step);
+          highlightSlot(boardSlotId, false);
+
+          return end_of_turn('player2'); // <<<<<< Turn korrekt beenden
+        }
       }
     }
-    discovered.sort((a, b) => b.value - a.value);
 
-    for (const d of discovered) {
-      if (drawn.value < d.value) {
-        await wait(KI_DELAY.swap);
-        const boardSlotId = getBoardSlotId(2, d.index);
-        if (!boardSlotId) break;
-        highlightSlot(boardSlotId, true);
-
-        const old = player2.cards[d.index];
-        player2.cards[d.index] = drawn;
-        player2.cards[d.index].place = 'board';
-        player2.cards[d.index].covered = false;
-
-        putOnAblage(old);
-        discover_card(player2.cards[d.index], boardSlotId, true);
-        setSlotDiscovered(boardSlotId);
-
-        await wait(KI_DELAY.step);
-        highlightSlot(boardSlotId, false);
-        return;
-      }
-    }
-
-    // keine sinnvolle Verbesserung → ablegen & verdeckte aufdecken
+    // 2b) Keine Verbesserung → ablegen & eine verdeckte aufdecken
     await wait(KI_DELAY.swap);
     highlightSlot('player_card_ablage', true);
     putOnAblage(drawn);
@@ -784,17 +841,11 @@ async function ki_take_turn() {
     highlightSlot('player_card_ablage', false);
 
     await ki_reveal_random_covered_one();
-    return;
-  } else {
-    await wait(KI_DELAY.swap);
-    highlightSlot('player_card_ablage', true);
-    putOnAblage(drawn);
-    await wait(KI_DELAY.step);
-    highlightSlot('player_card_ablage', false);
-
-    await ki_reveal_random_covered_one();
-    return;
+    return end_of_turn('player2'); // <<<<<< Turn korrekt beenden
   }
+
+  // Falls Stapel leer war (sehr selten) → trotzdem Zug beenden
+  return end_of_turn('player2');
 }
 
 async function ki_reveal_random_covered_one() {
@@ -835,7 +886,6 @@ function check_and_remove_vertical_triples(player) {
     const c1 = player.cards[col[1]];
     const c2 = player.cards[col[2]];
 
-    // Bedingung: alle existieren, alle aufgedeckt, gleicher Wert
     if (
       c0 && c1 && c2 &&
       !c0.covered && !c1.covered && !c2.covered &&
@@ -843,23 +893,21 @@ function check_and_remove_vertical_triples(player) {
     ) {
       console.log(`🔥 Triple gefunden bei Spieler ${player.name}: Wert ${c0.value}`);
 
-      // Karten entfernen (nullen) und UI leeren (ID-Schema tolerant)
+      // Karten entfernen und UI leeren
       for (const idx of col) {
         player.cards[idx] = null;
 
         const slotId = getBoardSlotId(player.playerNumber, idx);
-        if (!slotId) continue; // kein DOM-Element gefunden → weiter
+        if (!slotId) continue;
         const el = document.getElementById(slotId);
         if (!el) continue;
 
         el.innerHTML = '';
         setSlotRemoved(slotId);
-        // Optional: eine visuelle Info (z. B. „entfernt“)
-        // el.textContent = ''; // bewusst leer gelassen
       }
 
-      // Punkte neu berechnen (optional)
-      count_points();
+      // Optional: Punkteanzeige aktualisieren
+      count_points_debug();
     }
   }
 }
@@ -875,14 +923,10 @@ function helper_show_cards(player) {
   console.log(`${player.name} (${player.playerNumber})\n${output}`);
 }
 
-// ==== Dummy-/Kompatibilitätsfunktionen, falls dein Code sie aufruft ====
+// ==== Kompatibilitätsfunktion swap_card – falls extern genutzt ====
 
-/**
- * swap_card – universell:
- *  - Variante A: swap_card(playerObj, boardIndex, newCard)
- *  - Variante B (verhindert Fehler, macht aber nichts Sinnvolles): swap_card(a, b)
- */
 function swap_card(a, b, c) {
+  // Erwartet: swap_card(playerObj, boardIndex, newCard)
   if (arguments.length === 3) {
     const player = a, boardIndex = b, newCard = c;
     const old = player.cards[boardIndex];
@@ -898,15 +942,5 @@ function swap_card(a, b, c) {
     }
     return;
   }
-  // 2-Argumente: nichts tun, aber Fehler vermeiden
   console.warn('swap_card(a,b) aufgerufen – erwartetes Muster ist swap_card(player, index, newCard). Aufruf ignoriert.');
-}
-
-/**
- * end_turn – falls extern aufgerufen
- */
-function end_turn() {
-  current_player = (currentPlayer === 'player1') ? 'player2' : 'player1';
-  show_current_player();
-  checkGameEnd();
 }
