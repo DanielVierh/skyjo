@@ -199,7 +199,10 @@ body {
         }
     }
 
-
+    &.card-stack {
+        box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray, -10px 0 3px black;
+        border: 1px solid rgba(255, 255, 255, 0.586);
+    }
 }
 
 .point-label {
@@ -343,3 +346,4 @@ body {
         z-index: 99999999;
     }
 }
+
