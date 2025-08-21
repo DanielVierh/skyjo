@@ -186,10 +186,10 @@ function endGame() {
   }
 
   let winner = "Unentschieden";
-  if (points1 < points2) winner = player1.name;
-  else if (points2 < points1) winner = player2.name;
+  if (points1 < points2) winner = 'Du';
+  else if (points2 < points1) winner = 'Computer';
 
-  alert(`🎉 Spiel beendet!\n\n${player1.name}: ${points1} Punkte\n${player2.name}: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`);
+  alert(`🎉 Spiel beendet!\n\n Deine Punkte: ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`);
 
   // Optional: UI sperren
   const disable_area = document.getElementById('disable_area');
