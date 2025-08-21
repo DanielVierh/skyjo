@@ -68,11 +68,7 @@
  * - Vertikal-Triple-Entfernung (0/4/8, 1/5/9, 2/6/10, 3/7/11)
  * - Null-sichere Punkte- & KI-Logik
  * - swap_card / end_turn Dummy-Implementierungen
- */
-/***********************
- * Vollständige Datei  *
- ***********************/
-
+ */// ==== DOM-Referenzen ====
 const myBoard = document.getElementById('myBoard');
 const point_label = document.getElementById('point_label');
 const player1Board = document.getElementById('p1Board');
@@ -87,6 +83,7 @@ const btn_swap_with_ablage = document.getElementById('btn_swap_with_ablage');
 const btn_swap_with_ablage_after_new = document.getElementById('btn_swap_with_ablage_after_new');
 const btn_take_from_stack_after_new = document.getElementById('btn_take_from_stack_after_new');
 
+// ==== Spielzustand ====
 let player1;
 let player2;
 let cardStack = [];
@@ -264,48 +261,60 @@ function shuffleArray(array) {
   return array;
 }
 
-// DOM-Helfer
+// ==== DOM-Helfer ====
 
 function setSlotDiscovered(slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
+  // entfernte Slots bleiben gesperrt
+  if (el.getAttribute('data-status') === 'removed') return;
+
   el.classList.remove('covered');
   el.setAttribute('data-status', 'discovered');
-  // falls zuvor entfernt war (sollte nicht vorkommen), wieder aktivieren
-  el.style.pointerEvents = '';
-  el.removeAttribute('aria-disabled');
-  if (typeof el.tabIndex === 'number') el.tabIndex = 0;
+  if (el.style.pointerEvents === 'none') {
+    // Falls durch externe Styles gesetzt wurde: nur reaktivieren, wenn nicht removed
+    el.style.pointerEvents = '';
+    el.style.cursor = '';
+  }
 }
+
 function setSlotCovered(slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
+  if (el.getAttribute('data-status') === 'removed') return;
+
   el.classList.add('covered');
   el.setAttribute('data-status', 'covered');
-  el.style.pointerEvents = '';
-  el.removeAttribute('aria-disabled');
-  if (typeof el.tabIndex === 'number') el.tabIndex = 0;
+  if (el.style.pointerEvents === 'none') {
+    el.style.pointerEvents = '';
+    el.style.cursor = '';
+  }
 }
+
 function setSlotRemoved(slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
   el.classList.add('removed');
   el.setAttribute('data-status', 'removed');
-  // 🔒 HART DEAKTIVIEREN
+
+  // 🔒 Hard-Block: nicht anklickbar, nichts drauflegbar
   el.style.pointerEvents = 'none';
-  el.setAttribute('aria-disabled', 'true');
-  el.tabIndex = -1;
+  el.style.cursor = 'not-allowed';
 }
+
 function isSlotRemoved(elOrId) {
   const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
   if (!el) return false;
   return el.getAttribute('data-status') === 'removed';
 }
+
 function highlightSlot(slotId, on = true) {
   const el = document.getElementById(slotId);
   if (!el) return;
   if (on) el.classList.add('highlight');
   else el.classList.remove('highlight');
 }
+
 function clearCardUI(slotId) {
   const host = document.getElementById(slotId);
   if (!host) return;
@@ -421,12 +430,12 @@ function give_player_cards(_player) {
 function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj) return;
 
+  // ⛔️ nie auf entfernten Slots rendern
+  if (isSlotRemoved(slotId)) return;
+
   if (!cardObj.covered && !ignoreStatus) {
     return;
   }
-
-  // wenn Slot bereits entfernt → niemals visuell freigeben
-  if (isSlotRemoved(slotId)) return;
 
   setSlotDiscovered(slotId);
   cardObj.covered = false;
@@ -599,20 +608,14 @@ function onCardClick(cardEl) {
   if (meta.player === 'player1' && currentPlayer !== 'player1') return;
   if (meta.player === 'player2') return;
 
-  const { index, id, el } = meta;
-
-  // 🚫 HARTE SPERRE: entfernte Slots sind nicht interagierbar – weder Klick noch Swap-Ziel
-  if (isSlotRemoved(el)) {
-    if (is_Swap && current_card) {
-      show_info_modal('player1', 'Feld entfernt', 'Auf entfernte Felder darf nichts gelegt werden. Wähle ein anderes Feld.', 2200);
-    }
-    return;
-  }
-
+  const { index, id } = meta;
   const pCard = player1.cards[index];
 
-  // Wenn Slot leer (durch Entfernen) und kein Swap aktiv → nichts zu tun
-  if (!pCard && !is_Swap) return;
+  // ⛔️ Slot entfernt? nix anklicken, nix belegen.
+  if (isSlotRemoved(id)) return;
+
+  // ⛔️ Slot leer (nur durch Entfernung möglich) ⇒ niemals belegbar – auch nicht im Swap
+  if (!pCard) return;
 
   if (player1.firstRound) {
     if (player1.first_two_cards.discovered >= 2) return;
@@ -631,11 +634,8 @@ function onCardClick(cardEl) {
   }
 
   if (is_Swap && current_card) {
-    // doppelte Absicherung: auch hier Slotstatus prüfen
-    if (isSlotRemoved(id)) {
-      show_info_modal('player1', 'Feld entfernt', 'Hier darf keine Karte abgelegt werden. Wähle ein anderes Feld.', 2200);
-      return; // Swap aktiv bleibt, bis gültiger Slot gewählt wird
-    }
+    // Sicherheit: auf entfernten Slots nie ablegen (doppelt abgesichert)
+    if (isSlotRemoved(id)) return;
 
     const old = player1.cards[index];
     if (old) putOnAblage(old);
@@ -793,7 +793,7 @@ async function ki_take_turn() {
         const boardSlotId = getBoardSlotId(2, d.index);
         if (!boardSlotId) break;
 
-        // Sicherheit: nicht auf entfernte Slots legen
+        // Sicherstellen, dass Zielslot nicht entfernt ist
         if (isSlotRemoved(boardSlotId)) continue;
 
         highlightSlot('player_card_ablage', true);
@@ -855,8 +855,6 @@ async function ki_take_turn() {
           await wait(KI_DELAY.swap);
           const boardSlotId = getBoardSlotId(2, d.index);
           if (!boardSlotId) break;
-
-          // Sicherheit: nicht auf entfernte Slots legen
           if (isSlotRemoved(boardSlotId)) continue;
 
           highlightSlot(boardSlotId, true);
@@ -904,6 +902,8 @@ async function ki_reveal_random_covered_one() {
 
   const slotId = getBoardSlotId(2, index);
   if (!slotId) return;
+  if (isSlotRemoved(slotId)) return;
+
   const card = player2.cards[index];
   if (!card) return;
 
@@ -948,7 +948,7 @@ function check_and_remove_vertical_triples(player) {
         if (!el) continue;
 
         el.innerHTML = '';
-        setSlotRemoved(slotId); // 👈 hier wird der Slot unverrückbar deaktiviert
+        setSlotRemoved(slotId); // 🔒 blockiert den Slot zuverlässig
       }
 
       // Optional: Punkteanzeige aktualisieren
@@ -969,20 +969,21 @@ function helper_show_cards(player) {
 }
 
 // ==== Kompatibilitätsfunktion swap_card – falls extern genutzt ====
-// Wird gelegentlich extern aufgerufen; hier auch harter Schutz gegen Ablage auf entfernte Slots.
+
 function swap_card(a, b, c) {
   // Erwartet: swap_card(playerObj, boardIndex, newCard)
   if (arguments.length === 3) {
     const player = a, boardIndex = b, newCard = c;
 
     const slotId = getBoardSlotId(player.playerNumber, boardIndex);
-    if (slotId && isSlotRemoved(slotId)) {
-      console.warn('Swap abgelehnt: Slot ist entfernt und gesperrt.');
+    if (!slotId || isSlotRemoved(slotId)) {
+      console.warn('swap_card: Zielslot ist entfernt/blockiert – Operation verworfen.');
       return;
     }
 
     const old = player.cards[boardIndex];
     if (old) putOnAblage(old);
+
     player.cards[boardIndex] = newCard;
     player.cards[boardIndex].place = 'board';
     player.cards[boardIndex].covered = false;
