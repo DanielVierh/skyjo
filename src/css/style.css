@@ -116,7 +116,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: rotate(-180deg);
+  transform: rotate(0);
 }
 .card .after-label.underlined {
   text-decoration: underline;
@@ -260,7 +260,7 @@ body {
   max-width: 600px;
 }
 .modal.active.modal-action {
-  transform: translate(-50%, -50%) rotate(180deg);
+  transform: translate(-50%, -50%) rotate(0);
   z-index: 9999;
   background-color: rgba(240, 240, 240, 0.8039215686);
   color: black;
@@ -282,7 +282,7 @@ body {
   background-color: lightblue;
   color: black;
   z-index: 99999;
-  transform: translate(-50%, -50%) rotate(180deg);
+  transform: translate(-50%, -50%) rotate(0deg);
 }
 .modal.active.p1 {
   top: 25%;
