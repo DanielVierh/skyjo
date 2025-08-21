@@ -828,8 +828,6 @@ async function ki_take_turn() {
     const drawn = cardStack.splice(0, 1)[0];
     drawn.place = 'hand';
     drawn.covered = false;
-
-    show_info_modal('player2', 'KI zieht eine Karte', `Wert: ${drawn.value}`, 1200);
     await wait(KI_DELAY.step);
 
     // 2a) Falls klein, versuche eine schlechtere aufgedeckte zu ersetzen
@@ -884,7 +882,7 @@ async function ki_take_turn() {
     highlightSlot('player_card_ablage', false);
 
     await ki_reveal_random_covered_one();
-    return end_of_turn('player2'); // <<<<<< Turn korrekt beenden
+    return end_of_turn('player2'); 
   }
 
   // Falls Stapel leer war (sehr selten) → trotzdem Zug beenden
@@ -948,7 +946,7 @@ function check_and_remove_vertical_triples(player) {
         if (!el) continue;
 
         el.innerHTML = '';
-        setSlotRemoved(slotId); // 🔒 blockiert den Slot zuverlässig
+        setSlotRemoved(slotId); // blockiert den Slot zuverlässig
       }
 
       // Optional: Punkteanzeige aktualisieren
