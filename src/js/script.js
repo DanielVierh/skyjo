@@ -68,7 +68,17 @@
  * - Vertikal-Triple-Entfernung (0/4/8, 1/5/9, 2/6/10, 3/7/11)
  * - Null-sichere Punkte- & KI-Logik
  * - swap_card / end_turn Dummy-Implementierungen
- */ //*==== DOM-Referenzen ====
+/**
+ * Skyjo – vollständige, robuste Version mit animierten Kartenflügen
+ * - Karten fliegen zwischen Stack/Ablage/Board (Spieler & KI)
+ * - Ablagestapel-Kapselung
+ * - KI-Delays/„Animationen“
+ * - Vertikal-Triple-Entfernung (0/4/8, 1/5/9, 2/6/10, 3/7/11)
+ * - Null-sichere Punkte- & KI-Logik
+ * - swap_card / end_turn Dummy-Implementierungen
+ */
+
+//*==== DOM-Referenzen ====
 const myBoard = document.getElementById("myBoard");
 const point_label = document.getElementById("point_label");
 const player1Board = document.getElementById("p1Board");
@@ -97,6 +107,7 @@ let ablageStack = []; //*Top-Karte bei Index 0
 let currentPlayer = "player1";
 let ki_player = true; //*Spieler 2 ist KI
 let current_card = null; //*gezogene/aus Ablage genommene Karte „in der Hand“
+let current_card_source = null; // 'stack' | 'ablage' | null
 let is_Swap = false; //*true: nächster Klick tauscht mit current_card
 let cards = []; //*DOM-Karten; wird in init() gefüllt
 
@@ -108,11 +119,21 @@ let closingPlayer = null; //*wer hat zugemacht
 //*KI-Tempo
 const KI_DELAY = {
   think: 700,
-  draw: 800,
-  swap: 800,
-  reveal: 650,
-  step: 400,
+  draw: 500,   // etwas schneller, da die Fluganimation sichtbar ist
+  swap: 400,
+  reveal: 450,
+  step: 300,
 };
+
+//* Animations-Parameter
+const ANIM = {
+  fly: 600,
+  ease: 'cubic-bezier(.22,.61,.36,1)', // smooth „Material“-Kurve
+  z: 99999
+};
+
+// Letzte Position der Spieler-Vorschaukarte aus dem Stack (für Start der Flugbahn)
+let lastDrawnCardRect = null;
 
 //*==== Klassen ====
 
@@ -210,7 +231,7 @@ function do_disable_area() {
 
 function do_enable_area() {
   const disable_area = document.getElementById("disable_area");
-  disable_area.classList.remove("active");
+  if (disable_area) disable_area.classList.remove("active");
 }
 
 
@@ -399,7 +420,145 @@ function getPlayerAndIndexFromSlot(elOrId) {
   return { player, index, id: el.id, el };
 }
 
-//*==== Initialisierung ====
+/* -----------------------------------------------------------
+   ✨ Animations-Helfer: fliegende Karten (Stack/Ablage ↔ Board)
+------------------------------------------------------------ */
+
+function ensureFxLayer() {
+  let layer = document.getElementById('fx-layer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'fx-layer';
+    layer.style.position = 'fixed';
+    layer.style.left = '0';
+    layer.style.top = '0';
+    layer.style.width = '100vw';
+    layer.style.height = '100vh';
+    layer.style.pointerEvents = 'none';
+    layer.style.zIndex = String(ANIM.z);
+    document.body.appendChild(layer);
+  }
+  return layer;
+}
+
+function rectOf(elOrRect) {
+  if (!elOrRect) return null;
+  if (typeof elOrRect === 'object' && 'left' in elOrRect && 'top' in elOrRect) {
+    return elOrRect; // schon ein Rect
+  }
+  const el = typeof elOrRect === 'string' ? document.getElementById(elOrRect) : elOrRect;
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { left: r.left, top: r.top, width: r.width, height: r.height };
+}
+
+function viewportCenterRect(w = 72, h = 104) {
+  const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+  return {
+    left: (vw - w) / 2,
+    top: (vh - h) / 2,
+    width: w,
+    height: h
+  };
+}
+
+function uniqueId(prefix = 'flycard') {
+  return `${prefix}_${Math.random().toString(36).slice(2, 9)}_${Date.now()}`;
+}
+
+// Erzeugt einen fliegenden Karten-Klon mit richtiger Farbe/Labels
+function makeFlyingCard(value, fromRect) {
+  const layer = ensureFxLayer();
+  const host = document.createElement('div');
+  const id = uniqueId('fly');
+  host.id = id;
+  host.style.position = 'fixed';
+  host.style.left = (fromRect?.left ?? 0) + 'px';
+  host.style.top = (fromRect?.top ?? 0) + 'px';
+  host.style.width = (fromRect?.width ?? 72) + 'px';
+  host.style.height = (fromRect?.height ?? 104) + 'px';
+  host.style.willChange = 'transform';
+  host.style.transform = 'translate(0,0) scale(1)';
+  host.style.pointerEvents = 'none';
+  host.style.filter = 'drop-shadow(0 6px 18px rgba(0,0,0,.25))';
+  host.style.borderRadius = '10px';
+  host.style.backfaceVisibility = 'hidden';
+
+  layer.appendChild(host);
+  // nutzt deine bestehende Farblogik/Markup
+  set_attributes_to_Card(id, value);
+  return host;
+}
+
+// Karte von A → B fliegen lassen; Start/End können auch DOMRects sein
+async function flyCardBetween({ value, from, to, duration = ANIM.fly, easing = ANIM.ease }) {
+  const fromRect = rectOf(from) || viewportCenterRect();
+  const toRect = rectOf(to) || viewportCenterRect();
+
+  const fly = makeFlyingCard(value, fromRect);
+
+  const dx = toRect.left - fromRect.left;
+  const dy = toRect.top - fromRect.top;
+  const sx = toRect.width / fromRect.width;
+  const sy = toRect.height / fromRect.height;
+
+  const anim = fly.animate(
+    [
+      { transform: 'translate(0px,0px) scale(1,1)', opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 1 }
+    ],
+    { duration, easing, fill: 'forwards' }
+  );
+
+  await anim.finished.catch(() => {});
+  fly.remove();
+}
+
+// Zwei Flüge für einen Swap (neu A→B, alt B→Ablage) parallel ausführen
+async function flySwap({ newValue, fromEl, toEl, oldValue, ablageEl = 'player_card_ablage', duration = ANIM.fly }) {
+  const fromRect = rectOf(fromEl);
+  const toRect = rectOf(toEl);
+  const abRect = rectOf(ablageEl);
+
+  const tasks = [];
+  if (newValue != null && fromRect && toRect) {
+    tasks.push(flyCardBetween({ value: newValue, from: fromRect, to: toRect, duration }));
+  }
+  if (oldValue != null && toRect && abRect) {
+    tasks.push(flyCardBetween({ value: oldValue, from: toRect, to: abRect, duration }));
+  }
+  await Promise.all(tasks);
+}
+
+// UI kurz blockieren, während Animationen laufen
+async function withUIBlocked(promise) {
+  do_disable_area();
+  try {
+    return await promise;
+  } finally {
+    do_enable_area();
+  }
+}
+
+// Zieh-Startrechteck für KI (falls kein Stack-Element vorhanden)
+function getKiStackStartRect() {
+  // 1) Gibt es ein sichtbares Stack-Element?
+  const el = document.getElementById('player_card_stack');
+  const r = rectOf(el);
+  if (r && r.width > 0 && r.height > 0) return r;
+  // 2) Nimm Info-Modal oder Ablage als Näherung
+  const info = rectOf(info_modal);
+  if (info) return info;
+  const ab = rectOf('player_card_ablage');
+  if (ab) return { left: ab.left, top: ab.top - 80, width: ab.width, height: ab.height };
+  // 3) Fallback: Bildschirmmitte
+  return viewportCenterRect();
+}
+
+/* ===========================
+   ===== Initialisierung =====
+   =========================== */
 
 window.onload = init;
 
@@ -424,15 +583,15 @@ function init() {
   );
   btn_take_from_stack_after_new?.addEventListener("click", onKeepDrawnAndSwap);
 
-  //*Start
+  //*Start: oberste Karte offen auf Ablage legen (optional ohne Flug)
   if (cardStack.length > 0) {
     const startDiscard = cardStack.splice(0, 1)[0]; // oberste Karte vom Nachziehstapel
     startDiscard.covered = false; // soll offen liegen
     putOnAblage(startDiscard); // setzt ablageStack=[karte] + UI-Update
   } else {
-    // theoretischer Fallback, falls Stapel leer wäre
     updateAblageUI();
   }
+
   show_current_player();
 
   //*DEBUG
@@ -475,8 +634,9 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj.covered && !ignoreStatus) {
     return;
   }
-  //* Show card turn arround effect 
-  document.getElementById(slotId).classList.add('discover-effect')
+  //* Show card turn around effect 
+  const el = document.getElementById(slotId);
+  if (el) el.classList.add('discover-effect');
   
   setSlotDiscovered(slotId);
   cardObj.covered = false;
@@ -605,6 +765,7 @@ async function show_current_player() {
       action_modal?.classList.remove("active");
     } else {
       current_card = null;
+      current_card_source = null;
       is_Swap = false;
       if (!lastTurn) {
         setTimeout(() => {
@@ -658,7 +819,7 @@ async function show_current_player() {
 
 //*==== Click auf Karten (vom Spieler 1) ====
 
-function onCardClick(cardEl) {
+async function onCardClick(cardEl) {
   if (gameEnded) return;
 
   const meta = getPlayerAndIndexFromSlot(cardEl);
@@ -693,11 +854,40 @@ function onCardClick(cardEl) {
     return;
   }
 
+  // === Swap mit animiertem Flug ===
   if (is_Swap && current_card) {
-    //*Sicherheit: auf entfernten Slots nie ablegen (doppelt abgesichert)
     if (isSlotRemoved(id)) return;
 
     const old = player1.cards[index];
+    const boardSlotEl = document.getElementById(id);
+    const ablageEl = document.getElementById('player_card_ablage');
+
+    // Startrechteck je nach Quelle
+    let fromRef = null;
+    if (current_card_source === 'ablage') {
+      fromRef = ablageEl || 'player_card_ablage';
+    } else if (current_card_source === 'stack') {
+      fromRef = lastDrawnCardRect || rectOf('card_action') || viewportCenterRect();
+    } else {
+      fromRef = viewportCenterRect();
+    }
+
+    await withUIBlocked(
+      flySwap({
+        newValue: current_card.value,
+        fromEl: fromRef,
+        toEl: boardSlotEl,
+        oldValue: old ? old.value : null,
+        ablageEl: ablageEl
+      })
+    );
+
+    // Jetzt Datenmodell/DOM aktualisieren
+    if (current_card_source === 'ablage') {
+      // tatsächlich von Ablage nehmen (entfernt UI-Top und aktualisiert)
+      takeFromAblage();
+    }
+
     if (old) putOnAblage(old);
 
     player1.cards[index] = current_card;
@@ -708,12 +898,15 @@ function onCardClick(cardEl) {
     setSlotDiscovered(id);
 
     current_card = null;
+    current_card_source = null;
     is_Swap = false;
+    lastDrawnCardRect = null;
 
     setTimeout(() => {
       action_modal?.classList.remove("active");
-      end_of_turn("player1"); //*<<<<<< Turn korrekt beenden (inkl. Spielende-Check)
-    }, 250);
+      action_modal_card_from_stack?.classList.remove("active");
+      end_of_turn("player1");
+    }, 200);
     return;
   }
 
@@ -722,7 +915,7 @@ function onCardClick(cardEl) {
     setSlotDiscovered(id);
     setTimeout(() => {
       action_modal?.classList.remove("active");
-      end_of_turn("player1"); //*<<<<<< Turn korrekt beenden
+      end_of_turn("player1");
     }, 250);
   }
 }
@@ -737,19 +930,29 @@ function onTakeFromStack() {
   current_card = cardStack.splice(0, 1)[0];
   current_card.place = "hand";
   current_card.covered = false;
+  current_card_source = 'stack';
 
   action_modal?.classList.remove("active");
   action_modal_card_from_stack?.classList.add("active");
 
   set_attributes_to_Card("card_action", current_card.value);
+
+  // Startposition merken, solange sichtbar
+  const ca = document.getElementById('card_action');
+  if (ca) {
+    const r = ca.getBoundingClientRect();
+    lastDrawnCardRect = { left: r.left, top: r.top, width: r.width, height: r.height };
+  } else {
+    lastDrawnCardRect = viewportCenterRect();
+  }
 }
 
 function onTakeFromAblage() {
   if (gameEnded) return;
   if (currentPlayer !== "player1") return;
 
-  const taken = takeFromAblage();
-  if (!taken) {
+  const top = topAblage();
+  if (!top) {
     show_info_modal(
       "player1",
       "Ablagestapel leer",
@@ -758,9 +961,12 @@ function onTakeFromAblage() {
     );
     return;
   }
-  current_card = taken;
+
+  // ❗️WICHTIG: Noch NICHT aus der Ablage entfernen, erst beim finalen Swap.
+  current_card = top;
   current_card.place = "hand";
   current_card.covered = false;
+  current_card_source = 'ablage';
 
   action_modal?.classList.remove("active");
   show_info_modal(
@@ -772,15 +978,30 @@ function onTakeFromAblage() {
   is_Swap = true;
 }
 
-function onDiscardDrawnAndRevealOne() {
+async function onDiscardDrawnAndRevealOne() {
   if (gameEnded) return;
   if (currentPlayer !== "player1") return;
   if (!current_card) return;
 
+  // animiert: card_action → ablage
+  const startRect =
+    rectOf('card_action') || lastDrawnCardRect || viewportCenterRect();
+
+  await withUIBlocked(
+    flyCardBetween({
+      value: current_card.value,
+      from: startRect,
+      to: 'player_card_ablage',
+      duration: ANIM.fly
+    })
+  );
+
   putOnAblage(current_card);
 
   current_card = null;
+  current_card_source = null;
   is_Swap = false;
+  lastDrawnCardRect = null;
 
   action_modal_card_from_stack?.classList.remove("active");
 }
@@ -790,6 +1011,13 @@ function onKeepDrawnAndSwap() {
   if (currentPlayer !== "player1") return;
   if (!current_card) return;
 
+  // Merke letzte sichtbare Position der Vorschaukarte (vor dem Schließen)
+  const ca = document.getElementById('card_action');
+  if (ca) {
+    const r = ca.getBoundingClientRect();
+    lastDrawnCardRect = { left: r.left, top: r.top, width: r.width, height: r.height };
+  }
+
   action_modal_card_from_stack?.classList.remove("active");
   show_info_modal(
     "player1",
@@ -798,6 +1026,7 @@ function onKeepDrawnAndSwap() {
     4000
   );
   is_Swap = true;
+  // current_card_source bleibt 'stack'
 }
 
 //*==== KI ====
@@ -842,6 +1071,7 @@ async function ki_take_turn() {
   if (gameEnded) return;
 
   current_card = null;
+  current_card_source = null;
   is_Swap = false;
 
   //*1) Ablage nutzen?
@@ -872,28 +1102,34 @@ async function ki_take_turn() {
         //*Sicherstellen, dass Zielslot nicht entfernt ist
         if (isSlotRemoved(boardSlotId)) continue;
 
-        highlightSlot("player_card_ablage", true);
-        await wait(KI_DELAY.step);
+        const boardSlotEl = document.getElementById(boardSlotId);
+        const oldCard = player2.cards[d.index];
+
+        // Animiert: Ablage → Board, alte Boardkarte → Ablage
+        await withUIBlocked(
+          flySwap({
+            newValue: ablage.value,
+            fromEl: 'player_card_ablage',
+            toEl: boardSlotEl,
+            oldValue: oldCard ? oldCard.value : null,
+            ablageEl: 'player_card_ablage',
+            duration: ANIM.fly
+          })
+        );
+
+        // Modell/DOM aktualisieren
         const abFromTop = takeFromAblage();
-        highlightSlot("player_card_ablage", false);
         if (!abFromTop) break;
 
-        await wait(KI_DELAY.swap);
-        highlightSlot(boardSlotId, true);
-
-        const oldCard = player2.cards[d.index];
         player2.cards[d.index] = abFromTop;
         player2.cards[d.index].place = "board";
         player2.cards[d.index].covered = false;
 
-        putOnAblage(oldCard);
+        if (oldCard) putOnAblage(oldCard);
         discover_card(player2.cards[d.index], boardSlotId, true);
         setSlotDiscovered(boardSlotId);
 
-        await wait(KI_DELAY.step);
-        highlightSlot(boardSlotId, false);
-
-        return end_of_turn("player2"); //*<<<<<< Turn korrekt beenden
+        return end_of_turn("player2");
       }
     }
   }
@@ -904,6 +1140,7 @@ async function ki_take_turn() {
     const drawn = cardStack.splice(0, 1)[0];
     drawn.place = "hand";
     drawn.covered = false;
+
     await wait(KI_DELAY.step);
 
     //*2a) Falls klein, versuche eine schlechtere aufgedeckte zu ersetzen
@@ -926,36 +1163,48 @@ async function ki_take_turn() {
 
       for (const d of discovered) {
         if (drawn.value < d.value) {
-          await wait(KI_DELAY.swap);
           const boardSlotId = getBoardSlotId(2, d.index);
           if (!boardSlotId) break;
           if (isSlotRemoved(boardSlotId)) continue;
 
-          highlightSlot(boardSlotId, true);
-
+          const boardSlotEl = document.getElementById(boardSlotId);
           const old = player2.cards[d.index];
+
+          // Animiert: „Stack“ (Fallback) → Board, alte Boardkarte → Ablage
+          await withUIBlocked(
+            flySwap({
+              newValue: drawn.value,
+              fromEl: getKiStackStartRect(),
+              toEl: boardSlotEl,
+              oldValue: old ? old.value : null,
+              ablageEl: 'player_card_ablage',
+              duration: ANIM.fly
+            })
+          );
+
           player2.cards[d.index] = drawn;
           player2.cards[d.index].place = "board";
           player2.cards[d.index].covered = false;
 
-          putOnAblage(old);
+          if (old) putOnAblage(old);
           discover_card(player2.cards[d.index], boardSlotId, true);
           setSlotDiscovered(boardSlotId);
 
-          await wait(KI_DELAY.step);
-          highlightSlot(boardSlotId, false);
-
-          return end_of_turn("player2"); //*<<<<<< Turn korrekt beenden
+          return end_of_turn("player2");
         }
       }
     }
 
     //*2b) Keine Verbesserung → ablegen & eine verdeckte aufdecken
-    await wait(KI_DELAY.swap);
-    highlightSlot("player_card_ablage", true);
+    await withUIBlocked(
+      flyCardBetween({
+        value: drawn.value,
+        from: getKiStackStartRect(),
+        to: 'player_card_ablage',
+        duration: ANIM.fly
+      })
+    );
     putOnAblage(drawn);
-    await wait(KI_DELAY.step);
-    highlightSlot("player_card_ablage", false);
 
     await ki_reveal_random_covered_one();
     return end_of_turn("player2");
