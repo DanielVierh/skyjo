@@ -68,7 +68,7 @@
  * - Vertikal-Triple-Entfernung (0/4/8, 1/5/9, 2/6/10, 3/7/11)
  * - Null-sichere Punkte- & KI-Logik
  * - swap_card / end_turn Dummy-Implementierungen
- */// ==== DOM-Referenzen ====
+ *///*==== DOM-Referenzen ====
 const myBoard = document.getElementById('myBoard');
 const point_label = document.getElementById('point_label');
 const player1Board = document.getElementById('p1Board');
@@ -83,23 +83,23 @@ const btn_swap_with_ablage = document.getElementById('btn_swap_with_ablage');
 const btn_swap_with_ablage_after_new = document.getElementById('btn_swap_with_ablage_after_new');
 const btn_take_from_stack_after_new = document.getElementById('btn_take_from_stack_after_new');
 
-// ==== Spielzustand ====
+//*==== Spielzustand ====
 let player1;
 let player2;
 let cardStack = [];
-let ablageStack = [];           // Top-Karte bei Index 0
+let ablageStack = [];           //*Top-Karte bei Index 0
 let currentPlayer = 'player1';
-let ki_player = true;           // Spieler 2 ist KI
-let current_card = null;        // gezogene/aus Ablage genommene Karte „in der Hand“
-let is_Swap = false;            // true: nächster Klick tauscht mit current_card
-let cards = [];                 // DOM-Karten; wird in init() gefüllt
+let ki_player = true;           //*Spieler 2 ist KI
+let current_card = null;        //*gezogene/aus Ablage genommene Karte „in der Hand“
+let is_Swap = false;            //*true: nächster Klick tauscht mit current_card
+let cards = [];                 //*DOM-Karten; wird in init() gefüllt
 
-// Spielende-Status
+//*Spielende-Status
 let gameEnded = false;
-let lastTurn = false;           // wurde „zugemacht“, und der andere hat noch genau einen Zug
-let closingPlayer = null;       // wer hat zugemacht
+let lastTurn = false;           //*wurde „zugemacht“, und der andere hat noch genau einen Zug
+let closingPlayer = null;       //*wer hat zugemacht
 
-// KI-Tempo
+//*KI-Tempo
 const KI_DELAY = {
   think: 700,
   draw: 800,
@@ -108,12 +108,12 @@ const KI_DELAY = {
   step: 400
 };
 
-// ==== Klassen ====
+//*==== Klassen ====
 
 class Player {
   constructor(name, playerNumber) {
     this.name = name;
-    this.cards = []; // Array<Card | null>
+    this.cards = []; //*Array<Card | null>
     this.points = 0;
     this.firstRound = true;
     this.playerNumber = playerNumber;
@@ -126,13 +126,13 @@ class Player {
 
 class Card {
   constructor(value, place, covered = false) {
-    this.value = value;   // number
-    this.place = place;   // 'stack' | 'hand' | 'board'
+    this.value = value;   //*number
+    this.place = place;   //*'stack' | 'hand' | 'board'
     this.covered = covered;
   }
 }
 
-// ==== Kartendefinition ====
+//*==== Kartendefinition ====
 
 const all_cards = {
   '-2': 5,
@@ -152,10 +152,10 @@ const all_cards = {
   '12': 10,
 };
 
-// ==== Spielende-Helfer ====
+//*==== Spielende-Helfer ====
 
 function hasAllCardsOpen(player) {
-  // alle Slots sind entweder entfernt (null) oder offen (!covered)
+  //*alle Slots sind entweder entfernt (null) oder offen (!covered)
   return player.cards.every(c => c === null || !c.covered);
 }
 
@@ -176,7 +176,7 @@ function endGame() {
   let points1 = countPoints(player1);
   let points2 = countPoints(player2);
 
-  // Sonderregel: Wenn der Schließende NICHT die wenigsten Punkte hat → verdoppeln
+  //*Sonderregel: Wenn der Schließende NICHT die wenigsten Punkte hat → verdoppeln
   if (closingPlayer) {
     if (closingPlayer === player1 && points1 > points2) {
       points1 *= 2;
@@ -191,16 +191,16 @@ function endGame() {
 
   alert(`🎉 Spiel beendet!\n\n Deine Punkte: ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`);
 
-  // Optional: UI sperren
+  //*Optional: UI sperren
   const disable_area = document.getElementById('disable_area');
   if (disable_area) disable_area.classList.add('active');
 }
 
-// Einheitlicher Turn-Abschluss – MUSS am Ende JEDES ZUGES aufgerufen werden
+//*Einheitlicher Turn-Abschluss – MUSS am Ende JEDES ZUGES aufgerufen werden
 function end_of_turn(finished = null) {
   if (gameEnded) return;
 
-  // Wer hat den Zug gerade beendet?
+  //*Wer hat den Zug gerade beendet?
   const finishedPlayer =
     finished === 'player1' ? player1 :
     finished === 'player2' ? player2 :
@@ -209,10 +209,10 @@ function end_of_turn(finished = null) {
   const otherPlayer = (finishedPlayer === player1) ? player2 : player1;
   const otherKey = (finishedPlayer === player1) ? 'player2' : 'player1';
 
-  // Hat der gerade beendende Spieler alle Karten offen/entfernt?
+  //*Hat der gerade beendende Spieler alle Karten offen/entfernt?
   if (hasAllCardsOpen(finishedPlayer)) {
     if (!lastTurn) {
-      // Er hat „zugemacht“ → anderer Spieler bekommt GENAU EINEN Zug
+      //*Er hat „zugemacht“ → anderer Spieler bekommt GENAU EINEN Zug
       lastTurn = true;
       closingPlayer = finishedPlayer;
       currentPlayer = otherKey;
@@ -220,29 +220,29 @@ function end_of_turn(finished = null) {
       show_current_player();
       return;
     } else {
-      // Es war bereits der letzte Zug → jetzt endet das Spiel
+      //*Es war bereits der letzte Zug → jetzt endet das Spiel
       endGame();
       return;
     }
   }
 
-  // Falls schon „lastTurn“ aktiv ist und nun der andere (nicht Schließender) fertig ist → Spielende
+  //*Falls schon „lastTurn“ aktiv ist und nun der andere (nicht Schließender) fertig ist → Spielende
   if (lastTurn && finishedPlayer !== closingPlayer) {
     endGame();
     return;
   }
 
-  // Normaler Spielerwechsel
+  //*Normaler Spielerwechsel
   currentPlayer = otherKey;
   show_current_player();
 }
 
-// (kompatibler Alias, falls dein Code irgendwo end_turn() aufruft)
+//*(kompatibler Alias, falls dein Code irgendwo end_turn() aufruft)
 function end_turn() {
   end_of_turn(currentPlayer);
 }
 
-// ==== Utils ====
+//*==== Utils ====
 
 function wait(ms) {
   const disable_area = document.getElementById('disable_area');
@@ -261,18 +261,18 @@ function shuffleArray(array) {
   return array;
 }
 
-// ==== DOM-Helfer ====
+//*==== DOM-Helfer ====
 
 function setSlotDiscovered(slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
-  // entfernte Slots bleiben gesperrt
+  //*entfernte Slots bleiben gesperrt
   if (el.getAttribute('data-status') === 'removed') return;
 
   el.classList.remove('covered');
   el.setAttribute('data-status', 'discovered');
   if (el.style.pointerEvents === 'none') {
-    // Falls durch externe Styles gesetzt wurde: nur reaktivieren, wenn nicht removed
+    //*Falls durch externe Styles gesetzt wurde: nur reaktivieren, wenn nicht removed
     el.style.pointerEvents = '';
     el.style.cursor = '';
   }
@@ -297,7 +297,7 @@ function setSlotRemoved(slotId) {
   el.classList.add('removed');
   el.setAttribute('data-status', 'removed');
 
-  // 🔒 Hard-Block: nicht anklickbar, nichts drauflegbar
+  //*🔒 Hard-Block: nicht anklickbar, nichts drauflegbar
   el.style.pointerEvents = 'none';
   el.style.cursor = 'not-allowed';
 }
@@ -322,21 +322,21 @@ function clearCardUI(slotId) {
   host.classList.remove('green', 'red', 'yellow', 'lightblue', 'blue');
 }
 
-// Finde Board-Slot-Element per Spieler/Index (unterstützt zwei ID-Schemata)
+//*Finde Board-Slot-Element per Spieler/Index (unterstützt zwei ID-Schemata)
 function getBoardSlotElement(playerNumber, index) {
   const id1 = `player${playerNumber}_card_${index}`;
   let el = document.getElementById(id1);
   if (el) return el;
-  const id2 = `p${playerNumber}_card_${index}`; // Fallback
+  const id2 = `p${playerNumber}_card_${index}`; //*Fallback
   return document.getElementById(id2);
 }
-// Liefert die ID, wenn Element existiert
+//*Liefert die ID, wenn Element existiert
 function getBoardSlotId(playerNumber, index) {
   const el = getBoardSlotElement(playerNumber, index);
   return el ? el.id : null;
 }
 
-// Ablage-Helpers
+//*Ablage-Helpers
 function topAblage() {
   return ablageStack[0] ?? null;
 }
@@ -354,7 +354,7 @@ function updateAblageUI() {
   const slotId = 'player_card_ablage';
   const top = topAblage();
   if (top) {
-    // discover_card prüft via Regex, dass Ablage NICHT Triple-Check auslöst
+    //*discover_card prüft via Regex, dass Ablage NICHT Triple-Check auslöst
     discover_card(top, slotId, true);
   } else {
     clearCardUI(slotId);
@@ -370,7 +370,7 @@ function getPlayerAndIndexFromSlot(elOrId) {
   return { player, index, id: el.id, el };
 }
 
-// ==== Initialisierung ====
+//*==== Initialisierung ====
 
 window.onload = init;
 
@@ -380,29 +380,29 @@ function init() {
   give_player_cards(player1);
   give_player_cards(player2);
 
-  // Event-Listener für Karten erst jetzt binden
+  //*Event-Listener für Karten erst jetzt binden
   cards = Array.from(document.querySelectorAll('.card'));
   cards.forEach(cardEl => {
     cardEl.addEventListener('click', () => onCardClick(cardEl));
   });
 
-  // Buttons
+  //*Buttons
   btn_take_from_stack?.addEventListener('click', onTakeFromStack);
   btn_swap_with_ablage?.addEventListener('click', onTakeFromAblage);
   btn_swap_with_ablage_after_new?.addEventListener('click', onDiscardDrawnAndRevealOne);
   btn_take_from_stack_after_new?.addEventListener('click', onKeepDrawnAndSwap);
 
-  // Start
-  updateAblageUI(); // leer
+  //*Start
+  updateAblageUI(); //*leer
   show_current_player();
 
-  // DEBUG
+  //*DEBUG
   helper_show_cards(player1);
   helper_show_cards(player2);
   count_points_debug();
 }
 
-// ==== Setup: Kartenstapel erzeugen & austeilen ====
+//*==== Setup: Kartenstapel erzeugen & austeilen ====
 
 function create_cards() {
   cardStack.length = 0;
@@ -418,19 +418,19 @@ function create_cards() {
 
 function give_player_cards(_player) {
   for (let i = 0; i < 12; i++) {
-    const card = cardStack.splice(0, 1)[0]; // oberste Karte
+    const card = cardStack.splice(0, 1)[0]; //*oberste Karte
     card.place = 'board';
     card.covered = true;
     _player.cards.push(card);
   }
 }
 
-// ==== Anzeige / Rendering einer Karte im Slot ====
+//*==== Anzeige / Rendering einer Karte im Slot ====
 
 function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj) return;
 
-  // ⛔️ nie auf entfernten Slots rendern
+  //*⛔️ nie auf entfernten Slots rendern
   if (isSlotRemoved(slotId)) return;
 
   if (!cardObj.covered && !ignoreStatus) {
@@ -441,7 +441,7 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   cardObj.covered = false;
   set_attributes_to_Card(slotId, cardObj.value);
 
-  // 👉 Nach jedem Aufdecken: Triple-Check für den betroffenen Spieler (nicht für Ablage)
+  //*👉 Nach jedem Aufdecken: Triple-Check für den betroffenen Spieler (nicht für Ablage)
   const m = /^player([12])_card_(\d+)$/.exec(slotId) || /^p([12])_card_(\d+)$/.exec(slotId);
   if (m) {
     const pnum = parseInt(m[1], 10);
@@ -479,7 +479,7 @@ function set_attributes_to_Card(card_id, card_value) {
   host.appendChild(after_label);
   host.classList.add('card');
 
-  // Farben aktualisieren
+  //*Farben aktualisieren
   host.classList.remove('green', 'red', 'yellow', 'lightblue', 'blue');
 
   if (card_value > 0 && card_value < 5) {
@@ -495,7 +495,7 @@ function set_attributes_to_Card(card_id, card_value) {
   }
 }
 
-// ==== Punkte (Debug) ====
+//*==== Punkte (Debug) ====
 
 function count_points_debug() {
   const sum = (pl) => pl.cards.reduce((acc, c) => acc + (c ? parseInt(c.value, 10) : 0), 0);
@@ -504,7 +504,7 @@ function count_points_debug() {
   console.log(`P1: ${p1} Punkte || P2: ${p2} Punkte`);
 }
 
-// ==== Spieler anlegen ====
+//*==== Spieler anlegen ====
 
 function create_player() {
   for (let i = 1; i <= 2; i++) {
@@ -517,7 +517,7 @@ function create_player() {
   }
 }
 
-// ==== Info-Modal ====
+//*==== Info-Modal ====
 
 function show_info_modal(player, headline, text, countdown) {
   const modal_info_headline = document.getElementById('modal_info_headline');
@@ -540,7 +540,7 @@ function show_info_modal(player, headline, text, countdown) {
   setTimeout(() => info_modal.classList.remove('active'), countdown);
 }
 
-// ==== Rundensteuerung ====
+//*==== Rundensteuerung ====
 
 async function show_current_player() {
   if (gameEnded) return;
@@ -560,7 +560,7 @@ async function show_current_player() {
       if (!lastTurn) {
         action_modal?.classList.add('active');
       } else {
-        // Im letzten Zug keine Wahlmodalitäten – Spieler führt genau einen Zug aus
+        //*Im letzten Zug keine Wahlmodalitäten – Spieler führt genau einen Zug aus
         action_modal?.classList.add('active');
       }
     }
@@ -587,16 +587,16 @@ async function show_current_player() {
         currentPlayer = 'player2';
         show_info_modal('player2', 'Computer beginnt', 'Er hatte die höhere Summe.', 1800);
         await wait(KI_DELAY.think);
-        await ki_take_turn(); // ruft am Ende end_of_turn('player2')
+        await ki_take_turn(); //*ruft am Ende end_of_turn('player2')
       }
     } else {
       await wait(KI_DELAY.think);
-      await ki_take_turn(); // ruft am Ende end_of_turn('player2')
+      await ki_take_turn(); //*ruft am Ende end_of_turn('player2')
     }
   }
 }
 
-// ==== Click auf Karten (vom Spieler 1) ====
+//*==== Click auf Karten (vom Spieler 1) ====
 
 function onCardClick(cardEl) {
   if (gameEnded) return;
@@ -604,17 +604,17 @@ function onCardClick(cardEl) {
   const meta = getPlayerAndIndexFromSlot(cardEl);
   if (!meta) return;
 
-  // Nur wenn Spieler 1 dran ist
+  //*Nur wenn Spieler 1 dran ist
   if (meta.player === 'player1' && currentPlayer !== 'player1') return;
   if (meta.player === 'player2') return;
 
   const { index, id } = meta;
   const pCard = player1.cards[index];
 
-  // ⛔️ Slot entfernt? nix anklicken, nix belegen.
+  //*⛔️ Slot entfernt? nix anklicken, nix belegen.
   if (isSlotRemoved(id)) return;
 
-  // ⛔️ Slot leer (nur durch Entfernung möglich) ⇒ niemals belegbar – auch nicht im Swap
+  //*⛔️ Slot leer (nur durch Entfernung möglich) ⇒ niemals belegbar – auch nicht im Swap
   if (!pCard) return;
 
   if (player1.firstRound) {
@@ -634,7 +634,7 @@ function onCardClick(cardEl) {
   }
 
   if (is_Swap && current_card) {
-    // Sicherheit: auf entfernten Slots nie ablegen (doppelt abgesichert)
+    //*Sicherheit: auf entfernten Slots nie ablegen (doppelt abgesichert)
     if (isSlotRemoved(id)) return;
 
     const old = player1.cards[index];
@@ -652,7 +652,7 @@ function onCardClick(cardEl) {
 
     setTimeout(() => {
       action_modal?.classList.remove('active');
-      end_of_turn('player1'); // <<<<<< Turn korrekt beenden (inkl. Spielende-Check)
+      end_of_turn('player1'); //*<<<<<< Turn korrekt beenden (inkl. Spielende-Check)
     }, 250);
     return;
   }
@@ -662,12 +662,12 @@ function onCardClick(cardEl) {
     setSlotDiscovered(id);
     setTimeout(() => {
       action_modal?.classList.remove('active');
-      end_of_turn('player1'); // <<<<<< Turn korrekt beenden
+      end_of_turn('player1'); //*<<<<<< Turn korrekt beenden
     }, 250);
   }
 }
 
-// ==== Buttons – Spieleraktionen ====
+//*==== Buttons – Spieleraktionen ====
 
 function onTakeFromStack() {
   if (gameEnded) return;
@@ -726,7 +726,7 @@ function onKeepDrawnAndSwap() {
   is_Swap = true;
 }
 
-// ==== KI ====
+//*==== KI ====
 
 async function ki_discover_two_first_round() {
   const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
@@ -768,7 +768,7 @@ async function ki_take_turn() {
   current_card = null;
   is_Swap = false;
 
-  // 1) Ablage nutzen?
+  //*1) Ablage nutzen?
   const ablage = topAblage();
   if (ablage) {
     const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
@@ -778,7 +778,7 @@ async function ki_take_turn() {
         const meta = getPlayerAndIndexFromSlot(n);
         if (!meta) continue;
         const card = player2.cards[meta.index];
-        if (!card) continue; // entfernte Slots
+        if (!card) continue; //*entfernte Slots
         discovered.push({
           index: meta.index,
           value: card.value,
@@ -793,7 +793,7 @@ async function ki_take_turn() {
         const boardSlotId = getBoardSlotId(2, d.index);
         if (!boardSlotId) break;
 
-        // Sicherstellen, dass Zielslot nicht entfernt ist
+        //*Sicherstellen, dass Zielslot nicht entfernt ist
         if (isSlotRemoved(boardSlotId)) continue;
 
         highlightSlot('player_card_ablage', true);
@@ -817,12 +817,12 @@ async function ki_take_turn() {
         await wait(KI_DELAY.step);
         highlightSlot(boardSlotId, false);
 
-        return end_of_turn('player2'); // <<<<<< Turn korrekt beenden
+        return end_of_turn('player2'); //*<<<<<< Turn korrekt beenden
       }
     }
   }
 
-  // 2) Ziehen
+  //*2) Ziehen
   if (cardStack.length > 0) {
     await wait(KI_DELAY.draw);
     const drawn = cardStack.splice(0, 1)[0];
@@ -830,7 +830,7 @@ async function ki_take_turn() {
     drawn.covered = false;
     await wait(KI_DELAY.step);
 
-    // 2a) Falls klein, versuche eine schlechtere aufgedeckte zu ersetzen
+    //*2a) Falls klein, versuche eine schlechtere aufgedeckte zu ersetzen
     if (drawn.value <= 4) {
       const p2Nodes = Array.from(document.querySelectorAll('.player2-card'));
       let discovered = [];
@@ -869,12 +869,12 @@ async function ki_take_turn() {
           await wait(KI_DELAY.step);
           highlightSlot(boardSlotId, false);
 
-          return end_of_turn('player2'); // <<<<<< Turn korrekt beenden
+          return end_of_turn('player2'); //*<<<<<< Turn korrekt beenden
         }
       }
     }
 
-    // 2b) Keine Verbesserung → ablegen & eine verdeckte aufdecken
+    //*2b) Keine Verbesserung → ablegen & eine verdeckte aufdecken
     await wait(KI_DELAY.swap);
     highlightSlot('player_card_ablage', true);
     putOnAblage(drawn);
@@ -885,7 +885,7 @@ async function ki_take_turn() {
     return end_of_turn('player2'); 
   }
 
-  // Falls Stapel leer war (sehr selten) → trotzdem Zug beenden
+  //*Falls Stapel leer war (sehr selten) → trotzdem Zug beenden
   return end_of_turn('player2');
 }
 
@@ -913,10 +913,10 @@ async function ki_reveal_random_covered_one() {
   highlightSlot(slotId, false);
 }
 
-// ==== Vertikal-Triple-Check & Entfernen ====
+//*==== Vertikal-Triple-Check & Entfernen ====
 
 function check_and_remove_vertical_triples(player) {
-  // Spalten-Indexgruppen
+  //*Spalten-Indexgruppen
   const columns = [
     [0, 4, 8],
     [1, 5, 9],
@@ -936,7 +936,7 @@ function check_and_remove_vertical_triples(player) {
     ) {
       console.log(`🔥 Triple gefunden bei Spieler ${player.name}: Wert ${c0.value}`);
 
-      // Karten entfernen und UI leeren
+      //*Karten entfernen und UI leeren
       for (const idx of col) {
         player.cards[idx] = null;
 
@@ -946,16 +946,16 @@ function check_and_remove_vertical_triples(player) {
         if (!el) continue;
 
         el.innerHTML = '';
-        setSlotRemoved(slotId); // blockiert den Slot zuverlässig
+        setSlotRemoved(slotId); //*blockiert den Slot zuverlässig
       }
 
-      // Optional: Punkteanzeige aktualisieren
+      //*Optional: Punkteanzeige aktualisieren
       count_points_debug();
     }
   }
 }
 
-// ==== Hilfsanzeige in Konsole ====
+//*==== Hilfsanzeige in Konsole ====
 
 function helper_show_cards(player) {
   let output = '';
@@ -966,10 +966,10 @@ function helper_show_cards(player) {
   console.log(`${player.name} (${player.playerNumber})\n${output}`);
 }
 
-// ==== Kompatibilitätsfunktion swap_card – falls extern genutzt ====
+//*==== Kompatibilitätsfunktion swap_card – falls extern genutzt ====
 
 function swap_card(a, b, c) {
-  // Erwartet: swap_card(playerObj, boardIndex, newCard)
+  //*Erwartet: swap_card(playerObj, boardIndex, newCard)
   if (arguments.length === 3) {
     const player = a, boardIndex = b, newCard = c;
 
