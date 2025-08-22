@@ -200,9 +200,19 @@ function endGame() {
   );
 
   //*Optional: UI sperren
+  do_disable_area();
+}
+
+function do_disable_area() {
   const disable_area = document.getElementById("disable_area");
   if (disable_area) disable_area.classList.add("active");
 }
+
+function do_enable_area() {
+  const disable_area = document.getElementById("disable_area");
+  disable_area.classList.remove("active");
+}
+
 
 //*Einheitlicher Turn-Abschluss – MUSS am Ende JEDES ZUGES aufgerufen werden
 function end_of_turn(finished = null) {
@@ -610,12 +620,6 @@ async function show_current_player() {
     player2Board?.classList.add("active");
 
     if (player2.firstRound) {
-      show_info_modal(
-        "player2",
-        "Computer ist am Zug",
-        "Computer deckt 2 seiner Karten auf.",
-        3000
-      );
       await wait(KI_DELAY.think);
       await ki_discover_two_first_round();
 
@@ -777,12 +781,6 @@ function onDiscardDrawnAndRevealOne() {
   is_Swap = false;
 
   action_modal_card_from_stack?.classList.remove("active");
-  show_info_modal(
-    "player1",
-    "Eine Karte aufdecken",
-    "Klicke auf eine deiner verdeckten Karten, um sie aufzudecken.",
-    4000
-  );
 }
 
 function onKeepDrawnAndSwap() {
