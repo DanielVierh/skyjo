@@ -116,7 +116,9 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: rotate(0);
+  transform: rotateY(180deg);
+  transition: transform 0.3s;
+  perspective: 600px;
 }
 .card .after-label.underlined {
   text-decoration: underline;
@@ -177,7 +179,30 @@ body {
   box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray, -10px 0 3px black;
   border: 1px solid rgba(255, 255, 255, 0.586);
 }
+.card.discover-effect {
+  animation: card-flip 0.7s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
+  backface-visibility: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
 
+@keyframes card-flip {
+  0% {
+    transform: rotateY(180deg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  40% {
+    transform: rotateY(90deg) scale(1.08);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  }
+  60% {
+    transform: rotateY(45deg) scale(1.08);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+}
 .point-label {
   color: white;
   background-color: rgba(255, 255, 255, 0.25);

@@ -1,349 +1,418 @@
 :root {
-    --table-color: rgb(38, 38, 38);
-    --card-width: 52px;
-    --card-height: 65px;
+  --table-color: rgb(38, 38, 38);
+  --card-width: 52px;
+  --card-height: 65px;
 }
 
 * {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 body {
-    background-color: var(--table-color);
-    font-family: sans-serif;
+  background-color: var(--table-color);
+  font-family: sans-serif;
 }
 
 .p1-board {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 12px 12px 0 0;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 12px 12px 0 0;
 
-    &.active {
-        box-shadow: 0 0 30px white, inset 0 0 25px white;
-    }
+  &.active {
+    box-shadow: 0 0 30px white, inset 0 0 25px white;
+  }
 
-    &.deactivated {
-        &::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 99999;
-        }
+  &.deactivated {
+    &::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 99999;
     }
+  }
 }
 
 .p2-board {
-    position: fixed;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 0 0 12px 12px;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 0 0 12px 12px;
 
-    &.active {
-        box-shadow: 0 0 30px white, inset 0 0 25px white;
+  &.active {
+    box-shadow: 0 0 30px white, inset 0 0 25px white;
+  }
+
+  &.deactivated {
+    &::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 99999;
     }
-
-    &.deactivated {
-        &::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 99999;
-        }
-    }
-
+  }
 }
 
 .card-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card {
-    background-color: #f0f0f0;
-    text-align: center;
-    border: 1px solid black;
-    height: var(--card-height);
-    width: var(--card-width);
+  background-color: #f0f0f0;
+  text-align: center;
+  border: 1px solid black;
+  height: var(--card-height);
+  width: var(--card-width);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(
+        30deg,
+        black 12%,
+        transparent 12.5%,
+        transparent 87%,
+        black 87.5%,
+        black
+      ),
+      linear-gradient(
+        150deg,
+        black 12%,
+        transparent 12.5%,
+        transparent 87%,
+        black 87.5%,
+        black
+      ),
+      linear-gradient(
+        30deg,
+        black 12%,
+        transparent 12.5%,
+        transparent 87%,
+        black 87.5%,
+        black
+      ),
+      linear-gradient(
+        150deg,
+        black 12%,
+        transparent 12.5%,
+        transparent 87%,
+        black 87.5%,
+        black
+      ),
+      linear-gradient(
+        60deg,
+        #444cf777 25%,
+        transparent 25.5%,
+        transparent 75%,
+        #444cf777 75%,
+        #444cf777
+      ),
+      linear-gradient(
+        60deg,
+        #444cf777 25%,
+        transparent 25.5%,
+        transparent 75%,
+        #444cf777 75%,
+        #444cf777
+      );
+    background-size: 30px 15px;
+    background-position: 0 0, 0 0, 18px 32px, 18px 32px, 0 0, 18px 32px;
+    opacity: 0.2;
+    z-index: 3;
+  }
+
+  .before-label {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    font-size: 1rem;
+    background-color: white;
+    color: black;
+    width: 20px;
+    height: 15px;
+    border-radius: 20px;
+    padding: 5px 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.8rem;
-    font-weight: bold;
-    border-radius: 3px;
+
+    &.underlined {
+      text-decoration: underline;
+    }
+  }
+
+  .after-label {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    font-size: 1rem;
+    background-color: white;
+    color: black;
+    width: 20px;
+    height: 15px;
+    border-radius: 20px;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: rotateY(180deg); // Start: Rückseite zeigen
+    transition: transform 0.3s;
+    perspective: 600px;
+
+    &.underlined {
+      text-decoration: underline;
+    }
+  }
+
+  .val-label {
+    text-shadow: 0 0 10px white;
+
+    &.underlined {
+      text-decoration: underline;
+    }
+  }
+
+  &.green {
+    background-color: green;
+  }
+
+  &.yellow {
+    background-color: yellow;
+  }
+
+  &.red {
+    background-color: red;
+  }
+
+  &.lightblue {
+    background-color: aqua;
+  }
+
+  &.blue {
+    background-color: blue;
+    color: white;
+  }
+
+  &.covered {
+    width: var(--card-width);
+    height: var(--card-height);
     position: relative;
-    overflow: hidden;
-    cursor: pointer;
+    color: white;
+    background: linear-gradient(green, red);
 
     &::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-image: linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(60deg, #444CF777 25%, transparent 25.5%, transparent 75%, #444CF777 75%, #444CF777), linear-gradient(60deg, #444CF777 25%, transparent 25.5%, transparent 75%, #444CF777 75%, #444CF777);
-        background-size: 30px 15px;
-        background-position: 0 0, 0 0, 18px 32px, 18px 32px, 0 0, 18px 32px;
-        opacity: .2;
-        z-index: 3;
+      content: "SKYJO";
+      position: absolute;
+      transform: rotate(45deg);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      z-index: 20;
+      background: transparent;
+      color: white;
+      opacity: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .before-label {
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        font-size: 1rem;
-        background-color: white;
-        color: black;
-        width: 20px;
-        height: 15px;
-        border-radius: 20px;
-        padding: 5px 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        &.underlined {
-            text-decoration: underline;
-        }
+    &::before {
+      content: "";
+      position: absolute;
+      background: linear-gradient(to right, yellow, blue);
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      opacity: 0.4;
     }
+  }
 
-    .after-label {
-        position: absolute;
-        bottom: 3px;
-        right: 3px;
-        font-size: 1rem;
-        background-color: white;
-        color: black;
-        width: 20px;
-        height: 15px;
-        border-radius: 20px;
-        padding: 5px 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transform: rotate(-0);
+  &.card-stack {
+    box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray,
+      -10px 0 3px black;
+    border: 1px solid rgba(255, 255, 255, 0.586);
+  }
 
-        &.underlined {
-            text-decoration: underline;
-        }
+  &.discover-effect {
+    animation: card-flip 0.7s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
+    backface-visibility: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+}
 
-    }
-
-    .val-label {
-        text-shadow: 0 0 10px white;
-
-        &.underlined {
-            text-decoration: underline;
-        }
-    }
-
-    &.green {
-        background-color: green;
-    }
-
-    &.yellow {
-        background-color: yellow;
-    }
-
-    &.red {
-        background-color: red;
-    }
-
-    &.lightblue {
-        background-color: aqua;
-    }
-
-    &.blue {
-        background-color: blue;
-        color: white;
-    }
-
-    &.covered {
-        width: var(--card-width);
-        height: var(--card-height);
-        position: relative;
-        color: white;
-        background: linear-gradient(green, red);
-
-
-        &::after {
-            content: 'SKYJO';
-            position: absolute;
-            transform: rotate(45deg);
-            font-size: .8rem;
-            letter-spacing: 2px;
-            z-index: 20;
-            background: transparent;
-            color: white;
-            opacity: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        &::before {
-            content: '';
-            position: absolute;
-            background: linear-gradient(to right, yellow, blue);
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            opacity: .4;
-        }
-    }
-
-    &.card-stack {
-        box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray, -10px 0 3px black;
-        border: 1px solid rgba(255, 255, 255, 0.586);
-    }
+@keyframes card-flip {
+  0% {
+    transform: rotateY(180deg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  40% {
+    transform: rotateY(90deg) scale(1.08);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  }
+  60% {
+    transform: rotateY(45deg) scale(1.08);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .point-label {
-    color: white;
-    background-color: rgba(255, 255, 255, 0.25);
-    padding: 3px;
-    font-size: .7rem;
-    letter-spacing: 1.5px;
+  color: white;
+  background-color: rgba(255, 255, 255, 0.25);
+  padding: 3px;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
 
-    &.player1 {
-        position: fixed;
-        bottom: 0;
-        left: 10px;
-    }
+  &.player1 {
+    position: fixed;
+    bottom: 0;
+    left: 10px;
+  }
 }
 
 .gridfield {
-    display: grid;
-    grid-template-columns: repeat(4, var(--card-width));
-    grid-template-rows: var(--card-height) var(--card-height) var(--card-height);
-    background-color: rgba(251, 251, 251, 0.113);
-    width: 100vw;
-    height: 280px;
-    gap: 12px;
-    justify-content: center;
-    align-content: center;
-    margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, var(--card-width));
+  grid-template-rows: var(--card-height) var(--card-height) var(--card-height);
+  background-color: rgba(251, 251, 251, 0.113);
+  width: 100vw;
+  height: 280px;
+  gap: 12px;
+  justify-content: center;
+  align-content: center;
+  margin: 0 auto;
 
-    .grid-card {
-        grid-column: span 1;
-    }
+  .grid-card {
+    grid-column: span 1;
+  }
 }
 
 .middle {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0 80px;
-    width: 100%;
-    max-width: 400px;
-    height: 100px;
-    background-color: rgba(0, 149, 255, 0.2);
-
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0 80px;
+  width: 100%;
+  max-width: 400px;
+  height: 100px;
+  background-color: rgba(0, 149, 255, 0.2);
 }
 
 .decision-modal {
-    display: none;
+  display: none;
 
-    &.active {
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background-color: lightblue;
-        padding: 50px;
-        z-index: 99999;
-        border-radius: 8px;
+  &.active {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: lightblue;
+    padding: 50px;
+    z-index: 99999;
+    border-radius: 8px;
 
-        .option {
-            background-color: black;
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
+    .option {
+      background-color: black;
+      color: white;
+      padding: 10px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
+  }
 }
 
 .modal {
-    display: none;
+  display: none;
 
-    &.active {
-        display: block;
-        position: fixed;
-        top: 80%;
-        left: 50%;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 0 35px white;
-        width: 95%;
-        max-width: 600px;
+  &.active {
+    display: block;
+    position: fixed;
+    top: 80%;
+    left: 50%;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 35px white;
+    width: 95%;
+    max-width: 600px;
 
+    &.modal-action {
+      transform: translate(-50%, -50%) rotate(0);
+      z-index: 9999;
+      background-color: #f0f0f0cd;
+      color: black;
 
-        &.modal-action {
-            transform: translate(-50%, -50%) rotate(0);
-            z-index: 9999;
-            background-color: #f0f0f0cd;
-            color: black;
-
-            .action-button {
-                background-color: black;
-                color: white;
-                margin: 15px 0;
-                padding: 15px 20px;
-                border-radius: 8px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                box-shadow: inset 0 0 15px white;
-                cursor: pointer;
-            }
-        }
-
-        &.modal-info {
-            background-color: lightblue;
-            color: black;
-            z-index: 99999;
-            transform: translate(-50%, -50%) rotate(0deg);
-        }
-
-        &.p1 {
-            top: 25%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(0deg);
-        }
+      .action-button {
+        background-color: black;
+        color: white;
+        margin: 15px 0;
+        padding: 15px 20px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        box-shadow: inset 0 0 15px white;
+        cursor: pointer;
+      }
     }
+
+    &.modal-info {
+      background-color: lightblue;
+      color: black;
+      z-index: 99999;
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    &.p1 {
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+  }
 }
 
 .disable-area {
-    display: none;
+  display: none;
 
-    &.active {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: transparent;
-        z-index: 99999999;
-    }
+  &.active {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: transparent;
+    z-index: 99999999;
+  }
 }
-

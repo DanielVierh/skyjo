@@ -415,7 +415,6 @@ function init() {
   btn_take_from_stack_after_new?.addEventListener("click", onKeepDrawnAndSwap);
 
   //*Start
-  //updateAblageUI(); //*leer
   if (cardStack.length > 0) {
     const startDiscard = cardStack.splice(0, 1)[0]; // oberste Karte vom Nachziehstapel
     startDiscard.covered = false; // soll offen liegen
@@ -466,7 +465,9 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj.covered && !ignoreStatus) {
     return;
   }
-
+  //* Show card turn arround effect 
+  document.getElementById(slotId).classList.add('discover-effect')
+  
   setSlotDiscovered(slotId);
   cardObj.covered = false;
   set_attributes_to_Card(slotId, cardObj.value);
