@@ -1,73 +1,289 @@
 <!DOCTYPE html>
 <html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skyjo</title>
-    <link rel="stylesheet" href="src/css/style.css">
-</head>
-<body>
-
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Skyjo" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="src/css/style.css" />
+  </head>
+  <body>
     <div class="p2-board gridfield" id="p2Board">
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="0" id="player2_card_0"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="1" id="player2_card_1"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="2" id="player2_card_2"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="3" id="player2_card_3"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="4" id="player2_card_4"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="5" id="player2_card_5"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="6" id="player2_card_6"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="7" id="player2_card_7"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="8" id="player2_card_8"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="9" id="player2_card_9"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="10" id="player2_card_10"></div>
-        <div class="card grid-card covered player2-card" data-value="" data-place="" data-player="player2" data-status="covered" data-index="11" id="player2_card_11"></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="0"
+        id="player2_card_0"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="1"
+        id="player2_card_1"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="2"
+        id="player2_card_2"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="3"
+        id="player2_card_3"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="4"
+        id="player2_card_4"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="5"
+        id="player2_card_5"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="6"
+        id="player2_card_6"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="7"
+        id="player2_card_7"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="8"
+        id="player2_card_8"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="9"
+        id="player2_card_9"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="10"
+        id="player2_card_10"
+      ></div>
+      <div
+        class="card grid-card covered player2-card"
+        data-value=""
+        data-place=""
+        data-player="player2"
+        data-status="covered"
+        data-index="11"
+        id="player2_card_11"
+      ></div>
     </div>
 
     <div class="middle">
-        <div class="card covered card-stack"></div>
-        <div class="card grid-card" data-value="" data-status="covered" id="player_card_ablage"><p class="val-label"></p><p class="before-label"></p><p class="after-label"></p></div>
+      <div class="card covered card-stack"></div>
+      <div
+        class="card grid-card"
+        data-value=""
+        data-status="covered"
+        id="player_card_ablage"
+      >
+        <p class="val-label"></p>
+        <p class="before-label"></p>
+        <p class="after-label"></p>
+      </div>
     </div>
 
     <div class="modal modal-action p1" id="action_modal">
-        <h3>Was möchtest du als nächstes machen:</h3>
-        <div class="action-button" id="btn_take_from_stack"><b>Neue Karte ziehen: </b> - Karte vom Stapel nehmen</div>
-        <div class="action-button" id="btn_swap_with_ablage"><b>Karte tauschen: </b> - Aufgedeckte Karte mit Ablage tauschen</div>
+      <h3>Was möchtest du als nächstes machen:</h3>
+      <div class="action-button" id="btn_take_from_stack">
+        <b>Neue Karte ziehen: </b> - Karte vom Stapel nehmen
+      </div>
+      <div class="action-button" id="btn_swap_with_ablage">
+        <b>Karte tauschen: </b> - Aufgedeckte Karte mit Ablage tauschen
+      </div>
     </div>
 
     <div class="modal modal-action p1" id="action_modal_card_from_stack">
-        <div class="card-wrapper">
-            <div class="card" id="card_action"></div>
-        </div>
-        <div class="action-button" id="btn_swap_with_ablage_after_new"><b>Karte ablegen: </b> auf den Ablagestapel legen und eine deiner Karten aufdecken</div>
-        <div class="action-button" id="btn_take_from_stack_after_new"><b>Karte behalten: </b>Karte behalten und mit einer deiner Karten tauschen</div>
+      <div class="card-wrapper">
+        <div class="card" id="card_action"></div>
+      </div>
+      <div class="action-button" id="btn_swap_with_ablage_after_new">
+        <b>Karte ablegen: </b> auf den Ablagestapel legen und eine deiner Karten
+        aufdecken
+      </div>
+      <div class="action-button" id="btn_take_from_stack_after_new">
+        <b>Karte behalten: </b>Karte behalten und mit einer deiner Karten
+        tauschen
+      </div>
     </div>
 
     <div class="modal modal-info p1" id="info_modal">
-        <h3 id="modal_info_headline"></h3>
-        <p id="modal_info_text"></p>
+      <h3 id="modal_info_headline"></h3>
+      <p id="modal_info_text"></p>
     </div>
 
     <div class="disable-area" id="disable_area"></div>
 
     <!-- <div id="point_label" class="point-label player1"></div> -->
     <div class="p1-board gridfield" id="p1Board">
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="0" data-status="covered" id="player1_card_0"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="1" data-status="covered" id="player1_card_1"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="2" data-status="covered" id="player1_card_2"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="3" data-status="covered" id="player1_card_3"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="4" data-status="covered" id="player1_card_4"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="5" data-status="covered" id="player1_card_5"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="6" data-status="covered" id="player1_card_6"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="7" data-status="covered" id="player1_card_7"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="8" data-status="covered" id="player1_card_8"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="9" data-status="covered" id="player1_card_9"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="10" data-status="covered" id="player1_card_10"></div>
-        <div class="card grid-card covered" data-value="" data-player="player1" data-place="" data-index="11" data-status="covered" id="player1_card_11"></div>
-    <div class="decision-modal" id="player1_decision">
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="0"
+        data-status="covered"
+        id="player1_card_0"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="1"
+        data-status="covered"
+        id="player1_card_1"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="2"
+        data-status="covered"
+        id="player1_card_2"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="3"
+        data-status="covered"
+        id="player1_card_3"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="4"
+        data-status="covered"
+        id="player1_card_4"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="5"
+        data-status="covered"
+        id="player1_card_5"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="6"
+        data-status="covered"
+        id="player1_card_6"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="7"
+        data-status="covered"
+        id="player1_card_7"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="8"
+        data-status="covered"
+        id="player1_card_8"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="9"
+        data-status="covered"
+        id="player1_card_9"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="10"
+        data-status="covered"
+        id="player1_card_10"
+      ></div>
+      <div
+        class="card grid-card covered"
+        data-value=""
+        data-player="player1"
+        data-place=""
+        data-index="11"
+        data-status="covered"
+        id="player1_card_11"
+      ></div>
+      <div class="decision-modal" id="player1_decision">
         <div class="option" id="option_p1_1">Karte markieren</div>
         <div class="option" id="option_p1_2">Karte umdrehen</div>
-    </div>
+      </div>
     </div>
     <script src="src/js/script.js"></script>
-</body>
+  </body>
 </html>
