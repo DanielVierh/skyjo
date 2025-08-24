@@ -124,33 +124,33 @@ body {
   text-decoration: underline;
 }
 .card .val-label {
-  text-shadow: 0 0 10px white;
+  text-shadow: 0 0 10px #fff;
 }
 .card .val-label.underlined {
   text-decoration: underline;
 }
 .card.green {
-  background-color: green;
+  background-color: #008000;
 }
 .card.yellow {
-  background-color: yellow;
+  background-color: #ffff00;
 }
 .card.red {
-  background-color: red;
+  background-color: #ff0000;
 }
 .card.lightblue {
-  background-color: aqua;
+  background-color: #00ffff;
 }
 .card.blue {
-  background-color: blue;
-  color: white;
+  background-color: #0000ff;
+  color: #fff;
 }
 .card.covered {
   width: var(--card-width);
   height: var(--card-height);
   position: relative;
-  color: white;
-  background: linear-gradient(green, red);
+  color: #fff;
+  background: linear-gradient(#008000, #ff0000);
 }
 .card.covered::after {
   content: "SKYJO";
@@ -160,7 +160,7 @@ body {
   letter-spacing: 2px;
   z-index: 20;
   background: transparent;
-  color: white;
+  color: #fff;
   opacity: 1;
   display: flex;
   justify-content: center;
@@ -169,7 +169,7 @@ body {
 .card.covered::before {
   content: "";
   position: absolute;
-  background: linear-gradient(to right, yellow, blue);
+  background: linear-gradient(to right, #ffff00, #0000ff);
   width: 100%;
   height: 100%;
   z-index: 1000;

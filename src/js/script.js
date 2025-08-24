@@ -202,6 +202,7 @@ function endGame() {
 
   let points1 = countPoints(player1);
   let points2 = countPoints(player2);
+  //!Todo - show original points before double
 
   //*Sonderregel: Wenn der Schließende NICHT die wenigsten Punkte hat → verdoppeln
   if (closingPlayer) {
