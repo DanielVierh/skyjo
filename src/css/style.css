@@ -306,7 +306,7 @@ body {
   text-align: center;
   box-shadow: inset 0 0 15px white;
   cursor: pointer;
-  animation: button-animation 3s ease-in-out infinite;
+  animation: button-animation 4s ease-in-out infinite;
 }
 .modal.active.modal-info {
   background-color: lightblue;
