@@ -215,10 +215,12 @@ function endGame() {
   let winner = "Unentschieden";
   if (points1 < points2) winner = "Du";
   else if (points2 < points1) winner = "Computer";
-
-  alert(
+  reveal_all_cards();
+  setTimeout(() => {
+      alert(
     `🎉 Spiel beendet!\n\n Deine Punkte: ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`
   );
+  }, 500);
 
   //*Optional: UI sperren
   do_disable_area();
@@ -1333,4 +1335,19 @@ function swap_card(a, b, c) {
   console.warn(
     "swap_card(a,b) aufgerufen – erwartetes Muster ist swap_card(player, index, newCard). Aufruf ignoriert."
   );
+}
+
+function reveal_all_cards() {
+  [player1, player2].forEach((player) => {
+    for (let i = 0; i < player.cards.length; i++) {
+      const card = player.cards[i];
+      if (card && card.covered) {
+        const slotId = getBoardSlotId(player.playerNumber, i);
+        if (slotId && !isSlotRemoved(slotId)) {
+          discover_card(card, slotId, true);
+          setSlotDiscovered(slotId);
+        }
+      }
+    }
+  });
 }
