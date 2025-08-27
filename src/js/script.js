@@ -119,7 +119,7 @@ let closingPlayer = null; //*wer hat zugemacht
 //*KI-Tempo
 const KI_DELAY = {
   think: 700,
-  draw: 500,   // etwas schneller, da die Fluganimation sichtbar ist
+  draw: 500, // etwas schneller, da die Fluganimation sichtbar ist
   swap: 400,
   reveal: 450,
   step: 300,
@@ -128,8 +128,8 @@ const KI_DELAY = {
 //* Animations-Parameter
 const ANIM = {
   fly: 600,
-  ease: 'cubic-bezier(.22,.61,.36,1)', // smooth „Material“-Kurve
-  z: 99999
+  ease: "cubic-bezier(.22,.61,.36,1)", // smooth „Material“-Kurve
+  z: 99999,
 };
 
 // Letzte Position der Spieler-Vorschaukarte aus dem Stack (für Start der Flugbahn)
@@ -218,9 +218,9 @@ function endGame() {
   else if (points2 < points1) winner = "Computer";
   reveal_all_cards();
   setTimeout(() => {
-      alert(
-    `🎉 Spiel beendet!\n\n Deine Punkte: ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`
-  );
+    alert(
+      `🎉 Spiel beendet!\n\n Deine Punkte: ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`
+    );
   }, 500);
 
   //*Optional: UI sperren
@@ -236,7 +236,6 @@ function do_enable_area() {
   const disable_area = document.getElementById("disable_area");
   if (disable_area) disable_area.classList.remove("active");
 }
-
 
 //*Einheitlicher Turn-Abschluss – MUSS am Ende JEDES ZUGES aufgerufen werden
 function end_of_turn(finished = null) {
@@ -428,16 +427,16 @@ function getPlayerAndIndexFromSlot(elOrId) {
 ------------------------------------------------------------ */
 
 function ensureFxLayer() {
-  let layer = document.getElementById('fx-layer');
+  let layer = document.getElementById("fx-layer");
   if (!layer) {
-    layer = document.createElement('div');
-    layer.id = 'fx-layer';
-    layer.style.position = 'fixed';
-    layer.style.left = '0';
-    layer.style.top = '0';
-    layer.style.width = '100vw';
-    layer.style.height = '100vh';
-    layer.style.pointerEvents = 'none';
+    layer = document.createElement("div");
+    layer.id = "fx-layer";
+    layer.style.position = "fixed";
+    layer.style.left = "0";
+    layer.style.top = "0";
+    layer.style.width = "100vw";
+    layer.style.height = "100vh";
+    layer.style.pointerEvents = "none";
     layer.style.zIndex = String(ANIM.z);
     document.body.appendChild(layer);
   }
@@ -446,47 +445,54 @@ function ensureFxLayer() {
 
 function rectOf(elOrRect) {
   if (!elOrRect) return null;
-  if (typeof elOrRect === 'object' && 'left' in elOrRect && 'top' in elOrRect) {
+  if (typeof elOrRect === "object" && "left" in elOrRect && "top" in elOrRect) {
     return elOrRect; // schon ein Rect
   }
-  const el = typeof elOrRect === 'string' ? document.getElementById(elOrRect) : elOrRect;
+  const el =
+    typeof elOrRect === "string" ? document.getElementById(elOrRect) : elOrRect;
   if (!el) return null;
   const r = el.getBoundingClientRect();
   return { left: r.left, top: r.top, width: r.width, height: r.height };
 }
 
 function viewportCenterRect(w = 72, h = 104) {
-  const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-  const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+  const vw = Math.max(
+    document.documentElement.clientWidth,
+    window.innerWidth || 0
+  );
+  const vh = Math.max(
+    document.documentElement.clientHeight,
+    window.innerHeight || 0
+  );
   return {
     left: (vw - w) / 2,
     top: (vh - h) / 2,
     width: w,
-    height: h
+    height: h,
   };
 }
 
-function uniqueId(prefix = 'flycard') {
+function uniqueId(prefix = "flycard") {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}_${Date.now()}`;
 }
 
 // Erzeugt einen fliegenden Karten-Klon mit richtiger Farbe/Labels
 function makeFlyingCard(value, fromRect) {
   const layer = ensureFxLayer();
-  const host = document.createElement('div');
-  const id = uniqueId('fly');
+  const host = document.createElement("div");
+  const id = uniqueId("fly");
   host.id = id;
-  host.style.position = 'fixed';
-  host.style.left = (fromRect?.left ?? 0) + 'px';
-  host.style.top = (fromRect?.top ?? 0) + 'px';
-  host.style.width = (fromRect?.width ?? 72) + 'px';
-  host.style.height = (fromRect?.height ?? 104) + 'px';
-  host.style.willChange = 'transform';
-  host.style.transform = 'translate(0,0) scale(1)';
-  host.style.pointerEvents = 'none';
-  host.style.filter = 'drop-shadow(0 6px 18px rgba(0,0,0,.25))';
-  host.style.borderRadius = '10px';
-  host.style.backfaceVisibility = 'hidden';
+  host.style.position = "fixed";
+  host.style.left = (fromRect?.left ?? 0) + "px";
+  host.style.top = (fromRect?.top ?? 0) + "px";
+  host.style.width = (fromRect?.width ?? 72) + "px";
+  host.style.height = (fromRect?.height ?? 104) + "px";
+  host.style.willChange = "transform";
+  host.style.transform = "translate(0,0) scale(1)";
+  host.style.pointerEvents = "none";
+  host.style.filter = "drop-shadow(0 6px 18px rgba(0,0,0,.25))";
+  host.style.borderRadius = "10px";
+  host.style.backfaceVisibility = "hidden";
 
   layer.appendChild(host);
   // nutzt deine bestehende Farblogik/Markup
@@ -495,7 +501,13 @@ function makeFlyingCard(value, fromRect) {
 }
 
 // Karte von A → B fliegen lassen; Start/End können auch DOMRects sein
-async function flyCardBetween({ value, from, to, duration = ANIM.fly, easing = ANIM.ease }) {
+async function flyCardBetween({
+  value,
+  from,
+  to,
+  duration = ANIM.fly,
+  easing = ANIM.ease,
+}) {
   const fromRect = rectOf(from) || viewportCenterRect();
   const toRect = rectOf(to) || viewportCenterRect();
 
@@ -508,10 +520,13 @@ async function flyCardBetween({ value, from, to, duration = ANIM.fly, easing = A
 
   const anim = fly.animate(
     [
-      { transform: 'translate(0px,0px) scale(1,1)', opacity: 1 },
-      { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 1 }
+      { transform: "translate(0px,0px) scale(1,1)", opacity: 1 },
+      {
+        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        opacity: 1,
+      },
     ],
-    { duration, easing, fill: 'forwards' }
+    { duration, easing, fill: "forwards" }
   );
 
   await anim.finished.catch(() => {});
@@ -519,17 +534,28 @@ async function flyCardBetween({ value, from, to, duration = ANIM.fly, easing = A
 }
 
 // Zwei Flüge für einen Swap (neu A→B, alt B→Ablage) parallel ausführen
-async function flySwap({ newValue, fromEl, toEl, oldValue, ablageEl = 'player_card_ablage', duration = ANIM.fly }) {
+async function flySwap({
+  newValue,
+  fromEl,
+  toEl,
+  oldValue,
+  ablageEl = "player_card_ablage",
+  duration = ANIM.fly,
+}) {
   const fromRect = rectOf(fromEl);
   const toRect = rectOf(toEl);
   const abRect = rectOf(ablageEl);
 
   const tasks = [];
   if (newValue != null && fromRect && toRect) {
-    tasks.push(flyCardBetween({ value: newValue, from: fromRect, to: toRect, duration }));
+    tasks.push(
+      flyCardBetween({ value: newValue, from: fromRect, to: toRect, duration })
+    );
   }
   if (oldValue != null && toRect && abRect) {
-    tasks.push(flyCardBetween({ value: oldValue, from: toRect, to: abRect, duration }));
+    tasks.push(
+      flyCardBetween({ value: oldValue, from: toRect, to: abRect, duration })
+    );
   }
   await Promise.all(tasks);
 }
@@ -547,14 +573,20 @@ async function withUIBlocked(promise) {
 // Zieh-Startrechteck für KI (falls kein Stack-Element vorhanden)
 function getKiStackStartRect() {
   // 1) Gibt es ein sichtbares Stack-Element?
-  const el = document.getElementById('player_card_stack');
+  const el = document.getElementById("player_card_stack");
   const r = rectOf(el);
   if (r && r.width > 0 && r.height > 0) return r;
   // 2) Nimm Info-Modal oder Ablage als Näherung
   const info = rectOf(info_modal);
   if (info) return info;
-  const ab = rectOf('player_card_ablage');
-  if (ab) return { left: ab.left, top: ab.top - 80, width: ab.width, height: ab.height };
+  const ab = rectOf("player_card_ablage");
+  if (ab)
+    return {
+      left: ab.left,
+      top: ab.top - 80,
+      width: ab.width,
+      height: ab.height,
+    };
   // 3) Fallback: Bildschirmmitte
   return viewportCenterRect();
 }
@@ -637,10 +669,10 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj.covered && !ignoreStatus) {
     return;
   }
-  //* Show card turn around effect 
+  //* Show card turn around effect
   const el = document.getElementById(slotId);
-  if (el) el.classList.add('discover-effect');
-  
+  if (el) el.classList.add("discover-effect");
+
   setSlotDiscovered(slotId);
   cardObj.covered = false;
   set_attributes_to_Card(slotId, cardObj.value);
@@ -654,6 +686,8 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
     const player = pnum === 1 ? player1 : player2;
     check_and_remove_vertical_triples(player);
   }
+
+  refresh_point_label();
 }
 
 function set_attributes_to_Card(card_id, card_value) {
@@ -863,14 +897,15 @@ async function onCardClick(cardEl) {
 
     const old = player1.cards[index];
     const boardSlotEl = document.getElementById(id);
-    const ablageEl = document.getElementById('player_card_ablage');
+    const ablageEl = document.getElementById("player_card_ablage");
 
     // Startrechteck je nach Quelle
     let fromRef = null;
-    if (current_card_source === 'ablage') {
-      fromRef = ablageEl || 'player_card_ablage';
-    } else if (current_card_source === 'stack') {
-      fromRef = lastDrawnCardRect || rectOf('card_action') || viewportCenterRect();
+    if (current_card_source === "ablage") {
+      fromRef = ablageEl || "player_card_ablage";
+    } else if (current_card_source === "stack") {
+      fromRef =
+        lastDrawnCardRect || rectOf("card_action") || viewportCenterRect();
     } else {
       fromRef = viewportCenterRect();
     }
@@ -881,12 +916,12 @@ async function onCardClick(cardEl) {
         fromEl: fromRef,
         toEl: boardSlotEl,
         oldValue: old ? old.value : null,
-        ablageEl: ablageEl
+        ablageEl: ablageEl,
       })
     );
 
     // Jetzt Datenmodell/DOM aktualisieren
-    if (current_card_source === 'ablage') {
+    if (current_card_source === "ablage") {
       // tatsächlich von Ablage nehmen (entfernt UI-Top und aktualisiert)
       takeFromAblage();
     }
@@ -933,7 +968,7 @@ function onTakeFromStack() {
   current_card = cardStack.splice(0, 1)[0];
   current_card.place = "hand";
   current_card.covered = false;
-  current_card_source = 'stack';
+  current_card_source = "stack";
 
   action_modal?.classList.remove("active");
   action_modal_card_from_stack?.classList.add("active");
@@ -941,10 +976,15 @@ function onTakeFromStack() {
   set_attributes_to_Card("card_action", current_card.value);
 
   // Startposition merken, solange sichtbar
-  const ca = document.getElementById('card_action');
+  const ca = document.getElementById("card_action");
   if (ca) {
     const r = ca.getBoundingClientRect();
-    lastDrawnCardRect = { left: r.left, top: r.top, width: r.width, height: r.height };
+    lastDrawnCardRect = {
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+    };
   } else {
     lastDrawnCardRect = viewportCenterRect();
   }
@@ -969,7 +1009,7 @@ function onTakeFromAblage() {
   current_card = top;
   current_card.place = "hand";
   current_card.covered = false;
-  current_card_source = 'ablage';
+  current_card_source = "ablage";
 
   action_modal?.classList.remove("active");
   show_info_modal(
@@ -988,14 +1028,14 @@ async function onDiscardDrawnAndRevealOne() {
 
   // animiert: card_action → ablage
   const startRect =
-    rectOf('card_action') || lastDrawnCardRect || viewportCenterRect();
+    rectOf("card_action") || lastDrawnCardRect || viewportCenterRect();
 
   await withUIBlocked(
     flyCardBetween({
       value: current_card.value,
       from: startRect,
-      to: 'player_card_ablage',
-      duration: ANIM.fly
+      to: "player_card_ablage",
+      duration: ANIM.fly,
     })
   );
 
@@ -1015,10 +1055,15 @@ function onKeepDrawnAndSwap() {
   if (!current_card) return;
 
   // Merke letzte sichtbare Position der Vorschaukarte (vor dem Schließen)
-  const ca = document.getElementById('card_action');
+  const ca = document.getElementById("card_action");
   if (ca) {
     const r = ca.getBoundingClientRect();
-    lastDrawnCardRect = { left: r.left, top: r.top, width: r.width, height: r.height };
+    lastDrawnCardRect = {
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+    };
   }
 
   action_modal_card_from_stack?.classList.remove("active");
@@ -1112,11 +1157,11 @@ async function ki_take_turn() {
         await withUIBlocked(
           flySwap({
             newValue: ablage.value,
-            fromEl: 'player_card_ablage',
+            fromEl: "player_card_ablage",
             toEl: boardSlotEl,
             oldValue: oldCard ? oldCard.value : null,
-            ablageEl: 'player_card_ablage',
-            duration: ANIM.fly
+            ablageEl: "player_card_ablage",
+            duration: ANIM.fly,
           })
         );
 
@@ -1180,8 +1225,8 @@ async function ki_take_turn() {
               fromEl: getKiStackStartRect(),
               toEl: boardSlotEl,
               oldValue: old ? old.value : null,
-              ablageEl: 'player_card_ablage',
-              duration: ANIM.fly
+              ablageEl: "player_card_ablage",
+              duration: ANIM.fly,
             })
           );
 
@@ -1203,8 +1248,8 @@ async function ki_take_turn() {
       flyCardBetween({
         value: drawn.value,
         from: getKiStackStartRect(),
-        to: 'player_card_ablage',
-        duration: ANIM.fly
+        to: "player_card_ablage",
+        duration: ANIM.fly,
       })
     );
     putOnAblage(drawn);
@@ -1351,4 +1396,12 @@ function reveal_all_cards() {
       }
     }
   });
+}
+
+function refresh_point_label() {
+  const sum = player1.cards.reduce(
+    (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
+    0
+  );
+  point_label.innerHTML = `Summe ${sum}`;
 }
