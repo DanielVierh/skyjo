@@ -247,6 +247,38 @@ body {
   background-color: rgba(0, 149, 255, 0.2);
 }
 
+.game-points-layer {
+  background: linear-gradient(to bottom, rgb(0, 136, 255), rgb(38, 98, 101));
+  border: 1px solid rgba(255, 255, 255, 0.541);
+  width: 55px;
+  height: 60px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.7;
+}
+.game-points-layer h4 {
+  letter-spacing: 3px;
+}
+.game-points-layer p {
+  font-size: 1.5rem;
+}
+
+.game-points-layer--ki {
+  position: fixed;
+  top: -35%;
+  left: 1%;
+}
+
+.game-points-layer--player {
+  position: fixed;
+  top: -35%;
+  left: 85%;
+}
+
 .decision-modal {
   display: none;
 }

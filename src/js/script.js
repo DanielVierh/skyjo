@@ -98,6 +98,10 @@ const btn_swap_with_ablage_after_new = document.getElementById(
 const btn_take_from_stack_after_new = document.getElementById(
   "btn_take_from_stack_after_new"
 );
+const lbl_game_points_ki = document.getElementById("lbl_game_points_ki");
+const lbl_game_points_player = document.getElementById(
+  "lbl_game_points_player"
+);
 
 //*==== Spielzustand ====
 let player1;
@@ -130,6 +134,11 @@ const ANIM = {
   fly: 600,
   ease: "cubic-bezier(.22,.61,.36,1)", // smooth „Material“-Kurve
   z: 99999,
+};
+
+let save_object = {
+  points_ki: 0,
+  points_player: 0,
 };
 
 // Letzte Position der Spieler-Vorschaukarte aus dem Stack (für Start der Flugbahn)
@@ -213,6 +222,24 @@ function endGame() {
     }
   }
 
+  //* add points to sum and save
+  save_object.points_ki += points2;
+  save_object.points_player += points1;
+
+  if (save_object.points_ki >= 100) {
+    setTimeout(() => {
+      show_winner();
+    }, 1000);
+  } else if (save_object.points_player >= 100) {
+    setTimeout(() => {
+      show_winner();
+    }, 1000);
+  } else {
+    save_Game_into_Storage();
+    lbl_game_points_ki.innerHTML = save_object.points_ki;
+    lbl_game_points_player.innerHTML = save_object.points_player;
+  }
+
   let winner = "Unentschieden";
   if (points1 < points2) winner = "Du";
   else if (points2 < points1) winner = "Computer";
@@ -225,6 +252,21 @@ function endGame() {
 
   //*Optional: UI sperren
   do_disable_area();
+}
+
+//*ANCHOR - Show Winner of the game and reset local storage for new game
+function show_winner() {
+  if (save_object.points_ki > save_object.points_player) {
+    alert(`Gewonnen \n Du hast das Spiel gewonnen`);
+  } else {
+    alert("Game Over \n Der Computer hat das Spiel gewonnen");
+  }
+  save_object.points_ki = 0;
+  save_object.points_player = 0;
+  save_Game_into_Storage();
+  setTimeout(() => {
+    window.location.reload();
+  }, 1000);
 }
 
 function do_disable_area() {
@@ -598,6 +640,7 @@ function getKiStackStartRect() {
 window.onload = init;
 
 function init() {
+  loadGameFromLocalStorage();
   create_player();
   create_cards();
   give_player_cards(player1);
@@ -1383,6 +1426,7 @@ function swap_card(a, b, c) {
   );
 }
 
+//*ANCHOR - Discover all cards
 function reveal_all_cards() {
   [player1, player2].forEach((player) => {
     for (let i = 0; i < player.cards.length; i++) {
@@ -1397,11 +1441,28 @@ function reveal_all_cards() {
     }
   });
 }
-
+//*ANCHOR - Show current points from discovered cards
 function refresh_point_label() {
   const sum = player1.cards.reduce(
     (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
     0
   );
   point_label.innerHTML = `Summe ${sum}`;
+}
+
+//*ANCHOR - Load Game from Local Storage
+function loadGameFromLocalStorage() {
+  const savedGame = localStorage.getItem("skyjo_savegame");
+  if (savedGame) {
+    save_object = JSON.parse(savedGame);
+    lbl_game_points_ki.innerHTML = save_object.points_ki;
+    lbl_game_points_player.innerHTML = save_object.points_player;
+  } else {
+    save_Game_into_Storage();
+  }
+}
+
+//*ANCHOR - Save Game into Local Storage
+function save_Game_into_Storage() {
+  localStorage.setItem("skyjo_savegame", JSON.stringify(save_object));
 }
