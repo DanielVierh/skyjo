@@ -225,6 +225,8 @@ function endGame() {
   //* add points to sum and save
   save_object.points_ki += points2;
   save_object.points_player += points1;
+  lbl_game_points_ki.innerHTML = save_object.points_ki;
+  lbl_game_points_player.innerHTML = save_object.points_player;
 
   if (save_object.points_ki >= 100) {
     setTimeout(() => {
@@ -236,8 +238,6 @@ function endGame() {
     }, 1000);
   } else {
     save_Game_into_Storage();
-    lbl_game_points_ki.innerHTML = save_object.points_ki;
-    lbl_game_points_player.innerHTML = save_object.points_player;
   }
 
   let winner = "Unentschieden";
