@@ -1038,6 +1038,7 @@ function onTakeFromStack() {
 function onTakeFromAblage() {
   if (gameEnded) return;
   if (currentPlayer !== "player1") return;
+  do_enable_area();
 
   const top = topAblage();
   if (!top) {
