@@ -322,7 +322,7 @@ body {
 }
 .modal.active.modal-action {
   transform: translate(-50%, -50%) rotate(0);
-  z-index: 9999;
+  z-index: 999999999;
   background-color: rgba(240, 240, 240, 0.8039215686);
   color: black;
 }

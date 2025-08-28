@@ -834,8 +834,9 @@ async function show_current_player() {
     player2Board?.classList.add("deactivated");
     player1Board?.classList.remove("deactivated");
     player1Board?.classList.add("active");
-
+    do_disable_area();
     if (player1.firstRound) {
+      do_enable_area();
       show_info_modal(
         "player1",
         "2 Karten aufdecken",
@@ -986,6 +987,7 @@ async function onCardClick(cardEl) {
     setTimeout(() => {
       action_modal?.classList.remove("active");
       action_modal_card_from_stack?.classList.remove("active");
+      do_enable_area();
       end_of_turn("player1");
     }, 200);
     return;
@@ -1090,6 +1092,7 @@ async function onDiscardDrawnAndRevealOne() {
   lastDrawnCardRect = null;
 
   action_modal_card_from_stack?.classList.remove("active");
+  do_enable_area();
 }
 
 function onKeepDrawnAndSwap() {
@@ -1110,6 +1113,7 @@ function onKeepDrawnAndSwap() {
   }
 
   action_modal_card_from_stack?.classList.remove("active");
+  do_enable_area();
   show_info_modal(
     "player1",
     "Karte wählen",
