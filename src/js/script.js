@@ -1185,7 +1185,7 @@ async function ki_take_turn() {
     discovered.sort((a, b) => b.value - a.value);
 
     for (const d of discovered) {
-      if (ablage.value + 2 < d.value) {
+      if (ablage.value + 1 < d.value) {
         await wait(KI_DELAY.think);
         const boardSlotId = getBoardSlotId(2, d.index);
         if (!boardSlotId) break;
