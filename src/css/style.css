@@ -116,7 +116,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: rotateY(180deg);
+  transform: rotate(180deg);
   transition: transform 0.3s;
   perspective: 600px;
 }
