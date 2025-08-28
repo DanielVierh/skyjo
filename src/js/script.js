@@ -211,6 +211,7 @@ function endGame() {
 
   let points1 = countPoints(player1);
   let points2 = countPoints(player2);
+  let origin_points = points1;
   //!Todo - show original points before double
 
   //*Sonderregel: Wenn der Schließende NICHT die wenigsten Punkte hat → verdoppeln
@@ -222,6 +223,7 @@ function endGame() {
     }
   }
 
+  const additionalText = `Du hattest ${origin_points} Punkte und hast das Spiel beendet. Da du mehr Punkte als die KI hattest, werden deine Punkte verdoppelt.`;
   //* add points to sum and save
   save_object.points_ki += points2;
   save_object.points_player += points1;
@@ -246,7 +248,9 @@ function endGame() {
   reveal_all_cards();
   setTimeout(() => {
     alert(
-      `🎉 Spiel beendet!\n\n Deine Punkte: ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`
+      `🎉 Spiel beendet!\n\n Deine Punkte: ${
+        points1 > origin_points ? additionalText : ""
+      } ${points1} Punkte\n Computer: ${points2} Punkte\n\n➡️ Gewinner: ${winner}`
     );
   }, 500);
 
@@ -257,9 +261,9 @@ function endGame() {
 //*ANCHOR - Show Winner of the game and reset local storage for new game
 function show_winner() {
   if (save_object.points_ki > save_object.points_player) {
-    alert(`Gewonnen \n Du hast das Spiel gewonnen`);
+    alert(`Gewonnen 🏅 \n Du hast das Spiel gewonnen`);
   } else {
-    alert("Game Over \n Der Computer hat das Spiel gewonnen");
+    alert("Game Over 🥵 \n Der Computer hat das Spiel gewonnen");
   }
   save_object.points_ki = 0;
   save_object.points_player = 0;
