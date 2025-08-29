@@ -15,6 +15,10 @@
     <link rel="stylesheet" href="src/css/style.css" />
   </head>
   <body>
+    <div class="modal modal-endgame" id="mdl_endgame">
+      <p id="lbl_finishText"></p>
+      <div id="btn_next_game" class="btn">Weiter</div>
+    </div>
     <div class="p2-board gridfield" id="p2Board">
       <div
         class="card grid-card covered player2-card"
@@ -178,7 +182,7 @@
     </div>
 
     <div class="disable-area" id="disable_area"></div>
-
+    <div id="point_label_ki" class="point-label player2"></div>
     <div id="point_label" class="point-label player1"></div>
     <div class="p1-board gridfield" id="p1Board">
       <div
