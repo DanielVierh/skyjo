@@ -102,10 +102,10 @@ const lbl_game_points_ki = document.getElementById("lbl_game_points_ki");
 const lbl_game_points_player = document.getElementById(
   "lbl_game_points_player"
 );
-const btn_next_game = document.getElementById('btn_next_game');
-const mdl_endgame = document.getElementById('mdl_endgame');
-const lbl_finishText = document.getElementById('lbl_finishText');
-const point_label_ki = document.getElementById('point_label_ki');
+const btn_next_game = document.getElementById("btn_next_game");
+const mdl_endgame = document.getElementById("mdl_endgame");
+const lbl_finishText = document.getElementById("lbl_finishText");
+const point_label_ki = document.getElementById("point_label_ki");
 
 //*==== Spielzustand ====
 let player1;
@@ -209,9 +209,9 @@ function countPoints(player) {
   return points;
 }
 
-btn_next_game.addEventListener('click', ()=> {
+btn_next_game.addEventListener("click", () => {
   window.location.reload();
-})
+});
 
 function endGame() {
   if (gameEnded) return;
@@ -239,13 +239,9 @@ function endGame() {
   lbl_game_points_player.innerHTML = save_object.points_player;
 
   if (save_object.points_ki >= 100) {
-    setTimeout(() => {
-      show_winner();
-    }, 1000);
+    show_winner();
   } else if (save_object.points_player >= 100) {
-    setTimeout(() => {
-      show_winner();
-    }, 1000);
+    show_winner();
   } else {
     save_Game_into_Storage();
   }
@@ -255,10 +251,10 @@ function endGame() {
   else if (points2 < points1) winner = "Computer";
   reveal_all_cards();
   setTimeout(() => {
-    mdl_endgame.classList.add('active');
+    mdl_endgame.classList.add("active");
     lbl_finishText.innerHTML = `🎉 Spiel beendet!<br> <br> Deine Punkte: ${
-        points1 > origin_points ? additionalText : ""
-      } ${points1} Punkte <br> Computer: ${points2} Punkte<br> <br>➡️ Gewinner: ${winner}`
+      points1 > origin_points ? additionalText : ""
+    } ${points1} Punkte <br> Computer: ${points2} Punkte<br> <br>➡️ Gewinner: ${winner}`;
   }, 1000);
 
   //*Optional: UI sperren
@@ -271,10 +267,10 @@ function show_winner() {
   save_object.points_player = 0;
   save_Game_into_Storage();
   if (save_object.points_ki > save_object.points_player) {
-    mdl_endgame.classList.add('active');
+    mdl_endgame.classList.add("active");
     lbl_finishText.innerHTML = `Gewonnen 🏅 <br> Du hast das Spiel gewonnen`;
   } else {
-    mdl_endgame.classList.add('active');
+    mdl_endgame.classList.add("active");
     lbl_finishText.innerHTML = `Game Over 🥵 <br> Der Computer hat das Spiel gewonnen`;
   }
 }
@@ -1469,7 +1465,6 @@ function refresh_point_label() {
     0
   );
   point_label_ki.innerHTML = `Summe ${ki_sum}`;
-
 }
 
 //*ANCHOR - Load Game from Local Storage
