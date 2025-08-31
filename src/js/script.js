@@ -232,6 +232,16 @@ function endGame() {
   }
 
   const additionalText = `Du hattest ${origin_points} Punkte und hast das Spiel beendet. Da du mehr Punkte als die KI hattest, werden deine Punkte verdoppelt.`;
+
+  let winner = "Unentschieden";
+  if (points1 < points2) winner = "Du";
+  else if (points2 < points1) winner = "Computer";
+  reveal_all_cards();
+  mdl_endgame.classList.add("active");
+  lbl_finishText.innerHTML = `🎉 Spiel beendet!<br> <br> Deine Punkte: ${
+    points1 > origin_points ? additionalText : ""
+  } ${points1} Punkte <br> Computer: ${points2} Punkte<br> <br>➡️ Gewinner: ${winner}`;
+
   //* add points to sum and save
   save_object.points_ki += points2;
   save_object.points_player += points1;
@@ -245,17 +255,6 @@ function endGame() {
   } else {
     save_Game_into_Storage();
   }
-
-  let winner = "Unentschieden";
-  if (points1 < points2) winner = "Du";
-  else if (points2 < points1) winner = "Computer";
-  reveal_all_cards();
-  setTimeout(() => {
-    mdl_endgame.classList.add("active");
-    lbl_finishText.innerHTML = `🎉 Spiel beendet!<br> <br> Deine Punkte: ${
-      points1 > origin_points ? additionalText : ""
-    } ${points1} Punkte <br> Computer: ${points2} Punkte<br> <br>➡️ Gewinner: ${winner}`;
-  }, 1000);
 
   //*Optional: UI sperren
   do_disable_area();
