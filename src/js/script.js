@@ -262,9 +262,6 @@ function endGame() {
 
 //*ANCHOR - Show Winner of the game and reset local storage for new game
 function show_winner() {
-  save_object.points_ki = 0;
-  save_object.points_player = 0;
-  save_Game_into_Storage();
   if (save_object.points_ki > save_object.points_player) {
     mdl_endgame.classList.add("active");
     lbl_finishText.innerHTML = `Gewonnen 🏅 <br> Du hast das Spiel gewonnen`;
@@ -272,6 +269,9 @@ function show_winner() {
     mdl_endgame.classList.add("active");
     lbl_finishText.innerHTML = `Game Over 🥵 <br> Der Computer hat das Spiel gewonnen`;
   }
+  save_object.points_ki = 0;
+  save_object.points_player = 0;
+  save_Game_into_Storage();
 }
 
 function do_disable_area() {
