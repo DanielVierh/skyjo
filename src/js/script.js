@@ -856,7 +856,7 @@ async function show_current_player() {
       if (!lastTurn) {
         setTimeout(() => {
           action_modal?.classList.add("active");
-        }, 2500);
+        }, 1500);
       } else {
         //*Im letzten Zug keine Wahlmodalitäten – Spieler führt genau einen Zug aus
         action_modal?.classList.add("active");
