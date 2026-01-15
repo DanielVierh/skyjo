@@ -106,6 +106,10 @@ const btn_next_game = document.getElementById("btn_next_game");
 const mdl_endgame = document.getElementById("mdl_endgame");
 const lbl_finishText = document.getElementById("lbl_finishText");
 const point_label_ki = document.getElementById("point_label_ki");
+const start_modal = document.getElementById("start_modal");
+const btn_new_game = document.getElementById("btn_new_game");
+const btn_continue_game = document.getElementById("btn_continue_game");
+const btn_multiplayer = document.getElementById("btn_multiplayer");
 
 //*==== Spielzustand ====
 let player1;
@@ -210,8 +214,89 @@ function countPoints(player) {
 }
 
 btn_next_game.addEventListener("click", () => {
-  window.location.reload();
+  // Statt die Seite neu zu laden, starte eine neue Runde ohne das Start-Modal wieder anzuzeigen
+  if (mdl_endgame) mdl_endgame.classList.remove("active");
+  startRoundWithoutModal(false);
 });
+
+// Starte eine neue Runde ohne Page-Reload. Wenn resetScores=true, werden
+// die kumulierten Punktestände zurückgesetzt.
+function startRoundWithoutModal(resetScores = false) {
+  if (resetScores) {
+    save_object.points_ki = 0;
+    save_object.points_player = 0;
+    save_Game_into_Storage();
+  }
+
+  // Reset globale Spielzustandsvariablen
+  gameEnded = false;
+  lastTurn = false;
+  closingPlayer = null;
+  current_card = null;
+  current_card_source = null;
+  is_Swap = false;
+
+  // Clear stacks
+  ablageStack = [];
+  cardStack = [];
+
+  // Remove flying effects layer if present
+  const fx = document.getElementById("fx-layer");
+  if (fx) fx.remove();
+
+  // Clear board UI slots (player boards + ablage)
+  const slotEls = Array.from(
+    document.querySelectorAll(".grid-card, .card.grid-card")
+  );
+  slotEls.forEach((el) => {
+    el.innerHTML = "";
+    el.classList.remove(
+      "green",
+      "red",
+      "yellow",
+      "lightblue",
+      "blue",
+      "discover-effect",
+      "removed"
+    );
+    if (!el.classList.contains("covered")) el.classList.add("covered");
+    el.setAttribute("data-status", "covered");
+    el.style.pointerEvents = "";
+    el.style.cursor = "";
+  });
+
+  // Ablage UI
+  clearCardUI("player_card_ablage");
+  setSlotCovered("player_card_ablage");
+
+  // Recreate players and deal new cards
+  create_player();
+  create_cards();
+  give_player_cards(player1);
+  give_player_cards(player2);
+
+  // Put one card to ablage to start (like in init)
+  if (cardStack.length > 0) {
+    const startDiscard = cardStack.splice(0, 1)[0];
+    startDiscard.covered = false;
+    putOnAblage(startDiscard);
+  } else {
+    updateAblageUI();
+  }
+
+  // Update cumulative score labels
+  lbl_game_points_ki.innerHTML = save_object.points_ki;
+  lbl_game_points_player.innerHTML = save_object.points_player;
+
+  // Set current player and continue
+  currentPlayer = "player1";
+  show_current_player();
+
+  // Debug helpers
+  helper_show_cards(player1);
+  helper_show_cards(player2);
+  count_points_debug();
+}
 
 function endGame() {
   if (gameEnded) return;
@@ -642,7 +727,49 @@ function getKiStackStartRect() {
    ===== Initialisierung =====
    =========================== */
 
-window.onload = init;
+window.onload = showStartModalWrapper;
+
+function showStartModalWrapper() {
+  // lade gespeicherte Punkte, damit wir wissen, ob "Weiterspielen" sichtbar sein soll
+  loadGameFromLocalStorage();
+
+  if (btn_continue_game) {
+    if (
+      (!save_object.points_ki || save_object.points_ki === 0) &&
+      (!save_object.points_player || save_object.points_player === 0)
+    ) {
+      btn_continue_game.style.display = "none";
+    } else {
+      btn_continue_game.style.display = "block";
+    }
+  }
+
+  if (start_modal) start_modal.classList.add("active");
+
+  btn_new_game?.addEventListener("click", () => {
+    // Reset Scores und starte neues Spiel gegen KI
+    save_object.points_ki = 0;
+    save_object.points_player = 0;
+    save_Game_into_Storage();
+    if (start_modal) start_modal.classList.remove("active");
+    ki_player = true;
+    init();
+  });
+
+  btn_continue_game?.addEventListener("click", () => {
+    // Weiterspielen gegen KI mit bestehenden Punkten
+    if (start_modal) start_modal.classList.remove("active");
+    ki_player = true;
+    init();
+  });
+
+  btn_multiplayer?.addEventListener("click", () => {
+    // Multiplayer starten
+    if (start_modal) start_modal.classList.remove("active");
+    ki_player = false;
+    init();
+  });
+}
 
 function init() {
   loadGameFromLocalStorage();
