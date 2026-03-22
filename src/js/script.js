@@ -304,7 +304,12 @@ function updateBoardGuidance() {
         if (slotId) highlightSlot(slotId, true);
       }
     });
-  } else if (playerTurnPhase === PLAYER_PHASES.MUST_SWAP) {
+  } else if (
+    playerTurnPhase === PLAYER_PHASES.MUST_SWAP ||
+    (playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION &&
+      current_card_source === "stack" &&
+      !!current_card)
+  ) {
     player1.cards.forEach((card, index) => {
       if (card) {
         const slotId = getBoardSlotId(1, index);
@@ -1392,11 +1397,30 @@ async function onCardClick(cardEl) {
     return;
   }
 
-  if (playerTurnPhase !== PLAYER_PHASES.MUST_SWAP || !current_card) {
+  const canSwapHeldCard =
+    !!current_card &&
+    (playerTurnPhase === PLAYER_PHASES.MUST_SWAP ||
+      (noGuidanceMode &&
+        playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION &&
+        current_card_source === "stack"));
+
+  if (!canSwapHeldCard) {
     if (noGuidanceMode) {
       scheduleIdleHint();
     }
     return;
+  }
+
+  if (
+    noGuidanceMode &&
+    playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION &&
+    current_card_source === "stack"
+  ) {
+    is_Swap = true;
+    setPlayerTurnPhase(
+      PLAYER_PHASES.MUST_SWAP,
+      "Wähle eine deiner Karten, um mit der gezogenen Karte zu tauschen.",
+    );
   }
 
   // === Swap mit animiertem Flug ===

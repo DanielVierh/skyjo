@@ -129,6 +129,7 @@ body.no-guidance-mode .modal-info {
   text-decoration: underline;
 }
 .card .val-label {
+  color: #000;
   text-shadow: 0 0 10px #fff;
 }
 .card .val-label.underlined {
