@@ -13,6 +13,12 @@
 body {
   background-color: var(--table-color);
   font-family: sans-serif;
+  min-height: 100dvh;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 .p1-board {
@@ -435,11 +441,16 @@ body {
     }
 
     &.modal-start {
+      inset: 0;
+      width: 100vw;
+      max-width: none;
+      height: 100dvh;
+      min-height: 100dvh;
+      padding: 24px;
+      border-radius: 0;
+      box-shadow: none;
+
       &.active {
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
