@@ -591,6 +591,7 @@ function startRoundWithoutModal(resetScores = false) {
   // Update cumulative score labels
   lbl_game_points_ki.innerHTML = save_object.points_ki;
   lbl_game_points_player.innerHTML = save_object.points_player;
+  refresh_point_label();
 
   // Set current player and continue
   currentPlayer = "player1";
@@ -636,6 +637,7 @@ function endGame() {
   save_object.points_player += points1;
   lbl_game_points_ki.innerHTML = save_object.points_ki;
   lbl_game_points_player.innerHTML = save_object.points_player;
+  refresh_point_label();
 
   if (save_object.points_ki >= 100) {
     show_winner();
@@ -661,6 +663,7 @@ function show_winner() {
   save_object.points_ki = 0;
   save_object.points_player = 0;
   save_Game_into_Storage();
+  refresh_point_label();
 }
 
 function do_disable_area() {
@@ -2190,17 +2193,21 @@ function reveal_all_cards() {
 }
 //*ANCHOR - Show current points from discovered cards
 function refresh_point_label() {
-  const sum = player1.cards.reduce(
-    (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
-    0,
-  );
-  point_label.innerHTML = `Summe ${sum}`;
+  const playerRoundSum = player1
+    ? player1.cards.reduce(
+        (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
+        0,
+      )
+    : 0;
+  const kiRoundSum = player2
+    ? player2.cards.reduce(
+        (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
+        0,
+      )
+    : 0;
 
-  const ki_sum = player2.cards.reduce(
-    (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
-    0,
-  );
-  point_label_ki.innerHTML = `Summe ${ki_sum}`;
+  point_label.innerHTML = `Runde ${playerRoundSum} | Spiel ${save_object.points_player ?? 0}`;
+  point_label_ki.innerHTML = `Runde ${kiRoundSum} | Spiel ${save_object.points_ki ?? 0}`;
 }
 
 //*ANCHOR - Load Game from Local Storage
@@ -2212,6 +2219,7 @@ function loadGameFromLocalStorage() {
     save_object.points_player = save_object.points_player ?? 0;
     lbl_game_points_ki.innerHTML = save_object.points_ki;
     lbl_game_points_player.innerHTML = save_object.points_player;
+    refresh_point_label();
   } else {
     save_Game_into_Storage();
   }
