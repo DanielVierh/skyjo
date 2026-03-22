@@ -232,6 +232,7 @@ const KI_WEIGHTS = {
   tripleFinish: 160,
   tripleBuild: 48,
   pairSupport: 20,
+  negativeSetPenalty: 42,
   lowCardBonus: 10,
   highCardPenalty: 8,
   discardHighValueBonus: 6,
@@ -1108,6 +1109,7 @@ function evaluateKiSwap(player, opponent, incomingValue, slotIndex, context) {
   const sameOpenCount = otherOpenEntries.filter(
     (entry) => entry.card.value === incomingValue,
   ).length;
+  const avoidsNegativeCollection = incomingValue < 0;
 
   let positiveScore = 0;
   let negativeScore = 0;
@@ -1125,13 +1127,17 @@ function evaluateKiSwap(player, opponent, incomingValue, slotIndex, context) {
       Math.max(0, incomingValue) * KI_WEIGHTS.coveredHighPenalty;
   }
 
-  if (sameOpenCount >= 2) {
-    positiveScore += KI_WEIGHTS.tripleFinish;
-  } else if (sameOpenCount === 1) {
-    positiveScore += KI_WEIGHTS.tripleBuild;
-    if (targetCard.covered) {
-      positiveScore += KI_WEIGHTS.pairSupport;
+  if (!avoidsNegativeCollection) {
+    if (sameOpenCount >= 2) {
+      positiveScore += KI_WEIGHTS.tripleFinish;
+    } else if (sameOpenCount === 1) {
+      positiveScore += KI_WEIGHTS.tripleBuild;
+      if (targetCard.covered) {
+        positiveScore += KI_WEIGHTS.pairSupport;
+      }
     }
+  } else if (sameOpenCount > 0) {
+    negativeScore += sameOpenCount * KI_WEIGHTS.negativeSetPenalty;
   }
 
   if (incomingValue <= 0) {
