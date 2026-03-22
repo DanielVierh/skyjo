@@ -15,6 +15,11 @@ body {
   font-family: sans-serif;
 }
 
+body.no-guidance-mode .modal-action,
+body.no-guidance-mode .modal-info {
+  display: none !important;
+}
+
 .p1-board {
   position: fixed;
   bottom: 0;
@@ -179,6 +184,24 @@ body {
   box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray, -10px 0 3px black;
   border: 1px solid rgba(255, 255, 255, 0.586);
 }
+.card.is-interactive,
+.middle-pile.is-interactive .card,
+.middle-pile.is-interactive {
+  cursor: pointer;
+}
+.card.is-empty {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.7);
+}
+.card.is-empty::after {
+  content: "";
+  background-image: none;
+}
+.card.is-empty::before {
+  content: "";
+  display: none;
+}
 .card.discover-effect {
   animation: card-flip 0.7s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
   backface-visibility: hidden;
@@ -247,9 +270,97 @@ body {
   align-items: center;
   gap: 0 80px;
   width: 100%;
-  max-width: 400px;
-  height: 100px;
+  max-width: 540px;
+  min-height: 120px;
   background-color: rgba(0, 149, 255, 0.2);
+  border-radius: 18px;
+  padding: 14px 20px;
+}
+
+.middle-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.middle-pile .middle-label {
+  color: white;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.middle-pile.is-interactive {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18), 0 10px 24px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+.player-hand {
+  position: fixed;
+  left: 50%;
+  bottom: 305px;
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(10, 18, 28, 0.78);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+  z-index: 50;
+}
+
+.player-hand.is-active {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.player-hand-title {
+  font-size: 0.78rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-bottom: 6px;
+}
+
+.player-hand-text {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.player-hand-card-slot {
+  flex: 0 0 auto;
+  min-width: calc(var(--card-width) + 12px);
+  min-height: calc(var(--card-height) + 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px;
+}
+
+.player-hand-card-slot.has-card {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hand-card {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.player-hand.is-active .hand-card {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
 }
 
 .game-points-layer {
@@ -400,6 +511,10 @@ body {
   background: #0066cc;
   color: white;
 }
+.modal.active.modal-start .start-btn#btn_new_game_no_help {
+  background: #b04c00;
+  color: white;
+}
 .modal.active.modal-start .start-btn#btn_multiplayer {
   background: #ff8c00;
   color: white;
@@ -484,8 +599,43 @@ body {
   visibility: hidden;
 }
 
+.highlight {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.38), 0 0 18px rgba(255, 243, 176, 0.7) !important;
+  transform: translateY(-2px);
+}
+
 /* Optional: dezente Hervorhebung der Ablage beim Flugziel */
 #player_card_ablage.highlight {
   outline: 2px dashed rgba(0, 0, 0, 0.2);
   outline-offset: 3px;
-}/*# sourceMappingURL=style.css.map */
+}
+
+@media (max-width: 700px) {
+  .middle {
+    width: calc(100vw - 24px);
+    max-width: none;
+    gap: 14px;
+    padding: 12px;
+  }
+
+  .middle-pile {
+    flex: 1 1 0;
+  }
+
+  .player-hand {
+    bottom: 295px;
+    width: calc(100vw - 24px);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .player-hand-text {
+    font-size: 0.84rem;
+  }
+
+  .game-points-layer--player {
+    left: auto;
+    right: 1%;
+  }
+}
+/*# sourceMappingURL=style.css.map */

@@ -86,21 +86,21 @@ const player2Board = document.getElementById("p2Board");
 
 const action_modal = document.getElementById("action_modal");
 const action_modal_card_from_stack = document.getElementById(
-  "action_modal_card_from_stack"
+  "action_modal_card_from_stack",
 );
 const info_modal = document.getElementById("info_modal");
 
 const btn_take_from_stack = document.getElementById("btn_take_from_stack");
 const btn_swap_with_ablage = document.getElementById("btn_swap_with_ablage");
 const btn_swap_with_ablage_after_new = document.getElementById(
-  "btn_swap_with_ablage_after_new"
+  "btn_swap_with_ablage_after_new",
 );
 const btn_take_from_stack_after_new = document.getElementById(
-  "btn_take_from_stack_after_new"
+  "btn_take_from_stack_after_new",
 );
 const lbl_game_points_ki = document.getElementById("lbl_game_points_ki");
 const lbl_game_points_player = document.getElementById(
-  "lbl_game_points_player"
+  "lbl_game_points_player",
 );
 const btn_next_game = document.getElementById("btn_next_game");
 const mdl_endgame = document.getElementById("mdl_endgame");
@@ -108,8 +108,15 @@ const lbl_finishText = document.getElementById("lbl_finishText");
 const point_label_ki = document.getElementById("point_label_ki");
 const start_modal = document.getElementById("start_modal");
 const btn_new_game = document.getElementById("btn_new_game");
+const btn_new_game_no_help = document.getElementById("btn_new_game_no_help");
 const btn_continue_game = document.getElementById("btn_continue_game");
 const btn_multiplayer = document.getElementById("btn_multiplayer");
+const player_card_stack = document.getElementById("player_card_stack");
+const draw_pile_zone = document.getElementById("draw_pile_zone");
+const discard_pile_zone = document.getElementById("discard_pile_zone");
+const player_hand_panel = document.getElementById("player_hand_panel");
+const player_hand_text = document.getElementById("player_hand_text");
+const player_hand_slot = document.getElementById("player_hand_slot");
 
 //*==== Spielzustand ====
 let player1;
@@ -122,6 +129,20 @@ let current_card = null; //*gezogene/aus Ablage genommene Karte „in der Hand�
 let current_card_source = null; // 'stack' | 'ablage' | null
 let is_Swap = false; //*true: nächster Klick tauscht mit current_card
 let cards = []; //*DOM-Karten; wird in init() gefüllt
+let noGuidanceMode = false;
+let playerTurnPhase = "waiting";
+let uiEventsBound = false;
+let idleHintTimer = null;
+let handHintText = "Wähle Nachziehstapel oder Ablagestapel.";
+
+const PLAYER_PHASES = {
+  WAITING: "waiting",
+  FIRST_ROUND: "first-round",
+  CHOOSE_ACTION: "choose-action",
+  DRAWN_DECISION: "drawn-decision",
+  MUST_SWAP: "must-swap",
+  MUST_REVEAL: "must-reveal",
+};
 
 //*Spielende-Status
 let gameEnded = false;
@@ -213,6 +234,248 @@ function countPoints(player) {
   return points;
 }
 
+function closeActionModals() {
+  action_modal?.classList.remove("active");
+  action_modal_card_from_stack?.classList.remove("active");
+  info_modal?.classList.remove("active");
+}
+
+function clearIdleHintTimer() {
+  if (idleHintTimer) {
+    clearTimeout(idleHintTimer);
+    idleHintTimer = null;
+  }
+}
+
+function resetHighlights() {
+  document.querySelectorAll(".highlight").forEach((el) => {
+    el.classList.remove("highlight");
+  });
+}
+
+function setHandHint(text) {
+  handHintText = text || "";
+  if (player_hand_text) {
+    player_hand_text.textContent = handHintText;
+  }
+}
+
+function refreshPileInteractivity() {
+  const canChooseAction =
+    currentPlayer === "player1" &&
+    !gameEnded &&
+    !player1?.firstRound &&
+    playerTurnPhase === PLAYER_PHASES.CHOOSE_ACTION;
+
+  draw_pile_zone?.classList.toggle("is-interactive", canChooseAction);
+  player_card_stack?.classList.toggle("is-interactive", canChooseAction);
+
+  const canDiscardDrawn =
+    currentPlayer === "player1" &&
+    !gameEnded &&
+    playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION &&
+    current_card_source === "stack" &&
+    !!current_card;
+
+  const canTakeDiscard =
+    currentPlayer === "player1" &&
+    !gameEnded &&
+    playerTurnPhase === PLAYER_PHASES.CHOOSE_ACTION &&
+    !!topAblage();
+
+  const discardInteractive = canDiscardDrawn || canTakeDiscard;
+  discard_pile_zone?.classList.toggle("is-interactive", discardInteractive);
+  const ablageEl = document.getElementById("player_card_ablage");
+  ablageEl?.classList.toggle("is-interactive", discardInteractive);
+}
+
+function updateBoardGuidance() {
+  resetHighlights();
+
+  if (currentPlayer !== "player1" || gameEnded) {
+    refreshPileInteractivity();
+    return;
+  }
+
+  if (player1?.firstRound || playerTurnPhase === PLAYER_PHASES.FIRST_ROUND) {
+    player1.cards.forEach((card, index) => {
+      if (card?.covered) {
+        const slotId = getBoardSlotId(1, index);
+        if (slotId) highlightSlot(slotId, true);
+      }
+    });
+  } else if (playerTurnPhase === PLAYER_PHASES.MUST_SWAP) {
+    player1.cards.forEach((card, index) => {
+      if (card) {
+        const slotId = getBoardSlotId(1, index);
+        if (slotId) highlightSlot(slotId, true);
+      }
+    });
+  } else if (playerTurnPhase === PLAYER_PHASES.MUST_REVEAL) {
+    player1.cards.forEach((card, index) => {
+      if (card?.covered) {
+        const slotId = getBoardSlotId(1, index);
+        if (slotId) highlightSlot(slotId, true);
+      }
+    });
+  }
+
+  refreshPileInteractivity();
+}
+
+function updateHandCardUI() {
+  if (player_hand_panel) {
+    player_hand_panel.classList.toggle("is-active", !!current_card);
+    player_hand_panel.classList.toggle("is-no-guidance", noGuidanceMode);
+  }
+  if (player_hand_slot) {
+    player_hand_slot.classList.toggle("has-card", !!current_card);
+  }
+
+  if (!current_card) {
+    clearCardUI("card_action");
+    const cardAction = document.getElementById("card_action");
+    if (cardAction) {
+      cardAction.classList.add("covered", "is-empty");
+    }
+    if (noGuidanceMode && currentPlayer === "player1" && !gameEnded) {
+      if (player1?.firstRound) {
+        setHandHint("Decke 2 deiner Karten auf.");
+      } else if (playerTurnPhase === PLAYER_PHASES.MUST_REVEAL) {
+        setHandHint("Decke jetzt genau eine verdeckte Karte auf.");
+      } else if (playerTurnPhase === PLAYER_PHASES.CHOOSE_ACTION) {
+        setHandHint("Wähle Nachziehstapel oder Ablagestapel.");
+      }
+    }
+    return;
+  }
+
+  const cardAction = document.getElementById("card_action");
+  if (cardAction) {
+    cardAction.classList.remove("covered", "is-empty");
+  }
+  set_attributes_to_Card("card_action", current_card.value);
+
+  if (playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION) {
+    setHandHint(
+      "Lege die Karte auf die Ablage oder tausche sie mit einer deiner Karten.",
+    );
+  } else if (playerTurnPhase === PLAYER_PHASES.MUST_SWAP) {
+    setHandHint("Wähle jetzt genau eine deiner Karten zum Tauschen.");
+  }
+}
+
+function scheduleIdleHint() {
+  clearIdleHintTimer();
+  if (!noGuidanceMode || currentPlayer !== "player1" || gameEnded) return;
+
+  idleHintTimer = setTimeout(() => {
+    if (currentPlayer !== "player1" || gameEnded) return;
+
+    if (player1?.firstRound || playerTurnPhase === PLAYER_PHASES.FIRST_ROUND) {
+      setHandHint(
+        "Tipp: Decke 2 verdeckte Karten auf, um die Runde zu starten.",
+      );
+    } else if (playerTurnPhase === PLAYER_PHASES.CHOOSE_ACTION) {
+      setHandHint(
+        "Tipp: Klicke auf den Nachziehstapel oder nimm die offene Karte vom Ablagestapel.",
+      );
+    } else if (playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION) {
+      setHandHint(
+        "Tipp: Lege die gezogene Karte auf die Ablage oder tausche sie direkt mit einer eigenen Karte.",
+      );
+    } else if (playerTurnPhase === PLAYER_PHASES.MUST_SWAP) {
+      setHandHint(
+        "Tipp: Du musst die Karte jetzt mit genau einer eigenen Karte tauschen.",
+      );
+    } else if (playerTurnPhase === PLAYER_PHASES.MUST_REVEAL) {
+      setHandHint(
+        "Tipp: Decke jetzt eine verdeckte Karte auf, damit dein Zug endet.",
+      );
+    }
+
+    updateBoardGuidance();
+  }, 6500);
+}
+
+function setPlayerTurnPhase(phase, hintText = null) {
+  playerTurnPhase = phase;
+  if (hintText !== null) {
+    setHandHint(hintText);
+  }
+  updateHandCardUI();
+  updateBoardGuidance();
+  scheduleIdleHint();
+}
+
+function setGuidanceMode(enabled) {
+  noGuidanceMode = enabled;
+  document.body.classList.toggle("no-guidance-mode", enabled);
+  closeActionModals();
+  updateHandCardUI();
+  updateBoardGuidance();
+}
+
+function refreshDrawPileUI() {
+  if (!player_card_stack) return;
+  if (cardStack.length > 0) {
+    player_card_stack.classList.add("covered");
+    player_card_stack.classList.remove("is-empty");
+  } else {
+    player_card_stack.classList.remove("covered");
+    player_card_stack.classList.add("is-empty");
+  }
+}
+
+function recycleDiscardIntoDrawPile() {
+  if (cardStack.length > 0) return true;
+  if (ablageStack.length <= 1) return false;
+
+  const topCard = ablageStack.shift();
+  const recycled = ablageStack.map((card) => {
+    card.covered = true;
+    card.place = "stack";
+    return card;
+  });
+
+  cardStack = shuffleArray(recycled);
+  ablageStack = topCard ? [topCard] : [];
+  updateAblageUI();
+  refreshDrawPileUI();
+  return cardStack.length > 0;
+}
+
+function bindUIActions() {
+  if (uiEventsBound) return;
+  uiEventsBound = true;
+
+  btn_take_from_stack?.addEventListener("click", onTakeFromStack);
+  btn_swap_with_ablage?.addEventListener("click", onTakeFromAblage);
+  btn_swap_with_ablage_after_new?.addEventListener(
+    "click",
+    onDiscardDrawnAndRevealOne,
+  );
+  btn_take_from_stack_after_new?.addEventListener("click", onKeepDrawnAndSwap);
+
+  player_card_stack?.addEventListener("click", () => {
+    if (!noGuidanceMode) return;
+    onTakeFromStack();
+  });
+
+  discard_pile_zone?.addEventListener("click", () => {
+    if (!noGuidanceMode) return;
+    if (
+      playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION &&
+      current_card_source === "stack" &&
+      current_card
+    ) {
+      onDiscardDrawnAndRevealOne();
+      return;
+    }
+    onTakeFromAblage();
+  });
+}
+
 btn_next_game.addEventListener("click", () => {
   // Statt die Seite neu zu laden, starte eine neue Runde ohne das Start-Modal wieder anzuzeigen
   if (mdl_endgame) mdl_endgame.classList.remove("active");
@@ -235,6 +498,8 @@ function startRoundWithoutModal(resetScores = false) {
   current_card = null;
   current_card_source = null;
   is_Swap = false;
+  clearIdleHintTimer();
+  setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Warte auf den nächsten Zug.");
 
   // Clear stacks
   ablageStack = [];
@@ -246,7 +511,7 @@ function startRoundWithoutModal(resetScores = false) {
 
   // Clear board UI slots (player boards + ablage)
   const slotEls = Array.from(
-    document.querySelectorAll(".grid-card, .card.grid-card")
+    document.querySelectorAll(".grid-card, .card.grid-card"),
   );
   slotEls.forEach((el) => {
     el.innerHTML = "";
@@ -257,7 +522,7 @@ function startRoundWithoutModal(resetScores = false) {
       "lightblue",
       "blue",
       "discover-effect",
-      "removed"
+      "removed",
     );
     if (!el.classList.contains("covered")) el.classList.add("covered");
     el.setAttribute("data-status", "covered");
@@ -283,6 +548,7 @@ function startRoundWithoutModal(resetScores = false) {
   } else {
     updateAblageUI();
   }
+  refreshDrawPileUI();
 
   // Update cumulative score labels
   lbl_game_points_ki.innerHTML = save_object.points_ki;
@@ -378,10 +644,10 @@ function end_of_turn(finished = null) {
     finished === "player1"
       ? player1
       : finished === "player2"
-      ? player2
-      : currentPlayer === "player1"
-      ? player1
-      : player2;
+        ? player2
+        : currentPlayer === "player1"
+          ? player1
+          : player2;
 
   const otherPlayer = finishedPlayer === player1 ? player2 : player1;
   const otherKey = finishedPlayer === player1 ? "player2" : "player1";
@@ -397,7 +663,7 @@ function end_of_turn(finished = null) {
         otherKey,
         "Letzter Zug",
         `${otherPlayer.name} hat jetzt einen letzten Zug.`,
-        2500
+        2500,
       );
       show_current_player();
       return;
@@ -524,12 +790,14 @@ function topAblage() {
   return ablageStack[0] ?? null;
 }
 function putOnAblage(card) {
-  ablageStack = [card];
+  card.covered = false;
+  card.place = "ablage";
+  ablageStack.unshift(card);
   updateAblageUI();
 }
 function takeFromAblage() {
   if (!ablageStack.length) return null;
-  const c = ablageStack.splice(0, 1)[0];
+  const c = ablageStack.shift();
   updateAblageUI();
   return c;
 }
@@ -590,11 +858,11 @@ function rectOf(elOrRect) {
 function viewportCenterRect(w = 72, h = 104) {
   const vw = Math.max(
     document.documentElement.clientWidth,
-    window.innerWidth || 0
+    window.innerWidth || 0,
   );
   const vh = Math.max(
     document.documentElement.clientHeight,
-    window.innerHeight || 0
+    window.innerHeight || 0,
   );
   return {
     left: (vw - w) / 2,
@@ -658,7 +926,7 @@ async function flyCardBetween({
         opacity: 1,
       },
     ],
-    { duration, easing, fill: "forwards" }
+    { duration, easing, fill: "forwards" },
   );
 
   await anim.finished.catch(() => {});
@@ -681,12 +949,12 @@ async function flySwap({
   const tasks = [];
   if (newValue != null && fromRect && toRect) {
     tasks.push(
-      flyCardBetween({ value: newValue, from: fromRect, to: toRect, duration })
+      flyCardBetween({ value: newValue, from: fromRect, to: toRect, duration }),
     );
   }
   if (oldValue != null && toRect && abRect) {
     tasks.push(
-      flyCardBetween({ value: oldValue, from: toRect, to: abRect, duration })
+      flyCardBetween({ value: oldValue, from: toRect, to: abRect, duration }),
     );
   }
   await Promise.all(tasks);
@@ -753,6 +1021,17 @@ function showStartModalWrapper() {
     save_Game_into_Storage();
     if (start_modal) start_modal.classList.remove("active");
     ki_player = true;
+    setGuidanceMode(false);
+    init();
+  });
+
+  btn_new_game_no_help?.addEventListener("click", () => {
+    save_object.points_ki = 0;
+    save_object.points_player = 0;
+    save_Game_into_Storage();
+    if (start_modal) start_modal.classList.remove("active");
+    ki_player = true;
+    setGuidanceMode(true);
     init();
   });
 
@@ -760,6 +1039,7 @@ function showStartModalWrapper() {
     // Weiterspielen gegen KI mit bestehenden Punkten
     if (start_modal) start_modal.classList.remove("active");
     ki_player = true;
+    setGuidanceMode(false);
     init();
   });
 
@@ -781,17 +1061,12 @@ function init() {
   //*Event-Listener für Karten erst jetzt binden
   cards = Array.from(document.querySelectorAll(".card"));
   cards.forEach((cardEl) => {
+    if (cardEl.dataset.boundCardClick === "true") return;
+    cardEl.dataset.boundCardClick = "true";
     cardEl.addEventListener("click", () => onCardClick(cardEl));
   });
 
-  //*Buttons
-  btn_take_from_stack?.addEventListener("click", onTakeFromStack);
-  btn_swap_with_ablage?.addEventListener("click", onTakeFromAblage);
-  btn_swap_with_ablage_after_new?.addEventListener(
-    "click",
-    onDiscardDrawnAndRevealOne
-  );
-  btn_take_from_stack_after_new?.addEventListener("click", onKeepDrawnAndSwap);
+  bindUIActions();
 
   //*Start: oberste Karte offen auf Ablage legen (optional ohne Flug)
   if (cardStack.length > 0) {
@@ -801,6 +1076,9 @@ function init() {
   } else {
     updateAblageUI();
   }
+
+  refreshDrawPileUI();
+  updateHandCardUI();
 
   show_current_player();
 
@@ -936,6 +1214,12 @@ function create_player() {
 //*==== Info-Modal ====
 
 function show_info_modal(player, headline, text, countdown) {
+  if (noGuidanceMode) {
+    setHandHint(text || headline || "");
+    scheduleIdleHint();
+    return;
+  }
+
   const modal_info_headline = document.getElementById("modal_info_headline");
   const modal_info_text = document.getElementById("modal_info_text");
   if (!info_modal || !modal_info_headline || !modal_info_text) return;
@@ -960,6 +1244,8 @@ function show_info_modal(player, headline, text, countdown) {
 
 async function show_current_player() {
   if (gameEnded) return;
+  closeActionModals();
+  clearIdleHintTimer();
 
   if (currentPlayer === "player1") {
     player2Board?.classList.remove("active");
@@ -969,27 +1255,42 @@ async function show_current_player() {
     do_disable_area();
     if (player1.firstRound) {
       do_enable_area();
-      show_info_modal(
-        "player1",
-        "2 Karten aufdecken",
-        "Decke 2 deiner 12 Karten auf, indem du sie anklickst.",
-        4000
+      setPlayerTurnPhase(
+        PLAYER_PHASES.FIRST_ROUND,
+        "Decke 2 deiner Karten auf.",
       );
-      action_modal?.classList.remove("active");
+      if (!noGuidanceMode) {
+        show_info_modal(
+          "player1",
+          "2 Karten aufdecken",
+          "Decke 2 deiner 12 Karten auf, indem du sie anklickst.",
+          4000,
+        );
+      }
     } else {
       current_card = null;
       current_card_source = null;
       is_Swap = false;
-      if (!lastTurn) {
-        setTimeout(() => {
+      updateHandCardUI();
+      setPlayerTurnPhase(
+        PLAYER_PHASES.CHOOSE_ACTION,
+        lastTurn
+          ? "Letzter Zug: Wähle Nachziehstapel oder Ablagestapel."
+          : "Wähle Nachziehstapel oder Ablagestapel.",
+      );
+      do_enable_area();
+      if (!noGuidanceMode) {
+        if (!lastTurn) {
+          setTimeout(() => {
+            action_modal?.classList.add("active");
+          }, 1500);
+        } else {
           action_modal?.classList.add("active");
-        }, 1500);
-      } else {
-        //*Im letzten Zug keine Wahlmodalitäten – Spieler führt genau einen Zug aus
-        action_modal?.classList.add("active");
+        }
       }
     }
   } else {
+    setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Computer ist am Zug.");
     player1Board?.classList.remove("active");
     player1Board?.classList.add("deactivated");
     player2Board?.classList.remove("deactivated");
@@ -1009,7 +1310,7 @@ async function show_current_player() {
           "player1",
           "Du beginnst",
           "Du hattest die höhere Summe.",
-          1800
+          1800,
         );
         show_current_player();
       } else {
@@ -1018,7 +1319,7 @@ async function show_current_player() {
           "player2",
           "Computer beginnt",
           "Er hatte die höhere Summe.",
-          1800
+          1800,
         );
         await wait(KI_DELAY.think);
         await ki_take_turn(); //*ruft am Ende end_of_turn('player2')
@@ -1059,10 +1360,41 @@ async function onCardClick(cardEl) {
 
     if (player1.first_two_cards.discovered === 2) {
       player1.firstRound = false;
+      setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Computer ist am Zug.");
       setTimeout(() => {
         currentPlayer = "player2";
         show_current_player();
       }, 250);
+    }
+    return;
+  }
+
+  if (playerTurnPhase === PLAYER_PHASES.MUST_REVEAL) {
+    if (!pCard.covered) {
+      if (noGuidanceMode) {
+        setHandHint("Du musst eine verdeckte Karte aufdecken.");
+        scheduleIdleHint();
+      }
+      return;
+    }
+
+    discover_card(pCard, id);
+    setSlotDiscovered(id);
+    current_card = null;
+    current_card_source = null;
+    is_Swap = false;
+    lastDrawnCardRect = null;
+    setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Computer ist am Zug.");
+    setTimeout(() => {
+      action_modal?.classList.remove("active");
+      end_of_turn("player1");
+    }, 250);
+    return;
+  }
+
+  if (playerTurnPhase !== PLAYER_PHASES.MUST_SWAP || !current_card) {
+    if (noGuidanceMode) {
+      scheduleIdleHint();
     }
     return;
   }
@@ -1093,7 +1425,7 @@ async function onCardClick(cardEl) {
         toEl: boardSlotEl,
         oldValue: old ? old.value : null,
         ablageEl: ablageEl,
-      })
+      }),
     );
 
     // Jetzt Datenmodell/DOM aktualisieren
@@ -1115,6 +1447,7 @@ async function onCardClick(cardEl) {
     current_card_source = null;
     is_Swap = false;
     lastDrawnCardRect = null;
+    setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Computer ist am Zug.");
 
     setTimeout(() => {
       action_modal?.classList.remove("active");
@@ -1124,15 +1457,6 @@ async function onCardClick(cardEl) {
     }, 200);
     return;
   }
-
-  if (pCard && pCard.covered) {
-    discover_card(pCard, id);
-    setSlotDiscovered(id);
-    setTimeout(() => {
-      action_modal?.classList.remove("active");
-      end_of_turn("player1");
-    }, 250);
-  }
 }
 
 //*==== Buttons – Spieleraktionen ====
@@ -1140,17 +1464,38 @@ async function onCardClick(cardEl) {
 function onTakeFromStack() {
   if (gameEnded) return;
   if (currentPlayer !== "player1") return;
-  if (cardStack.length === 0) return;
+  if (player1?.firstRound) return;
+  if (playerTurnPhase !== PLAYER_PHASES.CHOOSE_ACTION) return;
+  if (cardStack.length === 0 && !recycleDiscardIntoDrawPile()) {
+    show_info_modal(
+      "player1",
+      "Nachziehstapel leer",
+      "Es kann keine neue Karte gezogen werden.",
+      2000,
+    );
+    return;
+  }
 
   current_card = cardStack.splice(0, 1)[0];
   current_card.place = "hand";
   current_card.covered = false;
   current_card_source = "stack";
+  refreshDrawPileUI();
+  is_Swap = false;
 
-  action_modal?.classList.remove("active");
-  action_modal_card_from_stack?.classList.add("active");
+  if (!noGuidanceMode) {
+    action_modal?.classList.remove("active");
+    action_modal_card_from_stack?.classList.add("active");
+  }
 
-  set_attributes_to_Card("card_action", current_card.value);
+  setPlayerTurnPhase(
+    noGuidanceMode
+      ? PLAYER_PHASES.DRAWN_DECISION
+      : PLAYER_PHASES.DRAWN_DECISION,
+    noGuidanceMode
+      ? "Lege die Karte auf die Ablage oder tausche sie mit einer deiner Karten."
+      : "Wähle, ob du die Karte behalten oder ablegen möchtest.",
+  );
 
   // Startposition merken, solange sichtbar
   const ca = document.getElementById("card_action");
@@ -1170,6 +1515,8 @@ function onTakeFromStack() {
 function onTakeFromAblage() {
   if (gameEnded) return;
   if (currentPlayer !== "player1") return;
+  if (player1?.firstRound) return;
+  if (playerTurnPhase !== PLAYER_PHASES.CHOOSE_ACTION) return;
   do_enable_area();
 
   const top = topAblage();
@@ -1178,7 +1525,7 @@ function onTakeFromAblage() {
       "player1",
       "Ablagestapel leer",
       "Es liegt noch keine Karte auf dem Ablagestapel.",
-      2000
+      2000,
     );
     return;
   }
@@ -1189,32 +1536,41 @@ function onTakeFromAblage() {
   current_card.covered = false;
   current_card_source = "ablage";
 
-  action_modal?.classList.remove("active");
-  show_info_modal(
-    "player1",
-    "Karte wählen",
-    "Klicke die Karte an, mit der getauscht werden soll.",
-    3000
-  );
   is_Swap = true;
+  action_modal?.classList.remove("active");
+  setPlayerTurnPhase(
+    PLAYER_PHASES.MUST_SWAP,
+    "Wähle eine deiner Karten, um mit der Ablagekarte zu tauschen.",
+  );
+  if (!noGuidanceMode) {
+    show_info_modal(
+      "player1",
+      "Karte wählen",
+      "Klicke die Karte an, mit der getauscht werden soll.",
+      3000,
+    );
+  }
 }
 
 async function onDiscardDrawnAndRevealOne() {
   if (gameEnded) return;
   if (currentPlayer !== "player1") return;
   if (!current_card) return;
+  if (current_card_source !== "stack") return;
+
+  const startRect =
+    lastDrawnCardRect || rectOf("card_action") || viewportCenterRect();
+  closeActionModals();
+  setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Lege Karte auf Ablage.");
 
   // animiert: card_action → ablage
-  const startRect =
-    rectOf("card_action") || lastDrawnCardRect || viewportCenterRect();
-
   await withUIBlocked(
     flyCardBetween({
       value: current_card.value,
       from: startRect,
       to: "player_card_ablage",
       duration: ANIM.fly,
-    })
+    }),
   );
 
   putOnAblage(current_card);
@@ -1226,6 +1582,10 @@ async function onDiscardDrawnAndRevealOne() {
 
   action_modal_card_from_stack?.classList.remove("active");
   do_enable_area();
+  setPlayerTurnPhase(
+    PLAYER_PHASES.MUST_REVEAL,
+    "Decke jetzt genau eine verdeckte Karte auf.",
+  );
 }
 
 function onKeepDrawnAndSwap() {
@@ -1245,15 +1605,21 @@ function onKeepDrawnAndSwap() {
     };
   }
 
+  is_Swap = true;
   action_modal_card_from_stack?.classList.remove("active");
   do_enable_area();
-  show_info_modal(
-    "player1",
-    "Karte wählen",
-    "Klicke auf die Karte, mit der getauscht werden soll.",
-    4000
+  setPlayerTurnPhase(
+    PLAYER_PHASES.MUST_SWAP,
+    "Wähle eine deiner Karten, um mit der gezogenen Karte zu tauschen.",
   );
-  is_Swap = true;
+  if (!noGuidanceMode) {
+    show_info_modal(
+      "player1",
+      "Karte wählen",
+      "Klicke auf die Karte, mit der getauscht werden soll.",
+      4000,
+    );
+  }
   // current_card_source bleibt 'stack'
 }
 
@@ -1262,7 +1628,7 @@ function onKeepDrawnAndSwap() {
 async function ki_discover_two_first_round() {
   const p2Nodes = Array.from(document.querySelectorAll(".player2-card"));
   const covered = p2Nodes.filter(
-    (n) => n.getAttribute("data-status") === "covered"
+    (n) => n.getAttribute("data-status") === "covered",
   );
 
   const howMany = Math.min(2, covered.length);
@@ -1342,7 +1708,7 @@ async function ki_take_turn() {
             oldValue: oldCard ? oldCard.value : null,
             ablageEl: "player_card_ablage",
             duration: ANIM.fly,
-          })
+          }),
         );
 
         // Modell/DOM aktualisieren
@@ -1407,7 +1773,7 @@ async function ki_take_turn() {
               oldValue: old ? old.value : null,
               ablageEl: "player_card_ablage",
               duration: ANIM.fly,
-            })
+            }),
           );
 
           player2.cards[d.index] = drawn;
@@ -1430,7 +1796,7 @@ async function ki_take_turn() {
         from: getKiStackStartRect(),
         to: "player_card_ablage",
         duration: ANIM.fly,
-      })
+      }),
     );
     putOnAblage(drawn);
 
@@ -1445,7 +1811,7 @@ async function ki_take_turn() {
 async function ki_reveal_random_covered_one() {
   const p2Nodes = Array.from(document.querySelectorAll(".player2-card"));
   const covered = p2Nodes.filter(
-    (n) => n.getAttribute("data-status") === "covered"
+    (n) => n.getAttribute("data-status") === "covered",
   );
   if (covered.length === 0) return;
   const node = covered[Math.floor(Math.random() * covered.length)];
@@ -1495,7 +1861,7 @@ function check_and_remove_vertical_triples(player) {
       c1.value === c2.value
     ) {
       console.log(
-        `🔥 Triple gefunden bei Spieler ${player.name}: Wert ${c0.value}`
+        `🔥 Triple gefunden bei Spieler ${player.name}: Wert ${c0.value}`,
       );
 
       //*Karten entfernen und UI leeren
@@ -1540,7 +1906,7 @@ function swap_card(a, b, c) {
     const slotId = getBoardSlotId(player.playerNumber, boardIndex);
     if (!slotId || isSlotRemoved(slotId)) {
       console.warn(
-        "swap_card: Zielslot ist entfernt/blockiert – Operation verworfen."
+        "swap_card: Zielslot ist entfernt/blockiert – Operation verworfen.",
       );
       return;
     }
@@ -1559,7 +1925,7 @@ function swap_card(a, b, c) {
     return;
   }
   console.warn(
-    "swap_card(a,b) aufgerufen – erwartetes Muster ist swap_card(player, index, newCard). Aufruf ignoriert."
+    "swap_card(a,b) aufgerufen – erwartetes Muster ist swap_card(player, index, newCard). Aufruf ignoriert.",
   );
 }
 
@@ -1582,13 +1948,13 @@ function reveal_all_cards() {
 function refresh_point_label() {
   const sum = player1.cards.reduce(
     (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
-    0
+    0,
   );
   point_label.innerHTML = `Summe ${sum}`;
 
   const ki_sum = player2.cards.reduce(
     (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
-    0
+    0,
   );
   point_label_ki.innerHTML = `Summe ${ki_sum}`;
 }
@@ -1598,6 +1964,8 @@ function loadGameFromLocalStorage() {
   const savedGame = localStorage.getItem("skyjo_savegame");
   if (savedGame) {
     save_object = JSON.parse(savedGame);
+    save_object.points_ki = save_object.points_ki ?? 0;
+    save_object.points_player = save_object.points_player ?? 0;
     lbl_game_points_ki.innerHTML = save_object.points_ki;
     lbl_game_points_player.innerHTML = save_object.points_player;
   } else {

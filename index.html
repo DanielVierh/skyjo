@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
@@ -21,6 +21,9 @@
         <div class="start-buttons">
           <button class="start-btn" id="btn_new_game">
             Neues Spiel gegen KI
+          </button>
+          <button class="start-btn" id="btn_new_game_no_help">
+            Neues Spiel ohne Spielhilfe
           </button>
           <button class="start-btn" id="btn_continue_game">
             Weiterspielen gegen KI
@@ -154,16 +157,34 @@
     </div>
 
     <div class="middle">
-      <div class="card covered card-stack"></div>
-      <div
-        class="card grid-card"
-        data-value=""
-        data-status="covered"
-        id="player_card_ablage"
-      >
-        <p class="val-label"></p>
-        <p class="before-label"></p>
-        <p class="after-label"></p>
+      <div class="middle-pile middle-pile-draw" id="draw_pile_zone">
+        <div class="middle-label">Nachziehstapel</div>
+        <div class="card covered card-stack" id="player_card_stack"></div>
+      </div>
+      <div class="middle-pile middle-pile-discard" id="discard_pile_zone">
+        <div class="middle-label">Ablagestapel</div>
+        <div
+          class="card grid-card"
+          data-value=""
+          data-status="covered"
+          id="player_card_ablage"
+        >
+          <p class="val-label"></p>
+          <p class="before-label"></p>
+          <p class="after-label"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-hand" id="player_hand_panel" aria-live="polite">
+      <div class="player-hand-copy">
+        <div class="player-hand-title">Deine Hand</div>
+        <p class="player-hand-text" id="player_hand_text">
+          Wähle Nachziehstapel oder Ablagestapel.
+        </p>
+      </div>
+      <div class="player-hand-card-slot" id="player_hand_slot">
+        <div class="card hand-card is-empty" id="card_action"></div>
       </div>
     </div>
 
