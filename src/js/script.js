@@ -217,6 +217,39 @@ const all_cards = {
   12: 10,
 };
 
+const COLUMN_GROUPS = [
+  [0, 4, 8],
+  [1, 5, 9],
+  [2, 6, 10],
+  [3, 7, 11],
+];
+
+const KI_WEIGHTS = {
+  visibleImprovement: 9,
+  visibleRegression: 7,
+  coveredPlacementBase: 16,
+  coveredHighPenalty: 3,
+  tripleFinish: 160,
+  tripleBuild: 48,
+  pairSupport: 20,
+  lowCardBonus: 10,
+  highCardPenalty: 8,
+  discardHighValueBonus: 6,
+  discardLowValuePenalty: 18,
+  opponentTripleThreat: 140,
+  opponentSetThreat: 28,
+  revealPairColumn: 38,
+  revealTripleChance: 26,
+  revealStructuredColumn: 20,
+  revealHighCardPressure: 4,
+  revealFreshColumn: 6,
+  revealSingleCoveredBonus: 6,
+  takeDiscardThreshold: 30,
+  drawSwapThreshold: 12,
+  lastTurnAggression: 1.35,
+  closingDefense: 1.25,
+};
+
 //*==== Spielende-Helfer ====
 
 function hasAllCardsOpen(player) {
@@ -996,6 +1029,308 @@ function getKiStackStartRect() {
   return viewportCenterRect();
 }
 
+function getColumnIndexForSlot(slotIndex) {
+  return COLUMN_GROUPS.findIndex((column) => column.includes(slotIndex));
+}
+
+function getPlayerColumnStates(player) {
+  return COLUMN_GROUPS.map((indices, columnIndex) => {
+    const entries = indices.map((index) => ({
+      index,
+      card: player.cards[index],
+    }));
+    const activeEntries = entries.filter((entry) => entry.card !== null);
+    const openEntries = activeEntries.filter((entry) => !entry.card.covered);
+    const coveredEntries = activeEntries.filter((entry) => entry.card.covered);
+
+    return {
+      columnIndex,
+      indices,
+      entries,
+      activeEntries,
+      openEntries,
+      coveredEntries,
+      removedCount: entries.length - activeEntries.length,
+      openValues: openEntries.map((entry) => entry.card.value),
+      openSum: openEntries.reduce((sum, entry) => sum + entry.card.value, 0),
+    };
+  });
+}
+
+function getOpponentNeedScore(opponent, cardValue) {
+  if (cardValue == null) return 0;
+
+  return getPlayerColumnStates(opponent).reduce((score, column) => {
+    const sameVisible = column.openEntries.filter(
+      (entry) => entry.card.value === cardValue,
+    ).length;
+
+    if (sameVisible >= 2) {
+      return score + KI_WEIGHTS.opponentTripleThreat;
+    }
+    if (sameVisible === 1) {
+      return score + KI_WEIGHTS.opponentSetThreat;
+    }
+    return score;
+  }, 0);
+}
+
+function getKiStrategicContext() {
+  const aiOpenCards = player2.cards.filter((card) => card && !card.covered).length;
+  const opponentOpenCards = player1.cards.filter(
+    (card) => card && !card.covered,
+  ).length;
+
+  return {
+    opponentLikelyClosing:
+      (lastTurn && closingPlayer === player1) || opponentOpenCards >= 10,
+    aiLikelyClosing: (lastTurn && closingPlayer === player2) || aiOpenCards >= 10,
+  };
+}
+
+function evaluateKiSwap(player, opponent, incomingValue, slotIndex, context) {
+  const targetCard = player.cards[slotIndex];
+  if (!targetCard) return Number.NEGATIVE_INFINITY;
+
+  const columnIndex = getColumnIndexForSlot(slotIndex);
+  const column = getPlayerColumnStates(player)[columnIndex];
+  if (!column) return Number.NEGATIVE_INFINITY;
+
+  const otherOpenEntries = column.openEntries.filter(
+    (entry) => entry.index !== slotIndex,
+  );
+  const sameOpenCount = otherOpenEntries.filter(
+    (entry) => entry.card.value === incomingValue,
+  ).length;
+
+  let positiveScore = 0;
+  let negativeScore = 0;
+
+  if (!targetCard.covered) {
+    const delta = targetCard.value - incomingValue;
+    if (delta >= 0) {
+      positiveScore += delta * KI_WEIGHTS.visibleImprovement;
+    } else {
+      negativeScore += Math.abs(delta) * KI_WEIGHTS.visibleRegression;
+    }
+  } else {
+    positiveScore +=
+      KI_WEIGHTS.coveredPlacementBase -
+      Math.max(0, incomingValue) * KI_WEIGHTS.coveredHighPenalty;
+  }
+
+  if (sameOpenCount >= 2) {
+    positiveScore += KI_WEIGHTS.tripleFinish;
+  } else if (sameOpenCount === 1) {
+    positiveScore += KI_WEIGHTS.tripleBuild;
+    if (targetCard.covered) {
+      positiveScore += KI_WEIGHTS.pairSupport;
+    }
+  }
+
+  if (incomingValue <= 0) {
+    positiveScore += KI_WEIGHTS.lowCardBonus;
+  }
+  if (incomingValue >= 8) {
+    negativeScore += (incomingValue - 7) * KI_WEIGHTS.highCardPenalty;
+  }
+
+  if (!targetCard.covered) {
+    negativeScore += getOpponentNeedScore(opponent, targetCard.value);
+  }
+
+  if (context.opponentLikelyClosing) {
+    positiveScore *= KI_WEIGHTS.lastTurnAggression;
+  }
+  if (context.aiLikelyClosing) {
+    negativeScore *= KI_WEIGHTS.closingDefense;
+  }
+
+  return positiveScore - negativeScore;
+}
+
+function getBestKiSwapOption(incomingValue, source, context) {
+  let bestOption = null;
+
+  for (let index = 0; index < player2.cards.length; index++) {
+    const targetCard = player2.cards[index];
+    if (!targetCard) continue;
+
+    const score = evaluateKiSwap(
+      player2,
+      player1,
+      incomingValue,
+      index,
+      context,
+    );
+
+    if (!bestOption || score > bestOption.score) {
+      bestOption = { index, score, source };
+    }
+  }
+
+  return bestOption;
+}
+
+function getSmartRevealChoice(player, context) {
+  const columns = getPlayerColumnStates(player);
+  let bestChoice = null;
+
+  for (const column of columns) {
+    for (const entry of column.coveredEntries) {
+      let score = 0;
+
+      if (column.openEntries.length >= 2) {
+        score += KI_WEIGHTS.revealPairColumn;
+        const distinctOpenValues = new Set(column.openValues);
+        if (distinctOpenValues.size === 1) {
+          score += KI_WEIGHTS.revealTripleChance;
+        }
+      } else if (column.openEntries.length === 1) {
+        score += KI_WEIGHTS.revealStructuredColumn;
+        score +=
+          Math.max(0, column.openEntries[0].card.value) *
+          KI_WEIGHTS.revealHighCardPressure;
+      } else {
+        score += KI_WEIGHTS.revealFreshColumn;
+      }
+
+      if (column.coveredEntries.length === 1) {
+        score += KI_WEIGHTS.revealSingleCoveredBonus;
+      }
+
+      if (context.opponentLikelyClosing) {
+        score *= KI_WEIGHTS.lastTurnAggression;
+      }
+
+      if (!bestChoice || score > bestChoice.score) {
+        bestChoice = { index: entry.index, score };
+      }
+    }
+  }
+
+  return bestChoice;
+}
+
+function evaluateKiDiscardAndReveal(drawnValue, revealChoice, context) {
+  let score = revealChoice ? revealChoice.score : 0;
+
+  if (drawnValue >= 7) {
+    score += drawnValue * KI_WEIGHTS.discardHighValueBonus;
+  } else if (drawnValue <= 0) {
+    score -=
+      Math.abs(drawnValue - 1) * KI_WEIGHTS.discardLowValuePenalty;
+  }
+
+  let opponentRisk = getOpponentNeedScore(player1, drawnValue);
+  if (context.aiLikelyClosing) {
+    opponentRisk *= KI_WEIGHTS.closingDefense;
+  }
+
+  return score - opponentRisk;
+}
+
+async function ki_reveal_index(index) {
+  if (index == null) return;
+
+  const slotId = getBoardSlotId(2, index);
+  if (!slotId || isSlotRemoved(slotId)) return;
+
+  const card = player2.cards[index];
+  if (!card) return;
+
+  await wait(KI_DELAY.reveal);
+  highlightSlot(slotId, true);
+  discover_card(card, slotId, true);
+  setSlotDiscovered(slotId);
+  await wait(KI_DELAY.step);
+  highlightSlot(slotId, false);
+}
+
+async function ki_execute_swap(option, incomingCard) {
+  if (!option || !incomingCard) return false;
+
+  const boardSlotId = getBoardSlotId(2, option.index);
+  if (!boardSlotId || isSlotRemoved(boardSlotId)) return false;
+
+  const boardSlotEl = document.getElementById(boardSlotId);
+  const oldCard = player2.cards[option.index];
+  const fromEl = option.source === "ablage" ? "player_card_ablage" : getKiStackStartRect();
+
+  await withUIBlocked(
+    flySwap({
+      newValue: incomingCard.value,
+      fromEl,
+      toEl: boardSlotEl,
+      oldValue: oldCard ? oldCard.value : null,
+      ablageEl: "player_card_ablage",
+      duration: ANIM.fly,
+    }),
+  );
+
+  let appliedCard = incomingCard;
+  if (option.source === "ablage") {
+    appliedCard = takeFromAblage();
+    if (!appliedCard) return false;
+  }
+
+  player2.cards[option.index] = appliedCard;
+  player2.cards[option.index].place = "board";
+  player2.cards[option.index].covered = false;
+
+  if (oldCard) {
+    putOnAblage(oldCard);
+  }
+
+  discover_card(player2.cards[option.index], boardSlotId, true);
+  setSlotDiscovered(boardSlotId);
+  return true;
+}
+
+async function ki_discard_drawn_and_reveal(drawnCard, revealChoice) {
+  await withUIBlocked(
+    flyCardBetween({
+      value: drawnCard.value,
+      from: getKiStackStartRect(),
+      to: "player_card_ablage",
+      duration: ANIM.fly,
+    }),
+  );
+
+  putOnAblage(drawnCard);
+
+  if (revealChoice) {
+    await ki_reveal_index(revealChoice.index);
+    return;
+  }
+
+  await ki_reveal_random_covered_one();
+}
+
+function getKiFirstRoundRevealIndices() {
+  const columns = shuffleArray([...getPlayerColumnStates(player2)]);
+  const selected = [];
+
+  for (const column of columns) {
+    if (!column.coveredEntries.length) continue;
+    const choice = column.coveredEntries[Math.floor(Math.random() * column.coveredEntries.length)];
+    selected.push(choice.index);
+    if (selected.length === 2) break;
+  }
+
+  if (selected.length < 2) {
+    const fallbackCovered = player2.cards
+      .map((card, index) => ({ card, index }))
+      .filter(({ card, index }) => card?.covered && !selected.includes(index));
+    shuffleArray(fallbackCovered);
+    while (selected.length < 2 && fallbackCovered.length > 0) {
+      selected.push(fallbackCovered.shift().index);
+    }
+  }
+
+  return selected;
+}
+
 /* ===========================
    ===== Initialisierung =====
    =========================== */
@@ -1650,26 +1985,15 @@ function onKeepDrawnAndSwap() {
 //*==== KI ====
 
 async function ki_discover_two_first_round() {
-  const p2Nodes = Array.from(document.querySelectorAll(".player2-card"));
-  const covered = p2Nodes.filter(
-    (n) => n.getAttribute("data-status") === "covered",
-  );
+  const revealIndices = getKiFirstRoundRevealIndices();
 
-  const howMany = Math.min(2, covered.length);
-  shuffleArray(covered);
-
-  for (let i = 0; i < howMany; i++) {
-    await wait(KI_DELAY.reveal);
-    const node = covered[i];
-    const meta = getPlayerAndIndexFromSlot(node);
-    if (!meta) continue;
-    const { index } = meta;
-
+  for (const index of revealIndices) {
     const slotId = getBoardSlotId(2, index);
     if (!slotId) continue;
     const card = player2.cards[index];
     if (!card) continue;
 
+    await wait(KI_DELAY.reveal);
     highlightSlot(slotId, true);
     await wait(KI_DELAY.step);
     discover_card(card, slotId, true);
@@ -1688,143 +2012,58 @@ async function ki_discover_two_first_round() {
 async function ki_take_turn() {
   if (gameEnded) return;
 
+  if (cardStack.length === 0) {
+    recycleDiscardIntoDrawPile();
+  }
+
   current_card = null;
   current_card_source = null;
   is_Swap = false;
+  const context = getKiStrategicContext();
 
   //*1) Ablage nutzen?
   const ablage = topAblage();
   if (ablage) {
-    const p2Nodes = Array.from(document.querySelectorAll(".player2-card"));
-    let discovered = [];
-    for (const n of p2Nodes) {
-      if (n.getAttribute("data-status") === "discovered") {
-        const meta = getPlayerAndIndexFromSlot(n);
-        if (!meta) continue;
-        const card = player2.cards[meta.index];
-        if (!card) continue; //*entfernte Slots
-        discovered.push({
-          index: meta.index,
-          value: card.value,
-        });
-      }
-    }
-    discovered.sort((a, b) => b.value - a.value);
-
-    for (const d of discovered) {
-      if (ablage.value + 1 < d.value) {
-        await wait(KI_DELAY.think);
-        const boardSlotId = getBoardSlotId(2, d.index);
-        if (!boardSlotId) break;
-
-        //*Sicherstellen, dass Zielslot nicht entfernt ist
-        if (isSlotRemoved(boardSlotId)) continue;
-
-        const boardSlotEl = document.getElementById(boardSlotId);
-        const oldCard = player2.cards[d.index];
-
-        // Animiert: Ablage → Board, alte Boardkarte → Ablage
-        await withUIBlocked(
-          flySwap({
-            newValue: ablage.value,
-            fromEl: "player_card_ablage",
-            toEl: boardSlotEl,
-            oldValue: oldCard ? oldCard.value : null,
-            ablageEl: "player_card_ablage",
-            duration: ANIM.fly,
-          }),
-        );
-
-        // Modell/DOM aktualisieren
-        const abFromTop = takeFromAblage();
-        if (!abFromTop) break;
-
-        player2.cards[d.index] = abFromTop;
-        player2.cards[d.index].place = "board";
-        player2.cards[d.index].covered = false;
-
-        if (oldCard) putOnAblage(oldCard);
-        discover_card(player2.cards[d.index], boardSlotId, true);
-        setSlotDiscovered(boardSlotId);
-
+    const discardOption = getBestKiSwapOption(ablage.value, "ablage", context);
+    if (discardOption && discardOption.score >= KI_WEIGHTS.takeDiscardThreshold) {
+      await wait(KI_DELAY.think);
+      const swapped = await ki_execute_swap(discardOption, ablage);
+      if (swapped) {
         return end_of_turn("player2");
       }
     }
   }
 
   //*2) Ziehen
-  if (cardStack.length > 0) {
+  if (cardStack.length > 0 || recycleDiscardIntoDrawPile()) {
     await wait(KI_DELAY.draw);
     const drawn = cardStack.splice(0, 1)[0];
+    refreshDrawPileUI();
     drawn.place = "hand";
     drawn.covered = false;
 
     await wait(KI_DELAY.step);
 
-    //*2a) Falls klein, versuche eine schlechtere aufgedeckte zu ersetzen
-    if (drawn.value <= 4) {
-      const p2Nodes = Array.from(document.querySelectorAll(".player2-card"));
-      let discovered = [];
-      for (const n of p2Nodes) {
-        if (n.getAttribute("data-status") === "discovered") {
-          const meta = getPlayerAndIndexFromSlot(n);
-          if (!meta) continue;
-          const card = player2.cards[meta.index];
-          if (!card) continue;
-          discovered.push({
-            index: meta.index,
-            value: card.value,
-          });
-        }
-      }
-      discovered.sort((a, b) => b.value - a.value);
+    const drawSwapOption = getBestKiSwapOption(drawn.value, "stack", context);
+    const revealChoice = getSmartRevealChoice(player2, context);
+    const discardScore = evaluateKiDiscardAndReveal(
+      drawn.value,
+      revealChoice,
+      context,
+    );
 
-      for (const d of discovered) {
-        if (drawn.value < d.value) {
-          const boardSlotId = getBoardSlotId(2, d.index);
-          if (!boardSlotId) break;
-          if (isSlotRemoved(boardSlotId)) continue;
-
-          const boardSlotEl = document.getElementById(boardSlotId);
-          const old = player2.cards[d.index];
-
-          // Animiert: „Stack“ (Fallback) → Board, alte Boardkarte → Ablage
-          await withUIBlocked(
-            flySwap({
-              newValue: drawn.value,
-              fromEl: getKiStackStartRect(),
-              toEl: boardSlotEl,
-              oldValue: old ? old.value : null,
-              ablageEl: "player_card_ablage",
-              duration: ANIM.fly,
-            }),
-          );
-
-          player2.cards[d.index] = drawn;
-          player2.cards[d.index].place = "board";
-          player2.cards[d.index].covered = false;
-
-          if (old) putOnAblage(old);
-          discover_card(player2.cards[d.index], boardSlotId, true);
-          setSlotDiscovered(boardSlotId);
-
-          return end_of_turn("player2");
-        }
+    if (
+      drawSwapOption &&
+      drawSwapOption.score >= KI_WEIGHTS.drawSwapThreshold &&
+      drawSwapOption.score >= discardScore
+    ) {
+      const swapped = await ki_execute_swap(drawSwapOption, drawn);
+      if (swapped) {
+        return end_of_turn("player2");
       }
     }
 
-    //*2b) Keine Verbesserung → ablegen & eine verdeckte aufdecken
-    await withUIBlocked(
-      flyCardBetween({
-        value: drawn.value,
-        from: getKiStackStartRect(),
-        to: "player_card_ablage",
-        duration: ANIM.fly,
-      }),
-    );
-    putOnAblage(drawn);
-
-    await ki_reveal_random_covered_one();
+    await ki_discard_drawn_and_reveal(drawn, revealChoice);
     return end_of_turn("player2");
   }
 
@@ -1833,43 +2072,15 @@ async function ki_take_turn() {
 }
 
 async function ki_reveal_random_covered_one() {
-  const p2Nodes = Array.from(document.querySelectorAll(".player2-card"));
-  const covered = p2Nodes.filter(
-    (n) => n.getAttribute("data-status") === "covered",
-  );
-  if (covered.length === 0) return;
-  const node = covered[Math.floor(Math.random() * covered.length)];
-  const meta = getPlayerAndIndexFromSlot(node);
-  if (!meta) return;
-  const { index } = meta;
-
-  const slotId = getBoardSlotId(2, index);
-  if (!slotId) return;
-  if (isSlotRemoved(slotId)) return;
-
-  const card = player2.cards[index];
-  if (!card) return;
-
-  await wait(KI_DELAY.reveal);
-  highlightSlot(slotId, true);
-  discover_card(card, slotId, true);
-  setSlotDiscovered(slotId);
-  await wait(KI_DELAY.step);
-  highlightSlot(slotId, false);
+  const revealChoice = getSmartRevealChoice(player2, getKiStrategicContext());
+  if (!revealChoice) return;
+  await ki_reveal_index(revealChoice.index);
 }
 
 //*==== Vertikal-Triple-Check & Entfernen ====
 
 function check_and_remove_vertical_triples(player) {
-  //*Spalten-Indexgruppen
-  const columns = [
-    [0, 4, 8],
-    [1, 5, 9],
-    [2, 6, 10],
-    [3, 7, 11],
-  ];
-
-  for (const col of columns) {
+  for (const col of COLUMN_GROUPS) {
     const c0 = player.cards[col[0]];
     const c1 = player.cards[col[1]];
     const c2 = player.cards[col[2]];
