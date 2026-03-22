@@ -135,6 +135,9 @@ let uiEventsBound = false;
 let idleHintTimer = null;
 let handHintText = "Wähle Nachziehstapel oder Ablagestapel.";
 
+const SAVEGAME_STORAGE_KEY = "skyjo_savegame";
+const GUIDANCE_MODE_STORAGE_KEY = "skyjo_no_guidance_mode";
+
 const PLAYER_PHASES = {
   WAITING: "waiting",
   FIRST_ROUND: "first-round",
@@ -168,6 +171,7 @@ const ANIM = {
 let save_object = {
   points_ki: 0,
   points_player: 0,
+  no_guidance_mode: false,
 };
 
 // Letzte Position der Spieler-Vorschaukarte aus dem Stack (für Start der Flugbahn)
@@ -447,12 +451,30 @@ function setPlayerTurnPhase(phase, hintText = null) {
   scheduleIdleHint();
 }
 
-function setGuidanceMode(enabled) {
+function setGuidanceMode(enabled, options = {}) {
+  const { persist = true } = options;
+
   noGuidanceMode = enabled;
+  save_object.no_guidance_mode = enabled;
   document.body.classList.toggle("no-guidance-mode", enabled);
   closeActionModals();
   updateHandCardUI();
   updateBoardGuidance();
+
+  localStorage.setItem(GUIDANCE_MODE_STORAGE_KEY, String(enabled));
+
+  if (persist) {
+    save_Game_into_Storage();
+  }
+}
+
+function loadStoredGuidanceMode() {
+  const storedMode = localStorage.getItem(GUIDANCE_MODE_STORAGE_KEY);
+  if (storedMode === null) {
+    return save_object.no_guidance_mode ?? false;
+  }
+
+  return storedMode === "true";
 }
 
 function refreshDrawPileUI() {
@@ -1355,6 +1377,7 @@ window.onload = showStartModalWrapper;
 function showStartModalWrapper() {
   // lade gespeicherte Punkte, damit wir wissen, ob "Weiterspielen" sichtbar sein soll
   loadGameFromLocalStorage();
+  setGuidanceMode(loadStoredGuidanceMode(), { persist: false });
 
   if (btn_continue_game) {
     if (
@@ -1394,7 +1417,8 @@ function showStartModalWrapper() {
     // Weiterspielen gegen KI mit bestehenden Punkten
     if (start_modal) start_modal.classList.remove("active");
     ki_player = true;
-    setGuidanceMode(false);
+    loadGameFromLocalStorage();
+    setGuidanceMode(loadStoredGuidanceMode(), { persist: false });
     init();
   });
 
@@ -1408,6 +1432,7 @@ function showStartModalWrapper() {
 
 function init() {
   loadGameFromLocalStorage();
+  setGuidanceMode(loadStoredGuidanceMode(), { persist: false });
   create_player();
   create_cards();
   give_player_cards(player1);
@@ -2218,20 +2243,28 @@ function refresh_point_label() {
 
 //*ANCHOR - Load Game from Local Storage
 function loadGameFromLocalStorage() {
-  const savedGame = localStorage.getItem("skyjo_savegame");
+  const savedGame = localStorage.getItem(SAVEGAME_STORAGE_KEY);
   if (savedGame) {
     save_object = JSON.parse(savedGame);
     save_object.points_ki = save_object.points_ki ?? 0;
     save_object.points_player = save_object.points_player ?? 0;
+    save_object.no_guidance_mode =
+      save_object.no_guidance_mode ?? loadStoredGuidanceMode();
     lbl_game_points_ki.innerHTML = save_object.points_ki;
     lbl_game_points_player.innerHTML = save_object.points_player;
     refresh_point_label();
   } else {
+    save_object.no_guidance_mode = loadStoredGuidanceMode();
     save_Game_into_Storage();
   }
 }
 
 //*ANCHOR - Save Game into Local Storage
 function save_Game_into_Storage() {
-  localStorage.setItem("skyjo_savegame", JSON.stringify(save_object));
+  save_object.no_guidance_mode = noGuidanceMode;
+  localStorage.setItem(
+    GUIDANCE_MODE_STORAGE_KEY,
+    String(save_object.no_guidance_mode),
+  );
+  localStorage.setItem(SAVEGAME_STORAGE_KEY, JSON.stringify(save_object));
 }
