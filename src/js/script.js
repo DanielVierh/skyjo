@@ -1076,7 +1076,9 @@ function getOpponentNeedScore(opponent, cardValue) {
 }
 
 function getKiStrategicContext() {
-  const aiOpenCards = player2.cards.filter((card) => card && !card.covered).length;
+  const aiOpenCards = player2.cards.filter(
+    (card) => card && !card.covered,
+  ).length;
   const opponentOpenCards = player1.cards.filter(
     (card) => card && !card.covered,
   ).length;
@@ -1084,7 +1086,8 @@ function getKiStrategicContext() {
   return {
     opponentLikelyClosing:
       (lastTurn && closingPlayer === player1) || opponentOpenCards >= 10,
-    aiLikelyClosing: (lastTurn && closingPlayer === player2) || aiOpenCards >= 10,
+    aiLikelyClosing:
+      (lastTurn && closingPlayer === player2) || aiOpenCards >= 10,
   };
 }
 
@@ -1218,8 +1221,7 @@ function evaluateKiDiscardAndReveal(drawnValue, revealChoice, context) {
   if (drawnValue >= 7) {
     score += drawnValue * KI_WEIGHTS.discardHighValueBonus;
   } else if (drawnValue <= 0) {
-    score -=
-      Math.abs(drawnValue - 1) * KI_WEIGHTS.discardLowValuePenalty;
+    score -= Math.abs(drawnValue - 1) * KI_WEIGHTS.discardLowValuePenalty;
   }
 
   let opponentRisk = getOpponentNeedScore(player1, drawnValue);
@@ -1255,7 +1257,8 @@ async function ki_execute_swap(option, incomingCard) {
 
   const boardSlotEl = document.getElementById(boardSlotId);
   const oldCard = player2.cards[option.index];
-  const fromEl = option.source === "ablage" ? "player_card_ablage" : getKiStackStartRect();
+  const fromEl =
+    option.source === "ablage" ? "player_card_ablage" : getKiStackStartRect();
 
   await withUIBlocked(
     flySwap({
@@ -1313,7 +1316,10 @@ function getKiFirstRoundRevealIndices() {
 
   for (const column of columns) {
     if (!column.coveredEntries.length) continue;
-    const choice = column.coveredEntries[Math.floor(Math.random() * column.coveredEntries.length)];
+    const choice =
+      column.coveredEntries[
+        Math.floor(Math.random() * column.coveredEntries.length)
+      ];
     selected.push(choice.index);
     if (selected.length === 2) break;
   }
@@ -2025,7 +2031,10 @@ async function ki_take_turn() {
   const ablage = topAblage();
   if (ablage) {
     const discardOption = getBestKiSwapOption(ablage.value, "ablage", context);
-    if (discardOption && discardOption.score >= KI_WEIGHTS.takeDiscardThreshold) {
+    if (
+      discardOption &&
+      discardOption.score >= KI_WEIGHTS.takeDiscardThreshold
+    ) {
       await wait(KI_DELAY.think);
       const swapped = await ki_execute_swap(discardOption, ablage);
       if (swapped) {

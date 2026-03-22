@@ -613,18 +613,22 @@ body.no-guidance-mode .modal-info {
 
 @media (max-width: 700px) {
   .middle {
+    top: 52%;
     width: calc(100vw - 24px);
     max-width: none;
+    flex-direction: row;
     gap: 14px;
     padding: 12px;
   }
 
   .middle-pile {
+    width: auto;
     flex: 1 1 0;
   }
 
   .player-hand {
-    bottom: 295px;
+    top: calc(52% - 155px);
+    bottom: auto;
     width: calc(100vw - 24px);
     gap: 12px;
     padding: 12px;
