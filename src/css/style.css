@@ -34,7 +34,9 @@ body.no-guidance-mode .modal-info {
   border-radius: 12px 12px 0 0;
 }
 .p1-board.active {
-  box-shadow: 0 0 30px white, inset 0 0 25px white;
+  box-shadow:
+    0 0 30px white,
+    inset 0 0 25px white;
 }
 .p1-board.deactivated::before {
   content: "";
@@ -55,7 +57,9 @@ body.multiplayer-mode .p2-board {
   transform: translateX(-50%) rotate(180deg);
 }
 .p2-board.active {
-  box-shadow: 0 0 30px white, inset 0 0 25px white;
+  box-shadow:
+    0 0 30px white,
+    inset 0 0 25px white;
 }
 .p2-board.deactivated::before {
   content: "";
@@ -92,9 +96,63 @@ body.multiplayer-mode .p2-board {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image: linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(60deg, rgba(68, 76, 247, 0.4666666667) 25%, transparent 25.5%, transparent 75%, rgba(68, 76, 247, 0.4666666667) 75%, rgba(68, 76, 247, 0.4666666667)), linear-gradient(60deg, rgba(68, 76, 247, 0.4666666667) 25%, transparent 25.5%, transparent 75%, rgba(68, 76, 247, 0.4666666667) 75%, rgba(68, 76, 247, 0.4666666667));
+  background-image:
+    linear-gradient(
+      30deg,
+      black 12%,
+      transparent 12.5%,
+      transparent 87%,
+      black 87.5%,
+      black
+    ),
+    linear-gradient(
+      150deg,
+      black 12%,
+      transparent 12.5%,
+      transparent 87%,
+      black 87.5%,
+      black
+    ),
+    linear-gradient(
+      30deg,
+      black 12%,
+      transparent 12.5%,
+      transparent 87%,
+      black 87.5%,
+      black
+    ),
+    linear-gradient(
+      150deg,
+      black 12%,
+      transparent 12.5%,
+      transparent 87%,
+      black 87.5%,
+      black
+    ),
+    linear-gradient(
+      60deg,
+      rgba(68, 76, 247, 0.4666666667) 25%,
+      transparent 25.5%,
+      transparent 75%,
+      rgba(68, 76, 247, 0.4666666667) 75%,
+      rgba(68, 76, 247, 0.4666666667)
+    ),
+    linear-gradient(
+      60deg,
+      rgba(68, 76, 247, 0.4666666667) 25%,
+      transparent 25.5%,
+      transparent 75%,
+      rgba(68, 76, 247, 0.4666666667) 75%,
+      rgba(68, 76, 247, 0.4666666667)
+    );
   background-size: 30px 15px;
-  background-position: 0 0, 0 0, 18px 32px, 18px 32px, 0 0, 18px 32px;
+  background-position:
+    0 0,
+    0 0,
+    18px 32px,
+    18px 32px,
+    0 0,
+    18px 32px;
   opacity: 0.2;
   z-index: 3;
 }
@@ -191,7 +249,12 @@ body.multiplayer-mode .p2-board {
   opacity: 0.4;
 }
 .card.card-stack {
-  box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray, -10px 0 3px black;
+  box-shadow:
+    2px 0 1px gray,
+    4px 0 1px gray,
+    1px 0 2px black,
+    10px 0 1px gray,
+    -10px 0 3px black;
   border: 1px solid rgba(255, 255, 255, 0.586);
 }
 .card.is-interactive,
@@ -297,7 +360,10 @@ body.multiplayer-mode .point-label.player2 {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 14px;
-  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
 }
 
 .middle-pile .middle-label {
@@ -309,7 +375,9 @@ body.multiplayer-mode .point-label.player2 {
 
 .middle-pile.is-interactive {
   background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18), 0 10px 24px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
 
@@ -333,12 +401,17 @@ body.multiplayer-mode .point-label.player2 {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 160ms ease;
 }
 
 .player-hand.is-active {
   border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 3px rgba(255, 255, 255, 0.08);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -350,6 +423,36 @@ body.multiplayer-mode .point-label.player2 {
   text-transform: uppercase;
   opacity: 0.75;
   margin-bottom: 6px;
+}
+
+.player-hand-copy {
+  transition: transform 180ms ease;
+  transform-origin: center center;
+}
+
+.player-turn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.72rem;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.player-turn-badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #9fd3ff;
+  box-shadow: 0 0 12px rgba(159, 211, 255, 0.85);
 }
 
 .player-hand-text {
@@ -374,13 +477,52 @@ body.multiplayer-mode .point-label.player2 {
 }
 
 .hand-card {
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .player-hand.is-active .hand-card {
   transform: translateY(-3px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
 }
+
+body.multiplayer-mode.turn-player1 .player-hand {
+  border-color: rgba(66, 210, 152, 0.32);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 3px rgba(66, 210, 152, 0.12);
+}
+
+body.multiplayer-mode.turn-player1 .player-turn-badge {
+  background: rgba(66, 210, 152, 0.16);
+  border-color: rgba(66, 210, 152, 0.32);
+}
+
+body.multiplayer-mode.turn-player1 .player-turn-badge::before {
+  background: #42d298;
+  box-shadow: 0 0 12px rgba(66, 210, 152, 0.75);
+}
+
+body.multiplayer-mode.turn-player2 .player-hand {
+  border-color: rgba(255, 172, 76, 0.34);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 3px rgba(255, 172, 76, 0.12);
+}
+
+body.multiplayer-mode.turn-player2 .player-hand-copy {
+  transform: rotate(180deg);
+}
+
+body.multiplayer-mode.turn-player2 .player-turn-badge {
+  background: rgba(255, 172, 76, 0.18);
+  border-color: rgba(255, 172, 76, 0.34);
+}
+
+body.multiplayer-mode.turn-player2 .player-turn-badge::before {
+  background: #ffac4c;
+  box-shadow: 0 0 12px rgba(255, 172, 76, 0.75);
 }
 
 .game-points-layer {
@@ -555,7 +697,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
 .modal.active.modal-endgame {
   background-color: rgba(0, 0, 0, 0.7);
   -webkit-backdrop-filter: blur(5px);
-          backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
   top: 0;
   left: 0;
   width: 100%;
@@ -573,7 +715,9 @@ body.multiplayer-mode .game-points-layer--player h4 {
   border-radius: 8px;
   font-size: 2rem;
   font-weight: bold;
-  box-shadow: inset 0 0 25px white, 0 0 45px white;
+  box-shadow:
+    inset 0 0 25px white,
+    0 0 45px white;
   border: 1px solid white;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -628,7 +772,9 @@ body.multiplayer-mode .game-points-layer--player h4 {
 }
 
 .highlight {
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.38), 0 0 18px rgba(255, 243, 176, 0.7) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.38),
+    0 0 18px rgba(255, 243, 176, 0.7) !important;
   transform: translateY(-2px);
 }
 
@@ -663,6 +809,11 @@ body.multiplayer-mode .game-points-layer--player h4 {
 
   .player-hand-text {
     font-size: 0.84rem;
+  }
+
+  .player-turn-badge {
+    font-size: 0.66rem;
+    letter-spacing: 1.4px;
   }
 
   .game-points-layer--player {

@@ -121,6 +121,7 @@ const player_card_stack = document.getElementById("player_card_stack");
 const draw_pile_zone = document.getElementById("draw_pile_zone");
 const discard_pile_zone = document.getElementById("discard_pile_zone");
 const player_hand_panel = document.getElementById("player_hand_panel");
+const player_turn_badge = document.getElementById("player_turn_badge");
 const player_hand_title = document.getElementById("player_hand_title");
 const player_hand_text = document.getElementById("player_hand_text");
 const player_hand_slot = document.getElementById("player_hand_slot");
@@ -158,6 +159,8 @@ const PLAYER2_MODES = {
   KI: "ki",
   HUMAN: "human",
 };
+
+const CARD_ACTION_IDS = ["card_action_hand", "card_action_modal"];
 
 //*Spielende-Status
 let gameEnded = false;
@@ -236,6 +239,12 @@ function getWaitingTurnHint(playerKey = currentPlayer) {
   return `${getPlayerDisplayName(playerKey)} ist am Zug.`;
 }
 
+function formatHintForPlayer(text, playerKey = currentPlayer) {
+  if (!text) return "";
+  if (!isMultiplayerMode()) return text;
+  return `${getPlayerDisplayName(playerKey)}: ${text}`;
+}
+
 function loadStoredPlayer2Mode() {
   return save_object.player2_mode === PLAYER2_MODES.HUMAN
     ? PLAYER2_MODES.HUMAN
@@ -244,6 +253,8 @@ function loadStoredPlayer2Mode() {
 
 function updateModeLabels() {
   document.body.classList.toggle("multiplayer-mode", isMultiplayerMode());
+  document.body.classList.toggle("turn-player1", currentPlayer === "player1");
+  document.body.classList.toggle("turn-player2", currentPlayer === "player2");
 
   if (lbl_game_points_opponent_title) {
     lbl_game_points_opponent_title.textContent = getScoreLabel("player2");
@@ -255,6 +266,15 @@ function updateModeLabels() {
     player_hand_title.textContent = isHumanTurn()
       ? `Hand ${getPlayerDisplayName(currentPlayer)}`
       : "Gezogene Karte";
+  }
+  if (player_turn_badge) {
+    if (isMultiplayerMode()) {
+      player_turn_badge.textContent = `Aktiver Zug: ${getPlayerDisplayName(currentPlayer)}`;
+    } else {
+      player_turn_badge.textContent = isHumanTurn()
+        ? "Dein Zug"
+        : "Computerzug";
+    }
   }
 }
 
@@ -392,10 +412,39 @@ function resetHighlights() {
 }
 
 function setHandHint(text) {
-  handHintText = text || "";
+  handHintText = formatHintForPlayer(text || "");
   if (player_hand_text) {
     player_hand_text.textContent = handHintText;
   }
+}
+
+function getActionCardElements() {
+  return CARD_ACTION_IDS.map((id) => document.getElementById(id)).filter(
+    Boolean,
+  );
+}
+
+function clearActionCardUI() {
+  getActionCardElements().forEach((el) => {
+    clearCardUI(el.id);
+    el.classList.add("covered", "is-empty");
+  });
+}
+
+function renderActionCard(value) {
+  getActionCardElements().forEach((el) => {
+    el.classList.remove("covered", "is-empty");
+    set_attributes_to_Card(el.id, value);
+  });
+}
+
+function getVisibleActionCardRect() {
+  const visibleActionCard = getActionCardElements().find((el) => {
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+
+  return visibleActionCard ? rectOf(visibleActionCard) : null;
 }
 
 function refreshPileInteractivity() {
@@ -485,11 +534,7 @@ function updateHandCardUI() {
   }
 
   if (!current_card) {
-    clearCardUI("card_action");
-    const cardAction = document.getElementById("card_action");
-    if (cardAction) {
-      cardAction.classList.add("covered", "is-empty");
-    }
+    clearActionCardUI();
     if (noGuidanceMode && isHumanTurn() && !gameEnded) {
       const activePlayer = getCurrentPlayerObject();
       if (activePlayer?.firstRound) {
@@ -503,11 +548,7 @@ function updateHandCardUI() {
     return;
   }
 
-  const cardAction = document.getElementById("card_action");
-  if (cardAction) {
-    cardAction.classList.remove("covered", "is-empty");
-  }
-  set_attributes_to_Card("card_action", current_card.value);
+  renderActionCard(current_card.value);
 
   if (playerTurnPhase === PLAYER_PHASES.DRAWN_DECISION) {
     setHandHint(
@@ -1758,7 +1799,12 @@ function prepareHumanTurn(playerKey) {
   do_disable_area();
   if (activePlayer.firstRound) {
     do_enable_area();
-    setPlayerTurnPhase(PLAYER_PHASES.FIRST_ROUND, "Decke 2 deiner Karten auf.");
+    setPlayerTurnPhase(
+      PLAYER_PHASES.FIRST_ROUND,
+      isMultiplayerMode()
+        ? "Decke 2 deiner eigenen Karten auf."
+        : "Decke 2 deiner Karten auf.",
+    );
     if (!noGuidanceMode) {
       show_info_modal(
         playerKey,
@@ -1777,8 +1823,8 @@ function prepareHumanTurn(playerKey) {
   setPlayerTurnPhase(
     PLAYER_PHASES.CHOOSE_ACTION,
     lastTurn
-      ? "Letzter Zug: Wähle Nachziehstapel oder Ablagestapel."
-      : "Wähle Nachziehstapel oder Ablagestapel.",
+      ? "Letzter Zug: Wähle Nachziehstapel oder Ablagestapel für diesen Zug."
+      : "Wähle Nachziehstapel oder Ablagestapel für deinen Zug.",
   );
   do_enable_area();
   if (!noGuidanceMode) {
@@ -1948,7 +1994,7 @@ async function onCardClick(cardEl) {
     is_Swap = true;
     setPlayerTurnPhase(
       PLAYER_PHASES.MUST_SWAP,
-      "Wähle eine deiner Karten, um mit der gezogenen Karte zu tauschen.",
+      "Wähle eine deiner offenen oder verdeckten Karten für den Tausch.",
     );
   }
 
@@ -1964,7 +2010,7 @@ async function onCardClick(cardEl) {
       fromRef = ablageEl || "player_card_ablage";
     } else if (current_card_source === "stack") {
       fromRef =
-        lastDrawnCardRect || rectOf("card_action") || viewportCenterRect();
+        lastDrawnCardRect || getVisibleActionCardRect() || viewportCenterRect();
     } else {
       fromRef = viewportCenterRect();
     }
@@ -2045,18 +2091,17 @@ function onTakeFromStack() {
   setPlayerTurnPhase(
     PLAYER_PHASES.DRAWN_DECISION,
     noGuidanceMode
-      ? "Lege die Karte auf die Ablage oder tausche sie mit einer deiner Karten."
-      : "Wähle, ob du die Karte behalten oder ablegen möchtest.",
+      ? "Lege die gezogene Karte ab oder tausche sie mit einer deiner Karten."
+      : "Entscheide, ob du die gezogene Karte behältst oder ablegst.",
   );
 
-  const ca = document.getElementById("card_action");
-  if (ca) {
-    const r = ca.getBoundingClientRect();
+  const actionCardRect = getVisibleActionCardRect();
+  if (actionCardRect) {
     lastDrawnCardRect = {
-      left: r.left,
-      top: r.top,
-      width: r.width,
-      height: r.height,
+      left: actionCardRect.left,
+      top: actionCardRect.top,
+      width: actionCardRect.width,
+      height: actionCardRect.height,
     };
   } else {
     lastDrawnCardRect = viewportCenterRect();
@@ -2111,7 +2156,7 @@ async function onDiscardDrawnAndRevealOne() {
   if (current_card_source !== "stack") return;
 
   const startRect =
-    lastDrawnCardRect || rectOf("card_action") || viewportCenterRect();
+    lastDrawnCardRect || getVisibleActionCardRect() || viewportCenterRect();
   closeActionModals();
   setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Lege Karte auf Ablage.");
 
@@ -2135,7 +2180,7 @@ async function onDiscardDrawnAndRevealOne() {
   do_enable_area();
   setPlayerTurnPhase(
     PLAYER_PHASES.MUST_REVEAL,
-    "Decke jetzt genau eine verdeckte Karte auf.",
+    "Decke jetzt genau eine verdeckte Karte auf, um den Zug zu beenden.",
   );
 }
 
@@ -2144,14 +2189,13 @@ function onKeepDrawnAndSwap() {
   if (!isHumanTurn()) return;
   if (!current_card) return;
 
-  const ca = document.getElementById("card_action");
-  if (ca) {
-    const r = ca.getBoundingClientRect();
+  const actionCardRect = getVisibleActionCardRect();
+  if (actionCardRect) {
     lastDrawnCardRect = {
-      left: r.left,
-      top: r.top,
-      width: r.width,
-      height: r.height,
+      left: actionCardRect.left,
+      top: actionCardRect.top,
+      width: actionCardRect.width,
+      height: actionCardRect.height,
     };
   }
 

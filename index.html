@@ -180,13 +180,14 @@
 
     <div class="player-hand" id="player_hand_panel" aria-live="polite">
       <div class="player-hand-copy">
+        <div class="player-turn-badge" id="player_turn_badge">Aktiver Zug</div>
         <div class="player-hand-title" id="player_hand_title">Deine Hand</div>
         <p class="player-hand-text" id="player_hand_text">
           Wähle Nachziehstapel oder Ablagestapel.
         </p>
       </div>
       <div class="player-hand-card-slot" id="player_hand_slot">
-        <div class="card hand-card is-empty" id="card_action"></div>
+        <div class="card hand-card is-empty" id="card_action_hand"></div>
       </div>
     </div>
 
@@ -207,7 +208,7 @@
 
     <div class="modal modal-action p1" id="action_modal_card_from_stack">
       <div class="card-wrapper">
-        <div class="card" id="card_action"></div>
+        <div class="card" id="card_action_modal"></div>
       </div>
       <div class="action-button" id="btn_swap_with_ablage_after_new">
         <b>Karte ablegen: </b> auf den Ablagestapel legen und eine deiner Karten
