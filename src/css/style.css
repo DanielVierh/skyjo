@@ -51,6 +51,9 @@ body.no-guidance-mode .modal-info {
   transform: translateX(-50%);
   border-radius: 0 0 12px 12px;
 }
+body.multiplayer-mode .p2-board {
+  transform: translateX(-50%) rotate(180deg);
+}
 .p2-board.active {
   box-shadow: 0 0 30px white, inset 0 0 25px white;
 }
@@ -250,6 +253,9 @@ body.no-guidance-mode .modal-info {
   top: 0;
   left: 10px;
 }
+body.multiplayer-mode .point-label.player2 {
+  top: 8px;
+}
 
 .gridfield {
   display: grid;
@@ -407,6 +413,10 @@ body.no-guidance-mode .modal-info {
   position: fixed;
   top: -35%;
   left: 85%;
+}
+body.multiplayer-mode .game-points-layer--ki h4,
+body.multiplayer-mode .game-points-layer--player h4 {
+  letter-spacing: 1px;
 }
 
 .decision-modal {
