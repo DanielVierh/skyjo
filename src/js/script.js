@@ -110,7 +110,15 @@ const lbl_game_points_player = document.getElementById(
 );
 const btn_next_game = document.getElementById("btn_next_game");
 const mdl_endgame = document.getElementById("mdl_endgame");
+const mdl_endgame_winner = document.getElementById("mdl_endgame_winner");
 const lbl_finishText = document.getElementById("lbl_finishText");
+const lbl_endgame_winner_title = document.getElementById(
+  "lbl_endgame_winner_title",
+);
+const lbl_endgame_winner_text = document.getElementById(
+  "lbl_endgame_winner_text",
+);
+const btn_endgame_winner_ok = document.getElementById("btn_endgame_winner_ok");
 const endgame_stats = document.getElementById("endgame_stats");
 const point_label_ki = document.getElementById("point_label_ki");
 const start_modal = document.getElementById("start_modal");
@@ -202,6 +210,8 @@ let save_object = {
 // Letzte Position der Spieler-Vorschaukarte aus dem Stack (für Start der Flugbahn)
 let lastDrawnCardRect = null;
 let turnTransitionTimer = null;
+let pendingEndgameSummary = null;
+let pendingEndgameResetScores = false;
 
 function isMultiplayerMode() {
   return !ki_player;
@@ -406,6 +416,52 @@ function renderEndgameStats(stats) {
       <p>${ruleText}</p>
     </section>`;
   endgame_stats.classList.remove("is-empty");
+}
+
+function hideEndgameOverlays() {
+  mdl_endgame?.classList.remove("active", "is-summary");
+  mdl_endgame_winner?.classList.remove("active");
+}
+
+function resetEndgameFlowState() {
+  pendingEndgameSummary = null;
+  pendingEndgameResetScores = false;
+  hideEndgameOverlays();
+}
+
+function showEndgameSummary() {
+  if (!pendingEndgameSummary || !mdl_endgame || !lbl_finishText) return;
+
+  mdl_endgame_winner?.classList.remove("active");
+  mdl_endgame.classList.add("active", "is-summary");
+  lbl_finishText.innerHTML = pendingEndgameSummary.headline;
+  renderEndgameStats(pendingEndgameSummary.stats);
+  btn_next_game.textContent = pendingEndgameResetScores ? "Neues Spiel" : "Weiter";
+  do_enable_area();
+}
+
+function queueEndgameFlow({ winnerTitle, winnerText, summaryHeadline, stats, resetScores = false }) {
+  pendingEndgameSummary = {
+    headline: summaryHeadline,
+    stats,
+  };
+  pendingEndgameResetScores = resetScores;
+
+  hideEndgameOverlays();
+  renderEndgameStats(null);
+  btn_next_game.textContent = resetScores ? "Neues Spiel" : "Weiter";
+
+  if (lbl_endgame_winner_title) {
+    lbl_endgame_winner_title.textContent = winnerTitle;
+  }
+  if (lbl_endgame_winner_text) {
+    lbl_endgame_winner_text.textContent = winnerText;
+  }
+
+  setTimeout(() => {
+    mdl_endgame_winner?.classList.add("active");
+    do_enable_area();
+  }, 900);
 }
 
 //*==== Klassen ====
@@ -804,9 +860,13 @@ function bindUIActions() {
 }
 
 btn_next_game.addEventListener("click", () => {
-  // Statt die Seite neu zu laden, starte eine neue Runde ohne das Start-Modal wieder anzuzeigen
-  if (mdl_endgame) mdl_endgame.classList.remove("active");
-  startRoundWithoutModal(false);
+  const shouldResetScores = pendingEndgameResetScores;
+  resetEndgameFlowState();
+  startRoundWithoutModal(shouldResetScores);
+});
+
+btn_endgame_winner_ok?.addEventListener("click", () => {
+  showEndgameSummary();
 });
 
 // Starte eine neue Runde ohne Page-Reload. Wenn resetScores=true, werden
@@ -826,6 +886,7 @@ function startRoundWithoutModal(resetScores = false) {
   current_card_source = null;
   is_Swap = false;
   clearIdleHintTimer();
+  resetEndgameFlowState();
   renderEndgameStats(null);
   setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Warte auf den nächsten Zug.");
 
@@ -932,13 +993,7 @@ function endGame() {
   const totalAfterRoundPlayer1 = (save_object.points_player ?? 0) + points1;
   const totalAfterRoundPlayer2 = (save_object.points_ki ?? 0) + points2;
 
-  reveal_all_cards();
-  mdl_endgame.classList.add("active");
-  lbl_finishText.innerHTML = doubledPlayerKey
-    ? `Runde beendet!<br><br>Gewinner der Runde: ${winner}<br>${getPlayerDisplayName(doubledPlayerKey)} hat die Verdopplungsregel ausgeloest.`
-    : `Runde beendet!<br><br>Gewinner der Runde: ${winner}`;
-
-  renderEndgameStats({
+  const endgameStats = {
     player1: {
       label: getPlayerDisplayName("player1"),
       roundPoints: points1,
@@ -959,7 +1014,7 @@ function endGame() {
     },
     closingPlayerKey,
     doubledPlayerKey,
-  });
+  };
 
   //* add points to sum and save
   save_object.points_ki += points2;
@@ -968,12 +1023,22 @@ function endGame() {
   lbl_game_points_player.innerHTML = save_object.points_player;
   refresh_point_label();
 
+  reveal_all_cards();
+
   if (save_object.points_ki >= 100) {
     show_winner();
   } else if (save_object.points_player >= 100) {
     show_winner();
   } else {
     save_Game_into_Storage();
+    queueEndgameFlow({
+      winnerTitle: "Rundensieger",
+      winnerText: winner === "Unentschieden" ? "Die Runde endet unentschieden." : `${winner} hat die Runde gewonnen.`,
+      summaryHeadline: doubledPlayerKey
+        ? `${winner}<br><span class="endgame-note">${getPlayerDisplayName(doubledPlayerKey)} hat die Verdopplungsregel ausgeloest.</span>`
+        : `${winner}`,
+      stats: endgameStats,
+    });
   }
 
   //*Optional: UI sperren
@@ -982,17 +1047,43 @@ function endGame() {
 
 //*ANCHOR - Show Winner of the game and reset local storage for new game
 function show_winner() {
-  if (save_object.points_ki > save_object.points_player) {
-    mdl_endgame.classList.add("active");
-    lbl_finishText.innerHTML = `Spiel gewonnen!<br>${getPlayerDisplayName("player1")} hat das Spiel gewonnen`;
-  } else {
-    mdl_endgame.classList.add("active");
-    lbl_finishText.innerHTML = `Spiel beendet<br>${getPlayerDisplayName("player2")} hat das Spiel gewonnen`;
-  }
+  const isPlayer1Winner = save_object.points_ki > save_object.points_player;
+  const winnerKey = isPlayer1Winner ? "player1" : "player2";
+  const finalStats = {
+    player1: {
+      label: getPlayerDisplayName("player1"),
+      roundPoints: countPoints(player1),
+      totalPoints: save_object.points_player,
+      openCards: countOpenCards(player1),
+      coveredCards: countCoveredCards(player1),
+      removedCards: countRemovedCards(player1),
+      isDoubled: false,
+    },
+    player2: {
+      label: getPlayerDisplayName("player2"),
+      roundPoints: countPoints(player2),
+      totalPoints: save_object.points_ki,
+      openCards: countOpenCards(player2),
+      coveredCards: countCoveredCards(player2),
+      removedCards: countRemovedCards(player2),
+      isDoubled: false,
+    },
+    closingPlayerKey: null,
+    doubledPlayerKey: null,
+  };
+
   save_object.points_ki = 0;
   save_object.points_player = 0;
   save_Game_into_Storage();
   refresh_point_label();
+
+  queueEndgameFlow({
+    winnerTitle: "Spielsieger",
+    winnerText: `${getPlayerDisplayName(winnerKey)} hat das Spiel gewonnen.`,
+    summaryHeadline: `${getPlayerDisplayName(winnerKey)} gewinnt das Spiel`,
+    stats: finalStats,
+    resetScores: true,
+  });
 }
 
 function do_disable_area() {
@@ -1685,6 +1776,7 @@ function showStartModalWrapper() {
   setGuidanceMode(ki_player ? loadStoredGuidanceMode() : true, {
     persist: false,
   });
+  resetEndgameFlowState();
   renderEndgameStats(null);
   updateStartMenuCopy();
 
@@ -1738,6 +1830,7 @@ function init() {
   setGuidanceMode(ki_player ? loadStoredGuidanceMode() : true, {
     persist: false,
   });
+  resetEndgameFlowState();
   create_player();
   create_cards();
   give_player_cards(player1);
