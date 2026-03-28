@@ -533,9 +533,11 @@ const KI_WEIGHTS = {
   pairSupport: 20,
   negativeSetPenalty: 42,
   lowCardBonus: 10,
+  zeroCardBonus: 32,
   highCardPenalty: 8,
   discardHighValueBonus: 6,
   discardLowValuePenalty: 18,
+  discardZeroPenalty: 42,
   opponentTripleThreat: 140,
   opponentSetThreat: 28,
   revealPairColumn: 38,
@@ -1571,6 +1573,9 @@ function evaluateKiSwap(player, opponent, incomingValue, slotIndex, context) {
   if (incomingValue <= 0) {
     positiveScore += KI_WEIGHTS.lowCardBonus;
   }
+  if (incomingValue === 0) {
+    positiveScore += KI_WEIGHTS.zeroCardBonus;
+  }
   if (incomingValue >= 8) {
     negativeScore += (incomingValue - 7) * KI_WEIGHTS.highCardPenalty;
   }
@@ -1657,7 +1662,9 @@ function evaluateKiDiscardAndReveal(drawnValue, revealChoice, context) {
 
   if (drawnValue >= 7) {
     score += drawnValue * KI_WEIGHTS.discardHighValueBonus;
-  } else if (drawnValue <= 0) {
+  } else if (drawnValue === 0) {
+    score -= KI_WEIGHTS.discardZeroPenalty;
+  } else if (drawnValue < 0) {
     score -= Math.abs(drawnValue - 1) * KI_WEIGHTS.discardLowValuePenalty;
   }
 
@@ -2507,6 +2514,16 @@ async function ki_take_turn() {
   const ablage = topAblage();
   if (ablage) {
     const discardOption = getBestKiSwapOption(ablage.value, "ablage", context);
+
+    // Eine offene 0 ist in Skyjo fast immer wertvoll: direkt nehmen.
+    if (ablage.value === 0 && discardOption) {
+      await wait(KI_DELAY.think);
+      const swapped = await ki_execute_swap(discardOption, ablage);
+      if (swapped) {
+        return end_of_turn("player2");
+      }
+    }
+
     if (
       discardOption &&
       discardOption.score >= KI_WEIGHTS.takeDiscardThreshold
