@@ -16,6 +16,10 @@ body {
   min-height: 100dvh;
 }
 
+body.is-turn-transition {
+  overflow: hidden;
+}
+
 html,
 body {
   min-height: 100%;
@@ -32,6 +36,10 @@ body.no-guidance-mode .modal-info {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 12px 12px 0 0;
+  transition:
+    box-shadow 220ms ease,
+    opacity 220ms ease,
+    filter 220ms ease;
 }
 .p1-board.active {
   box-shadow:
@@ -52,6 +60,10 @@ body.no-guidance-mode .modal-info {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 0 0 12px 12px;
+  transition:
+    box-shadow 220ms ease,
+    opacity 220ms ease,
+    filter 220ms ease;
 }
 body.multiplayer-mode .p2-board {
   transform: translateX(-50%) rotate(180deg);
@@ -60,6 +72,28 @@ body.multiplayer-mode .p2-board {
   box-shadow:
     0 0 30px white,
     inset 0 0 25px white;
+}
+.p1-board.deactivated,
+.p2-board.deactivated {
+  opacity: 0.72;
+  filter: saturate(0.78);
+}
+
+body.is-turn-transition .p1-board,
+body.is-turn-transition .p2-board,
+body.is-turn-transition .player-hand,
+body.is-turn-transition .player-turn-badge,
+body.is-turn-transition .game-points-layer {
+  transition-duration: 360ms;
+}
+
+body.is-turn-transition .player-hand {
+  filter: brightness(1.06);
+}
+
+body.is-turn-transition.turn-player1 .p1-board.active,
+body.is-turn-transition.turn-player2 .p2-board.active {
+  filter: brightness(1.08);
 }
 .p2-board.deactivated::before {
   content: "";
@@ -404,7 +438,10 @@ body.multiplayer-mode .point-label.player2 {
   transition:
     opacity 160ms ease,
     transform 160ms ease,
-    visibility 160ms ease;
+    visibility 160ms ease,
+    filter 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
 
 .player-hand.is-active {
@@ -444,6 +481,11 @@ body.multiplayer-mode .point-label.player2 {
   text-transform: uppercase;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.92);
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .player-turn-badge::before {
@@ -653,6 +695,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   flex-direction: column;
   gap: 20px;
   align-items: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
 }
 .modal.active.modal-start .start-inner h2 {
   margin: 0;
@@ -672,6 +715,32 @@ body.multiplayer-mode .game-points-layer--player h4 {
   cursor: pointer;
   font-weight: 700;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+.modal.active.modal-start .start-btn:hover,
+.modal.active.modal-start .start-btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.18);
+  filter: brightness(1.03);
+}
+.modal.active.modal-start .start-btn-title {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.modal.active.modal-start .start-btn-subtitle {
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.92;
 }
 .modal.active.modal-start .start-btn#btn_new_game {
   background: #008000;
@@ -707,6 +776,8 @@ body.multiplayer-mode .game-points-layer--player h4 {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 20px;
+  padding: 32px 20px;
 }
 .modal.active.modal-endgame .btn {
   background-color: #008000;
@@ -721,7 +792,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   border: 1px solid white;
   text-transform: uppercase;
   letter-spacing: 3px;
-  margin-top: 50px;
+  margin-top: 10px;
 }
 .modal.active.modal-endgame #lbl_finishText {
   color: white;
@@ -729,6 +800,71 @@ body.multiplayer-mode .game-points-layer--player h4 {
   text-align: center;
   line-height: 23px;
   text-shadow: 0 0 26px black;
+  max-width: 680px;
+}
+
+.endgame-stats {
+  width: min(880px, 100%);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.endgame-stats.is-empty {
+  display: none;
+}
+
+.endgame-stat-card,
+.endgame-rule-card {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  padding: 16px 18px;
+  color: white;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+}
+
+.endgame-stat-card h4,
+.endgame-rule-card h4 {
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.endgame-stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.94rem;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.endgame-stat-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.endgame-stat-row strong {
+  font-size: 1rem;
+}
+
+.endgame-rule-card p {
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .modal.active.modal-start .start-inner {
+    width: 100%;
+    padding: 24px 18px;
+  }
+
+  .modal.active.modal-endgame #lbl_finishText {
+    font-size: 1.2rem;
+    line-height: 1.35;
+  }
 }
 
 @keyframes button-animation {

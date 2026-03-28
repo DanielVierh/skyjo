@@ -20,22 +20,39 @@
         <h2>Willkommen bei Skyjo</h2>
         <div class="start-buttons">
           <button class="start-btn" id="btn_new_game">
-            Neues Spiel gegen KI mit Spielhilfe
+            <span class="start-btn-title">Neues Spiel mit Hilfe</span>
+            <span class="start-btn-subtitle"
+              >Gegen die KI mit eingeblendeten Aktionen und Hinweisen.</span
+            >
           </button>
           <button class="start-btn" id="btn_new_game_no_help">
-            Neues Spiel gegen KI ohne Spielhilfe
+            <span class="start-btn-title">Neues Spiel ohne Hilfe</span>
+            <span class="start-btn-subtitle"
+              >Gegen die KI mit direkter Steuerung ueber Stapel und
+              Karten.</span
+            >
           </button>
           <button class="start-btn" id="btn_continue_game">
-            Weiterspielen
+            <span class="start-btn-title" id="btn_continue_game_title"
+              >Weiterspielen</span
+            >
+            <span class="start-btn-subtitle" id="btn_continue_game_subtitle"
+              >Setzt die letzte gespeicherte Partie fort.</span
+            >
           </button>
           <button class="start-btn" id="btn_multiplayer">
-            Neues Spiel zu zweit
+            <span class="start-btn-title">Neues Spiel zu zweit</span>
+            <span class="start-btn-subtitle"
+              >Lokaler Hotseat-Modus ohne Hilfemodals und mit gedrehtem
+              Oberfeld.</span
+            >
           </button>
         </div>
       </div>
     </div>
     <div class="modal modal-endgame" id="mdl_endgame">
       <p id="lbl_finishText"></p>
+      <div class="endgame-stats" id="endgame_stats"></div>
       <div id="btn_next_game" class="btn">Weiter</div>
     </div>
     <div class="p2-board gridfield" id="p2Board">

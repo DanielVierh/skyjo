@@ -111,12 +111,19 @@ const lbl_game_points_player = document.getElementById(
 const btn_next_game = document.getElementById("btn_next_game");
 const mdl_endgame = document.getElementById("mdl_endgame");
 const lbl_finishText = document.getElementById("lbl_finishText");
+const endgame_stats = document.getElementById("endgame_stats");
 const point_label_ki = document.getElementById("point_label_ki");
 const start_modal = document.getElementById("start_modal");
 const btn_new_game = document.getElementById("btn_new_game");
 const btn_new_game_no_help = document.getElementById("btn_new_game_no_help");
 const btn_continue_game = document.getElementById("btn_continue_game");
 const btn_multiplayer = document.getElementById("btn_multiplayer");
+const btn_continue_game_title = document.getElementById(
+  "btn_continue_game_title",
+);
+const btn_continue_game_subtitle = document.getElementById(
+  "btn_continue_game_subtitle",
+);
 const player_card_stack = document.getElementById("player_card_stack");
 const draw_pile_zone = document.getElementById("draw_pile_zone");
 const discard_pile_zone = document.getElementById("discard_pile_zone");
@@ -183,6 +190,8 @@ const ANIM = {
   z: 99999,
 };
 
+const TURN_TRANSITION_MS = 360;
+
 let save_object = {
   points_ki: 0,
   points_player: 0,
@@ -192,6 +201,7 @@ let save_object = {
 
 // Letzte Position der Spieler-Vorschaukarte aus dem Stack (für Start der Flugbahn)
 let lastDrawnCardRect = null;
+let turnTransitionTimer = null;
 
 function isMultiplayerMode() {
   return !ki_player;
@@ -295,6 +305,107 @@ function setPlayer2Mode(mode, options = {}) {
   if (persist) {
     save_Game_into_Storage();
   }
+}
+
+function updateStartMenuCopy() {
+  const savedMode = loadStoredPlayer2Mode();
+  const hasSave = !!save_object.points_ki || !!save_object.points_player;
+
+  if (btn_continue_game) {
+    btn_continue_game.style.display = hasSave ? "block" : "none";
+  }
+
+  if (btn_continue_game_title) {
+    btn_continue_game_title.textContent =
+      savedMode === PLAYER2_MODES.HUMAN
+        ? "Zwei-Spieler-Partie fortsetzen"
+        : "Partie fortsetzen";
+  }
+
+  if (btn_continue_game_subtitle) {
+    btn_continue_game_subtitle.textContent =
+      savedMode === PLAYER2_MODES.HUMAN
+        ? "Setzt eure letzte lokale Hotseat-Runde mit dem gleichen Modus fort."
+        : "Laedt den zuletzt gespeicherten Stand gegen die KI.";
+  }
+}
+
+function triggerTurnTransition() {
+  updateModeLabels();
+  if (!document.body) return;
+
+  document.body.classList.remove("is-turn-transition");
+  if (turnTransitionTimer) {
+    clearTimeout(turnTransitionTimer);
+  }
+
+  void document.body.offsetWidth;
+  document.body.classList.add("is-turn-transition");
+  turnTransitionTimer = setTimeout(() => {
+    document.body.classList.remove("is-turn-transition");
+    turnTransitionTimer = null;
+  }, TURN_TRANSITION_MS);
+}
+
+function switchToPlayer(playerKey) {
+  currentPlayer = playerKey;
+  show_current_player();
+}
+
+function countOpenCards(player) {
+  return player.cards.filter((card) => card && !card.covered).length;
+}
+
+function countCoveredCards(player) {
+  return player.cards.filter((card) => card && card.covered).length;
+}
+
+function countRemovedCards(player) {
+  return player.cards.filter((card) => !card).length;
+}
+
+function renderEndgameStats(stats) {
+  if (!endgame_stats) return;
+
+  if (!stats) {
+    endgame_stats.innerHTML = "";
+    endgame_stats.classList.add("is-empty");
+    return;
+  }
+
+  const playerCard = ({
+    label,
+    roundPoints,
+    totalPoints,
+    openCards,
+    coveredCards,
+    removedCards,
+    isDoubled,
+  }) => `
+    <section class="endgame-stat-card">
+      <h4>${label}</h4>
+      <div class="endgame-stat-row"><span>Rundenpunkte</span><strong>${roundPoints}</strong></div>
+      <div class="endgame-stat-row"><span>Spielstand nach Runde</span><strong>${totalPoints}</strong></div>
+      <div class="endgame-stat-row"><span>Offene Karten</span><strong>${openCards}</strong></div>
+      <div class="endgame-stat-row"><span>Verdeckte Karten</span><strong>${coveredCards}</strong></div>
+      <div class="endgame-stat-row"><span>Entfernte Karten</span><strong>${removedCards}</strong></div>
+      <div class="endgame-stat-row"><span>Verdopplung</span><strong>${isDoubled ? "Ja" : "Nein"}</strong></div>
+    </section>`;
+
+  const ruleText = stats.doubledPlayerKey
+    ? `${getPlayerDisplayName(stats.doubledPlayerKey)} hat die Runde geschlossen, aber nicht die wenigsten Punkte erzielt. Deshalb wurden die Rundenpunkte verdoppelt.`
+    : stats.closingPlayerKey
+      ? `${getPlayerDisplayName(stats.closingPlayerKey)} hat die Runde geschlossen und die Verdopplungsregel nicht ausgeloest.`
+      : "Die Runde endete ohne Schliesser. Es wurde keine Verdopplung angewendet.";
+
+  endgame_stats.innerHTML = `
+    ${playerCard(stats.player1)}
+    ${playerCard(stats.player2)}
+    <section class="endgame-rule-card">
+      <h4>Rundenregel</h4>
+      <p>${ruleText}</p>
+    </section>`;
+  endgame_stats.classList.remove("is-empty");
 }
 
 //*==== Klassen ====
@@ -715,6 +826,7 @@ function startRoundWithoutModal(resetScores = false) {
   current_card_source = null;
   is_Swap = false;
   clearIdleHintTimer();
+  renderEndgameStats(null);
   setPlayerTurnPhase(PLAYER_PHASES.WAITING, "Warte auf den nächsten Zug.");
 
   // Clear stacks
@@ -787,32 +899,67 @@ function endGame() {
 
   let points1 = countPoints(player1);
   let points2 = countPoints(player2);
-  let origin_points = points1;
-  //!Todo - show original points before double
+  let doubledPlayerKey = null;
+  const player1OpenCards = countOpenCards(player1);
+  const player1CoveredCards = countCoveredCards(player1);
+  const player1RemovedCards = countRemovedCards(player1);
+  const player2OpenCards = countOpenCards(player2);
+  const player2CoveredCards = countCoveredCards(player2);
+  const player2RemovedCards = countRemovedCards(player2);
 
   //*Sonderregel: Wenn der Schließende NICHT die wenigsten Punkte hat → verdoppeln
   if (closingPlayer) {
     if (closingPlayer === player1 && points1 > points2) {
       points1 *= 2;
+      doubledPlayerKey = "player1";
     } else if (closingPlayer === player2 && points2 > points1) {
       points2 *= 2;
+      doubledPlayerKey = "player2";
     }
   }
 
-  const closingPlayerName =
-    closingPlayer === player2
-      ? getPlayerDisplayName("player2")
-      : getPlayerDisplayName("player1");
-  const additionalText = `${closingPlayerName} hatte ${origin_points} Punkte und hat die Runde beendet. Da ${closingPlayerName} nicht die wenigsten Punkte hatte, werden diese Punkte verdoppelt.`;
+  const closingPlayerKey =
+    closingPlayer === player1
+      ? "player1"
+      : closingPlayer === player2
+        ? "player2"
+        : null;
 
   let winner = "Unentschieden";
   if (points1 < points2) winner = getPlayerDisplayName("player1");
   else if (points2 < points1) winner = getPlayerDisplayName("player2");
+
+  const totalAfterRoundPlayer1 = (save_object.points_player ?? 0) + points1;
+  const totalAfterRoundPlayer2 = (save_object.points_ki ?? 0) + points2;
+
   reveal_all_cards();
   mdl_endgame.classList.add("active");
-  lbl_finishText.innerHTML = `Spiel beendet!<br><br>${getPlayerDisplayName("player1")}: ${
-    points1 > origin_points ? `${additionalText}<br><br>` : ""
-  }${points1} Punkte<br>${getPlayerDisplayName("player2")}: ${points2} Punkte<br><br>Gewinner: ${winner}`;
+  lbl_finishText.innerHTML = doubledPlayerKey
+    ? `Runde beendet!<br><br>Gewinner der Runde: ${winner}<br>${getPlayerDisplayName(doubledPlayerKey)} hat die Verdopplungsregel ausgeloest.`
+    : `Runde beendet!<br><br>Gewinner der Runde: ${winner}`;
+
+  renderEndgameStats({
+    player1: {
+      label: getPlayerDisplayName("player1"),
+      roundPoints: points1,
+      totalPoints: totalAfterRoundPlayer1,
+      openCards: player1OpenCards,
+      coveredCards: player1CoveredCards,
+      removedCards: player1RemovedCards,
+      isDoubled: doubledPlayerKey === "player1",
+    },
+    player2: {
+      label: getPlayerDisplayName("player2"),
+      roundPoints: points2,
+      totalPoints: totalAfterRoundPlayer2,
+      openCards: player2OpenCards,
+      coveredCards: player2CoveredCards,
+      removedCards: player2RemovedCards,
+      isDoubled: doubledPlayerKey === "player2",
+    },
+    closingPlayerKey,
+    doubledPlayerKey,
+  });
 
   //* add points to sum and save
   save_object.points_ki += points2;
@@ -837,7 +984,7 @@ function endGame() {
 function show_winner() {
   if (save_object.points_ki > save_object.points_player) {
     mdl_endgame.classList.add("active");
-    lbl_finishText.innerHTML = `Gewonnen<br>${getPlayerDisplayName("player1")} hat das Spiel gewonnen`;
+    lbl_finishText.innerHTML = `Spiel gewonnen!<br>${getPlayerDisplayName("player1")} hat das Spiel gewonnen`;
   } else {
     mdl_endgame.classList.add("active");
     lbl_finishText.innerHTML = `Spiel beendet<br>${getPlayerDisplayName("player2")} hat das Spiel gewonnen`;
@@ -881,14 +1028,13 @@ function end_of_turn(finished = null) {
       //*Er hat „zugemacht“ → anderer Spieler bekommt GENAU EINEN Zug
       lastTurn = true;
       closingPlayer = finishedPlayer;
-      currentPlayer = otherKey;
       show_info_modal(
         otherKey,
         "Letzter Zug",
         `${otherPlayer.name} hat jetzt einen letzten Zug.`,
         2500,
       );
-      show_current_player();
+      switchToPlayer(otherKey);
       return;
     } else {
       //*Es war bereits der letzte Zug → jetzt endet das Spiel
@@ -904,8 +1050,7 @@ function end_of_turn(finished = null) {
   }
 
   //*Normaler Spielerwechsel
-  currentPlayer = otherKey;
-  show_current_player();
+  switchToPlayer(otherKey);
 }
 
 //*(kompatibler Alias, falls dein Code irgendwo end_turn() aufruft)
@@ -1540,17 +1685,8 @@ function showStartModalWrapper() {
   setGuidanceMode(ki_player ? loadStoredGuidanceMode() : true, {
     persist: false,
   });
-
-  if (btn_continue_game) {
-    if (
-      (!save_object.points_ki || save_object.points_ki === 0) &&
-      (!save_object.points_player || save_object.points_player === 0)
-    ) {
-      btn_continue_game.style.display = "none";
-    } else {
-      btn_continue_game.style.display = "block";
-    }
-  }
+  renderEndgameStats(null);
+  updateStartMenuCopy();
 
   if (start_modal) start_modal.classList.add("active");
 
@@ -1844,6 +1980,7 @@ async function show_current_player() {
   if (gameEnded) return;
   closeActionModals();
   clearIdleHintTimer();
+  triggerTurnTransition();
 
   if (isHumanTurn()) {
     prepareHumanTurn(currentPlayer);
@@ -1924,23 +2061,30 @@ async function onCardClick(cardEl) {
           getWaitingTurnHint(getOtherPlayerKey("player1")),
         );
         setTimeout(() => {
-          currentPlayer = "player2";
-          show_current_player();
+          switchToPlayer("player2");
         }, 250);
       } else {
         const p1sum = player1.first_two_cards.sum;
         const p2sum = player2.first_two_cards.sum;
 
-        currentPlayer = p1sum > p2sum ? "player1" : "player2";
-        show_info_modal(
-          currentPlayer,
-          `${getPlayerDisplayName(currentPlayer)} beginnt`,
-          `${getPlayerDisplayName(currentPlayer)} hatte die höhere Summe.`,
-          1800,
-        );
-        setTimeout(() => {
-          show_current_player();
-        }, 250);
+        const nextPlayer = p1sum > p2sum ? "player1" : "player2";
+
+        if (isMultiplayerMode()) {
+          setTimeout(() => {
+            switchToPlayer(nextPlayer);
+          }, 250);
+        } else {
+          currentPlayer = nextPlayer;
+          show_info_modal(
+            currentPlayer,
+            `${getPlayerDisplayName(currentPlayer)} beginnt`,
+            `${getPlayerDisplayName(currentPlayer)} hatte die höhere Summe.`,
+            1800,
+          );
+          setTimeout(() => {
+            show_current_player();
+          }, 250);
+        }
       }
     }
     return;
