@@ -36,16 +36,13 @@ body.no-guidance-mode .modal-info {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 12px 12px 0 0;
-  transition:
-    box-shadow 220ms ease,
-    opacity 220ms ease,
-    filter 220ms ease;
+  transition: box-shadow 220ms ease, opacity 220ms ease, filter 220ms ease;
 }
+
 .p1-board.active {
-  box-shadow:
-    0 0 30px white,
-    inset 0 0 25px white;
+  box-shadow: 0 0 30px white, inset 0 0 25px white;
 }
+
 .p1-board.deactivated::before {
   content: "";
   position: absolute;
@@ -60,19 +57,17 @@ body.no-guidance-mode .modal-info {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 0 0 12px 12px;
-  transition:
-    box-shadow 220ms ease,
-    opacity 220ms ease,
-    filter 220ms ease;
+  transition: box-shadow 220ms ease, opacity 220ms ease, filter 220ms ease;
 }
+
 body.multiplayer-mode .p2-board {
   transform: translateX(-50%) rotate(180deg);
 }
+
 .p2-board.active {
-  box-shadow:
-    0 0 30px white,
-    inset 0 0 25px white;
+  box-shadow: 0 0 30px white, inset 0 0 25px white;
 }
+
 .p1-board.deactivated,
 .p2-board.deactivated {
   opacity: 0.72;
@@ -95,6 +90,7 @@ body.is-turn-transition.turn-player1 .p1-board.active,
 body.is-turn-transition.turn-player2 .p2-board.active {
   filter: brightness(1.08);
 }
+
 .p2-board.deactivated::before {
   content: "";
   position: absolute;
@@ -125,71 +121,19 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   overflow: hidden;
   cursor: pointer;
 }
+
 .card::after {
   content: "";
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image:
-    linear-gradient(
-      30deg,
-      black 12%,
-      transparent 12.5%,
-      transparent 87%,
-      black 87.5%,
-      black
-    ),
-    linear-gradient(
-      150deg,
-      black 12%,
-      transparent 12.5%,
-      transparent 87%,
-      black 87.5%,
-      black
-    ),
-    linear-gradient(
-      30deg,
-      black 12%,
-      transparent 12.5%,
-      transparent 87%,
-      black 87.5%,
-      black
-    ),
-    linear-gradient(
-      150deg,
-      black 12%,
-      transparent 12.5%,
-      transparent 87%,
-      black 87.5%,
-      black
-    ),
-    linear-gradient(
-      60deg,
-      rgba(68, 76, 247, 0.4666666667) 25%,
-      transparent 25.5%,
-      transparent 75%,
-      rgba(68, 76, 247, 0.4666666667) 75%,
-      rgba(68, 76, 247, 0.4666666667)
-    ),
-    linear-gradient(
-      60deg,
-      rgba(68, 76, 247, 0.4666666667) 25%,
-      transparent 25.5%,
-      transparent 75%,
-      rgba(68, 76, 247, 0.4666666667) 75%,
-      rgba(68, 76, 247, 0.4666666667)
-    );
+  background-image: linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(30deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(150deg, black 12%, transparent 12.5%, transparent 87%, black 87.5%, black), linear-gradient(60deg, rgba(68, 76, 247, 0.4666666667) 25%, transparent 25.5%, transparent 75%, rgba(68, 76, 247, 0.4666666667) 75%, rgba(68, 76, 247, 0.4666666667)), linear-gradient(60deg, rgba(68, 76, 247, 0.4666666667) 25%, transparent 25.5%, transparent 75%, rgba(68, 76, 247, 0.4666666667) 75%, rgba(68, 76, 247, 0.4666666667));
   background-size: 30px 15px;
-  background-position:
-    0 0,
-    0 0,
-    18px 32px,
-    18px 32px,
-    0 0,
-    18px 32px;
+  background-position: 0 0, 0 0, 18px 32px, 18px 32px, 0 0, 18px 32px;
   opacity: 0.2;
   z-index: 3;
 }
+
 .card .before-label {
   position: absolute;
   top: 3px;
@@ -205,9 +149,11 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   justify-content: center;
   align-items: center;
 }
+
 .card .before-label.underlined {
   text-decoration: underline;
 }
+
 .card .after-label {
   position: absolute;
   bottom: 3px;
@@ -226,32 +172,41 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   transition: transform 0.3s;
   perspective: 600px;
 }
+
 .card .after-label.underlined {
   text-decoration: underline;
 }
+
 .card .val-label {
   color: #000;
   text-shadow: 0 0 10px #fff;
 }
+
 .card .val-label.underlined {
   text-decoration: underline;
 }
+
 .card.green {
   background-color: #008000;
 }
+
 .card.yellow {
   background-color: #ffff00;
 }
+
 .card.red {
   background-color: #ff0000;
 }
+
 .card.lightblue {
   background-color: #00ffff;
 }
+
 .card.blue {
   background-color: #0000ff;
   color: #fff;
 }
+
 .card.covered {
   width: var(--card-width);
   height: var(--card-height);
@@ -259,6 +214,7 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   color: #fff;
   background: linear-gradient(#008000, #ff0000);
 }
+
 .card.covered::after {
   content: "SKYJO";
   position: absolute;
@@ -273,6 +229,7 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   justify-content: center;
   align-items: center;
 }
+
 .card.covered::before {
   content: "";
   position: absolute;
@@ -282,33 +239,34 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   z-index: 1000;
   opacity: 0.4;
 }
+
 .card.card-stack {
-  box-shadow:
-    2px 0 1px gray,
-    4px 0 1px gray,
-    1px 0 2px black,
-    10px 0 1px gray,
-    -10px 0 3px black;
+  box-shadow: 2px 0 1px gray, 4px 0 1px gray, 1px 0 2px black, 10px 0 1px gray, -10px 0 3px black;
   border: 1px solid rgba(255, 255, 255, 0.586);
 }
+
 .card.is-interactive,
 .middle-pile.is-interactive .card,
 .middle-pile.is-interactive {
   cursor: pointer;
 }
+
 .card.is-empty {
   background: rgba(255, 255, 255, 0.08);
   border: 1px dashed rgba(255, 255, 255, 0.35);
   color: rgba(255, 255, 255, 0.7);
 }
+
 .card.is-empty::after {
   content: "";
   background-image: none;
 }
+
 .card.is-empty::before {
   content: "";
   display: none;
 }
+
 .card.discover-effect {
   animation: card-flip 0.7s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
   backface-visibility: hidden;
@@ -340,16 +298,19 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   font-size: 0.7rem;
   letter-spacing: 1.5px;
 }
+
 .point-label.player1 {
   position: fixed;
   bottom: 0;
   left: 10px;
 }
+
 .point-label.player2 {
   position: fixed;
   top: 0;
   left: 10px;
 }
+
 body.multiplayer-mode .point-label.player2 {
   top: 8px;
 }
@@ -366,6 +327,7 @@ body.multiplayer-mode .point-label.player2 {
   align-content: center;
   margin: 0 auto;
 }
+
 .gridfield .grid-card {
   grid-column: span 1;
 }
@@ -394,10 +356,7 @@ body.multiplayer-mode .point-label.player2 {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 14px;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background-color 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
 .middle-pile .middle-label {
@@ -409,9 +368,7 @@ body.multiplayer-mode .point-label.player2 {
 
 .middle-pile.is-interactive {
   background: rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.18),
-    0 10px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18), 0 10px 24px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
 
@@ -435,20 +392,12 @@ body.multiplayer-mode .point-label.player2 {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition:
-    opacity 160ms ease,
-    transform 160ms ease,
-    visibility 160ms ease,
-    filter 220ms ease,
-    box-shadow 220ms ease,
-    border-color 220ms ease;
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease, filter 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 
 .player-hand.is-active {
   border-color: rgba(255, 255, 255, 0.22);
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 3px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.08);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -481,11 +430,7 @@ body.multiplayer-mode .point-label.player2 {
   text-transform: uppercase;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.92);
-  transition:
-    background-color 220ms ease,
-    border-color 220ms ease,
-    color 220ms ease,
-    box-shadow 220ms ease;
+  transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease, box-shadow 220ms ease;
 }
 
 .player-turn-badge::before {
@@ -519,9 +464,7 @@ body.multiplayer-mode .point-label.player2 {
 }
 
 .hand-card {
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
 .player-hand.is-active .hand-card {
@@ -531,9 +474,7 @@ body.multiplayer-mode .point-label.player2 {
 
 body.multiplayer-mode.turn-player1 .player-hand {
   border-color: rgba(66, 210, 152, 0.32);
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 3px rgba(66, 210, 152, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(66, 210, 152, 0.12);
 }
 
 body.multiplayer-mode.turn-player1 .player-turn-badge {
@@ -548,9 +489,7 @@ body.multiplayer-mode.turn-player1 .player-turn-badge::before {
 
 body.multiplayer-mode.turn-player2 .player-hand {
   border-color: rgba(255, 172, 76, 0.34);
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 3px rgba(255, 172, 76, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255, 172, 76, 0.12);
 }
 
 body.multiplayer-mode.turn-player2 .player-hand-copy {
@@ -580,9 +519,11 @@ body.multiplayer-mode.turn-player2 .player-turn-badge::before {
   align-items: center;
   opacity: 0.7;
 }
+
 .game-points-layer h4 {
   letter-spacing: 3px;
 }
+
 .game-points-layer p {
   font-size: 1.5rem;
 }
@@ -598,6 +539,7 @@ body.multiplayer-mode.turn-player2 .player-turn-badge::before {
   top: -35%;
   left: 85%;
 }
+
 body.multiplayer-mode .game-points-layer--ki h4,
 body.multiplayer-mode .game-points-layer--player h4 {
   letter-spacing: 1px;
@@ -606,6 +548,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
 .decision-modal {
   display: none;
 }
+
 .decision-modal.active {
   position: absolute;
   bottom: 10px;
@@ -619,6 +562,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   z-index: 99999;
   border-radius: 8px;
 }
+
 .decision-modal.active .option {
   background-color: black;
   color: white;
@@ -633,6 +577,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
 .modal {
   display: none;
 }
+
 .modal.active {
   display: block;
   position: fixed;
@@ -644,12 +589,14 @@ body.multiplayer-mode .game-points-layer--player h4 {
   width: 95%;
   max-width: 600px;
 }
+
 .modal.active.modal-action {
   transform: translate(-50%, -50%) rotate(0);
   z-index: 999999999;
   background-color: rgba(240, 240, 240, 0.8039215686);
   color: black;
 }
+
 .modal.active.modal-action .action-button {
   background-color: black;
   color: white;
@@ -664,12 +611,14 @@ body.multiplayer-mode .game-points-layer--player h4 {
   cursor: pointer;
   animation: button-animation 4s ease-in-out infinite;
 }
+
 .modal.active.modal-info {
   background-color: lightblue;
   color: black;
   z-index: 99999;
   transform: translate(-50%, -50%) rotate(0deg);
 }
+
 .modal.active.modal-start {
   inset: 0;
   width: 100vw;
@@ -685,6 +634,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   border-radius: 0;
   box-shadow: none;
 }
+
 .modal.active.modal-start .start-inner {
   background: rgba(255, 255, 255, 0.98);
   padding: 30px;
@@ -697,17 +647,20 @@ body.multiplayer-mode .game-points-layer--player h4 {
   align-items: center;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
 }
+
 .modal.active.modal-start .start-inner h2 {
   margin: 0;
   font-size: 1.4rem;
   text-align: center;
 }
+
 .modal.active.modal-start .start-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
 }
+
 .modal.active.modal-start .start-btn {
   padding: 12px 16px;
   border-radius: 8px;
@@ -720,52 +673,57 @@ body.multiplayer-mode .game-points-layer--player h4 {
   align-items: flex-start;
   gap: 4px;
   text-align: left;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    filter 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
+
 .modal.active.modal-start .start-btn:hover,
 .modal.active.modal-start .start-btn:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 14px 24px rgba(0, 0, 0, 0.18);
   filter: brightness(1.03);
 }
+
 .modal.active.modal-start .start-btn-title {
   font-size: 1rem;
   font-weight: 800;
   line-height: 1.2;
 }
+
 .modal.active.modal-start .start-btn-subtitle {
   font-size: 0.84rem;
   font-weight: 500;
   line-height: 1.35;
   opacity: 0.92;
 }
+
 .modal.active.modal-start .start-btn#btn_new_game {
   background: #008000;
   color: white;
 }
+
 .modal.active.modal-start .start-btn#btn_continue_game {
   background: #0066cc;
   color: white;
 }
+
 .modal.active.modal-start .start-btn#btn_new_game_no_help {
   background: #b04c00;
   color: white;
 }
+
 .modal.active.modal-start .start-btn#btn_multiplayer {
   background: #ff8c00;
   color: white;
 }
+
 .modal.active.p1 {
   top: 25%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(0deg);
 }
+
 .modal.active.modal-endgame {
   background-color: rgba(0, 0, 0, 0.7);
-  -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
   top: 0;
   left: 0;
@@ -782,11 +740,13 @@ body.multiplayer-mode .game-points-layer--player h4 {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
 .modal.active.modal-endgame.is-summary {
   justify-content: flex-start;
   padding-top: min(12dvh, 90px);
   padding-bottom: max(32px, env(safe-area-inset-bottom, 0px) + 20px);
 }
+
 .modal.active.modal-endgame .btn {
   background-color: #008000;
   color: white;
@@ -794,9 +754,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   border-radius: 8px;
   font-size: 2rem;
   font-weight: bold;
-  box-shadow:
-    inset 0 0 25px white,
-    0 0 45px white;
+  box-shadow: inset 0 0 25px white, 0 0 45px white;
   border: 1px solid white;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -804,6 +762,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   margin-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
 }
+
 .modal.active.modal-endgame #lbl_finishText {
   color: white;
   font-size: 1.5rem;
@@ -812,6 +771,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
   text-shadow: 0 0 26px black;
   max-width: 680px;
 }
+
 .modal.active.modal-endgame.is-summary #lbl_finishText {
   font-size: 1.2rem;
   line-height: 1.4;
@@ -932,28 +892,23 @@ body.multiplayer-mode .game-points-layer--player h4 {
     align-items: stretch;
     padding: 20px 14px max(24px, env(safe-area-inset-bottom, 0px) + 12px);
   }
-
   .modal.active.modal-start .start-inner {
     width: 100%;
     padding: 24px 18px;
   }
-
   .modal.active.modal-endgame #lbl_finishText {
     font-size: 1.2rem;
     line-height: 1.35;
   }
-
   .modal.active.modal-endgame .btn {
     align-self: center;
     font-size: 1.35rem;
     letter-spacing: 2px;
   }
-
   .winner-card {
     padding: 22px 18px;
   }
 }
-
 @keyframes button-animation {
   0% {
     outline: 0 solid #fff;
@@ -968,6 +923,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
 .disable-area {
   display: none;
 }
+
 .disable-area.active {
   display: block;
   position: fixed;
@@ -995,9 +951,7 @@ body.multiplayer-mode .game-points-layer--player h4 {
 }
 
 .highlight {
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.38),
-    0 0 18px rgba(255, 243, 176, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.38), 0 0 18px rgba(255, 243, 176, 0.7) !important;
   transform: translateY(-2px);
 }
 
@@ -1016,12 +970,10 @@ body.multiplayer-mode .game-points-layer--player h4 {
     gap: 14px;
     padding: 12px;
   }
-
   .middle-pile {
     width: auto;
     flex: 1 1 0;
   }
-
   .player-hand {
     top: calc(52% - 155px);
     bottom: auto;
@@ -1029,16 +981,13 @@ body.multiplayer-mode .game-points-layer--player h4 {
     gap: 12px;
     padding: 12px;
   }
-
   .player-hand-text {
     font-size: 0.84rem;
   }
-
   .player-turn-badge {
     font-size: 0.66rem;
     letter-spacing: 1.4px;
   }
-
   .game-points-layer--player {
     left: auto;
     right: 1%;
