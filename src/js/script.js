@@ -436,11 +436,19 @@ function showEndgameSummary() {
   mdl_endgame.classList.add("active", "is-summary");
   lbl_finishText.innerHTML = pendingEndgameSummary.headline;
   renderEndgameStats(pendingEndgameSummary.stats);
-  btn_next_game.textContent = pendingEndgameResetScores ? "Neues Spiel" : "Weiter";
+  btn_next_game.textContent = pendingEndgameResetScores
+    ? "Neues Spiel"
+    : "Weiter";
   do_enable_area();
 }
 
-function queueEndgameFlow({ winnerTitle, winnerText, summaryHeadline, stats, resetScores = false }) {
+function queueEndgameFlow({
+  winnerTitle,
+  winnerText,
+  summaryHeadline,
+  stats,
+  resetScores = false,
+}) {
   pendingEndgameSummary = {
     headline: summaryHeadline,
     stats,
@@ -1033,7 +1041,10 @@ function endGame() {
     save_Game_into_Storage();
     queueEndgameFlow({
       winnerTitle: "Rundensieger",
-      winnerText: winner === "Unentschieden" ? "Die Runde endet unentschieden." : `${winner} hat die Runde gewonnen.`,
+      winnerText:
+        winner === "Unentschieden"
+          ? "Die Runde endet unentschieden."
+          : `${winner} hat die Runde gewonnen.`,
       summaryHeadline: doubledPlayerKey
         ? `${winner}<br><span class="endgame-note">${getPlayerDisplayName(doubledPlayerKey)} hat die Verdopplungsregel ausgeloest.</span>`
         : `${winner}`,
