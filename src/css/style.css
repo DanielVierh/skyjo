@@ -778,10 +778,14 @@ body.multiplayer-mode .game-points-layer--player h4 {
   align-items: center;
   gap: 20px;
   padding: 32px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .modal.active.modal-endgame.is-summary {
   justify-content: flex-start;
   padding-top: min(12dvh, 90px);
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px) + 20px);
 }
 .modal.active.modal-endgame .btn {
   background-color: #008000;
@@ -797,6 +801,8 @@ body.multiplayer-mode .game-points-layer--player h4 {
   text-transform: uppercase;
   letter-spacing: 3px;
   margin-top: 10px;
+  margin-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
 }
 .modal.active.modal-endgame #lbl_finishText {
   color: white;
@@ -922,6 +928,11 @@ body.multiplayer-mode .game-points-layer--player h4 {
 }
 
 @media (max-width: 640px) {
+  .modal.active.modal-endgame {
+    align-items: stretch;
+    padding: 20px 14px max(24px, env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
   .modal.active.modal-start .start-inner {
     width: 100%;
     padding: 24px 18px;
@@ -930,6 +941,12 @@ body.multiplayer-mode .game-points-layer--player h4 {
   .modal.active.modal-endgame #lbl_finishText {
     font-size: 1.2rem;
     line-height: 1.35;
+  }
+
+  .modal.active.modal-endgame .btn {
+    align-self: center;
+    font-size: 1.35rem;
+    letter-spacing: 2px;
   }
 
   .winner-card {
