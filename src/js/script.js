@@ -198,6 +198,14 @@ const ANIM = {
   z: 99999,
 };
 
+const ENDGAME_REVEAL_SETTLE_MS = 760;
+const ENDGAME_MODAL_DELAY_MS = 1150;
+const ENDGAME_ANIMATION_MULTIPLIER = 2;
+
+function scaleEndgameAnimationMs(ms) {
+  return Math.round(ms * ENDGAME_ANIMATION_MULTIPLIER);
+}
+
 const TURN_TRANSITION_MS = 360;
 
 let save_object = {
@@ -212,6 +220,10 @@ let lastDrawnCardRect = null;
 let turnTransitionTimer = null;
 let pendingEndgameSummary = null;
 let pendingEndgameResetScores = false;
+
+function clearRoundScoreOverlay() {
+  document.getElementById("endgame_round_score_layer")?.remove();
+}
 
 function isMultiplayerMode() {
   return !ki_player;
@@ -426,6 +438,7 @@ function hideEndgameOverlays() {
 function resetEndgameFlowState() {
   pendingEndgameSummary = null;
   pendingEndgameResetScores = false;
+  clearRoundScoreOverlay();
   hideEndgameOverlays();
 }
 
@@ -448,6 +461,7 @@ function queueEndgameFlow({
   summaryHeadline,
   stats,
   resetScores = false,
+  initialDelayMs = 900,
 }) {
   pendingEndgameSummary = {
     headline: summaryHeadline,
@@ -469,7 +483,7 @@ function queueEndgameFlow({
   setTimeout(() => {
     mdl_endgame_winner?.classList.add("active");
     do_enable_area();
-  }, 900);
+  }, initialDelayMs);
 }
 
 //*==== Klassen ====
@@ -964,12 +978,15 @@ function startRoundWithoutModal(resetScores = false) {
   count_points_debug();
 }
 
-function endGame() {
+async function endGame() {
   if (gameEnded) return;
   gameEnded = true;
+  do_disable_area();
 
-  let points1 = countPoints(player1);
-  let points2 = countPoints(player2);
+  const basePoints1 = countPoints(player1);
+  const basePoints2 = countPoints(player2);
+  let points1 = basePoints1;
+  let points2 = basePoints2;
   let doubledPlayerKey = null;
   const player1OpenCards = countOpenCards(player1);
   const player1CoveredCards = countCoveredCards(player1);
@@ -1034,11 +1051,33 @@ function endGame() {
   refresh_point_label();
 
   reveal_all_cards();
+  await playEndRoundScoreAnimation([
+    {
+      playerKey: "player2",
+      label: getPlayerDisplayName("player2"),
+      boardEl: player2Board,
+      basePoints: basePoints2,
+      finalPoints: points2,
+      isDoubled: doubledPlayerKey === "player2",
+    },
+    {
+      playerKey: "player1",
+      label: getPlayerDisplayName("player1"),
+      boardEl: player1Board,
+      basePoints: basePoints1,
+      finalPoints: points1,
+      isDoubled: doubledPlayerKey === "player1",
+    },
+  ]);
 
   if (save_object.points_ki >= 100) {
-    show_winner();
+    show_winner({
+      initialDelayMs: scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
+    });
   } else if (save_object.points_player >= 100) {
-    show_winner();
+    show_winner({
+      initialDelayMs: scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
+    });
   } else {
     save_Game_into_Storage();
     queueEndgameFlow({
@@ -1051,6 +1090,7 @@ function endGame() {
         ? `${winner}<br><span class="endgame-note">${getPlayerDisplayName(doubledPlayerKey)} hat die Verdopplungsregel ausgeloest.</span>`
         : `${winner}`,
       stats: endgameStats,
+      initialDelayMs: scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
     });
   }
 
@@ -1059,7 +1099,8 @@ function endGame() {
 }
 
 //*ANCHOR - Show Winner of the game and reset local storage for new game
-function show_winner() {
+function show_winner(options = {}) {
+  const { initialDelayMs = 900 } = options;
   const isPlayer1Winner = save_object.points_ki > save_object.points_player;
   const winnerKey = isPlayer1Winner ? "player1" : "player2";
   const finalStats = {
@@ -1096,6 +1137,7 @@ function show_winner() {
     summaryHeadline: `${getPlayerDisplayName(winnerKey)} gewinnt das Spiel`,
     stats: finalStats,
     resetScores: true,
+    initialDelayMs,
   });
 }
 
@@ -1440,6 +1482,178 @@ async function withUIBlocked(promise) {
   } finally {
     do_enable_area();
   }
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function formatRoundScoreValue(value) {
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function ensureRoundScoreLayer() {
+  let layer = document.getElementById("endgame_round_score_layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "endgame_round_score_layer";
+    layer.className = "endgame-round-score-layer";
+    document.body.appendChild(layer);
+  }
+  return layer;
+}
+
+function getBoardAnchorPosition(boardEl, playerKey) {
+  const fallback = viewportCenterRect();
+  if (!boardEl) {
+    return {
+      left: fallback.left + fallback.width / 2,
+      top: fallback.top,
+    };
+  }
+
+  const rect = boardEl.getBoundingClientRect();
+  const isPlayer1 = playerKey === "player1";
+  return {
+    left: rect.left + rect.width / 2,
+    top: isPlayer1
+      ? rect.top + rect.height * 0.32
+      : rect.top + rect.height * 0.68,
+  };
+}
+
+function createRoundScoreChip({ playerKey, label, top, left }) {
+  const chip = document.createElement("section");
+  chip.className = `endgame-round-score-chip ${playerKey}`;
+  chip.style.left = `${left}px`;
+  chip.style.top = `${top}px`;
+  chip.style.setProperty("--chip-y", playerKey === "player1" ? "-56%" : "-44%");
+
+  const labelEl = document.createElement("div");
+  labelEl.className = "endgame-round-score-label";
+  labelEl.textContent = label;
+
+  const valueEl = document.createElement("div");
+  valueEl.className = "endgame-round-score-value";
+  valueEl.textContent = "0";
+
+  const multiplierEl = document.createElement("div");
+  multiplierEl.className = "endgame-round-score-multiplier";
+  multiplierEl.textContent = "x2";
+
+  chip.appendChild(labelEl);
+  chip.appendChild(valueEl);
+  chip.appendChild(multiplierEl);
+
+  return { chip, valueEl, multiplierEl };
+}
+
+function animateRoundScoreValue(valueEl, from, to, duration = 900) {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const startValue = Number.isFinite(from) ? from : 0;
+    const targetValue = Number.isFinite(to) ? to : 0;
+
+    function step(now) {
+      const elapsed = now - start;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = easeOutCubic(progress);
+      const value = Math.round(startValue + (targetValue - startValue) * eased);
+      valueEl.textContent = formatRoundScoreValue(value);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        valueEl.textContent = formatRoundScoreValue(targetValue);
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(step);
+  });
+}
+
+async function runRoundScoreChipAnimation({
+  chip,
+  valueEl,
+  multiplierEl,
+  basePoints,
+  finalPoints,
+  isDoubled,
+  staggerMs = 0,
+}) {
+  await new Promise((resolve) =>
+    setTimeout(resolve, scaleEndgameAnimationMs(staggerMs)),
+  );
+  chip.classList.add("is-visible");
+
+  const baseDuration = Math.max(
+    scaleEndgameAnimationMs(700),
+    Math.min(
+      scaleEndgameAnimationMs(1300),
+      scaleEndgameAnimationMs(820 + Math.abs(basePoints) * 16),
+    ),
+  );
+  await animateRoundScoreValue(valueEl, 0, basePoints, baseDuration);
+
+  if (isDoubled && basePoints !== finalPoints) {
+    multiplierEl.classList.add("is-active");
+    chip.classList.add("is-doubling");
+    await new Promise((resolve) =>
+      setTimeout(resolve, scaleEndgameAnimationMs(520)),
+    );
+    await animateRoundScoreValue(
+      valueEl,
+      basePoints,
+      finalPoints,
+      scaleEndgameAnimationMs(760),
+    );
+    chip.classList.remove("is-doubling");
+  }
+}
+
+async function playEndRoundScoreAnimation(entries = []) {
+  if (!Array.isArray(entries) || entries.length === 0) return;
+
+  await new Promise((resolve) =>
+    setTimeout(resolve, scaleEndgameAnimationMs(ENDGAME_REVEAL_SETTLE_MS)),
+  );
+
+  const layer = ensureRoundScoreLayer();
+  layer.classList.remove("active", "is-exit");
+  layer.innerHTML = "";
+
+  const chips = entries.map((entry) => {
+    const anchor = getBoardAnchorPosition(entry.boardEl, entry.playerKey);
+    const created = createRoundScoreChip({
+      playerKey: entry.playerKey,
+      label: entry.label,
+      left: anchor.left,
+      top: anchor.top,
+    });
+    layer.appendChild(created.chip);
+    return { ...created, ...entry };
+  });
+
+  requestAnimationFrame(() => layer.classList.add("active"));
+
+  await Promise.all(
+    chips.map((chipData, index) =>
+      runRoundScoreChipAnimation({
+        ...chipData,
+        staggerMs: 280 * index,
+      }),
+    ),
+  );
+
+  await new Promise((resolve) =>
+    setTimeout(resolve, scaleEndgameAnimationMs(620)),
+  );
+  layer.classList.add("is-exit");
+  await new Promise((resolve) =>
+    setTimeout(resolve, scaleEndgameAnimationMs(380)),
+  );
+  layer.remove();
 }
 
 // Zieh-Startrechteck für KI (falls kein Stack-Element vorhanden)

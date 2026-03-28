@@ -887,6 +887,130 @@ body.multiplayer-mode .game-points-layer--player h4 {
   line-height: 1.45;
 }
 
+.endgame-round-score-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 150000000;
+  opacity: 0;
+  transition: opacity 520ms ease;
+}
+
+.endgame-round-score-layer.active {
+  opacity: 1;
+}
+
+.endgame-round-score-layer.is-exit {
+  opacity: 0;
+}
+
+.endgame-round-score-chip {
+  position: absolute;
+  --chip-y: -50%;
+  transform: translate(-50%, var(--chip-y)) scale(0.82);
+  min-width: 140px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(0, 0, 0, 0.86), rgba(26, 43, 56, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow: 0 24px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  text-align: center;
+  color: white;
+  opacity: 0;
+  filter: blur(2px);
+}
+
+.endgame-round-score-chip.is-visible {
+  animation: round-score-chip-enter 720ms cubic-bezier(0.2, 0.85, 0.2, 1) forwards;
+}
+
+.endgame-round-score-chip.is-doubling {
+  animation: round-score-chip-pulse 1100ms ease;
+}
+
+.endgame-round-score-chip.player1 {
+  border-color: rgba(66, 210, 152, 0.55);
+  box-shadow: 0 24px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(66, 210, 152, 0.3) inset, 0 0 26px rgba(66, 210, 152, 0.24);
+}
+
+.endgame-round-score-chip.player2 {
+  border-color: rgba(255, 172, 76, 0.56);
+  box-shadow: 0 24px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 172, 76, 0.3) inset, 0 0 26px rgba(255, 172, 76, 0.24);
+}
+
+.endgame-round-score-label {
+  font-size: 0.7rem;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.endgame-round-score-value {
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  margin-top: 3px;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.34);
+}
+
+.endgame-round-score-multiplier {
+  margin: 8px auto 0;
+  width: -moz-fit-content;
+  width: fit-content;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  opacity: 0;
+  transform: scale(0.82);
+}
+
+.endgame-round-score-multiplier.is-active {
+  animation: round-score-multiplier-pop 1080ms cubic-bezier(0.2, 0.85, 0.2, 1) forwards;
+}
+
+@keyframes round-score-chip-enter {
+  0% {
+    opacity: 0;
+    filter: blur(2px);
+    transform: translate(-50%, calc(var(--chip-y) + 10%)) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, var(--chip-y)) scale(1);
+  }
+}
+@keyframes round-score-chip-pulse {
+  0% {
+    transform: translate(-50%, var(--chip-y)) scale(1);
+  }
+  50% {
+    transform: translate(-50%, calc(var(--chip-y) - 4%)) scale(1.05);
+  }
+  100% {
+    transform: translate(-50%, var(--chip-y)) scale(1);
+  }
+}
+@keyframes round-score-multiplier-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.76);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 @media (max-width: 640px) {
   .modal.active.modal-endgame {
     align-items: stretch;
