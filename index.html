@@ -13,6 +13,12 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="src/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="src/css/theme-original.css"
+      id="theme_original_stylesheet"
+      disabled
+    />
   </head>
   <body>
     <div class="modal modal-start" id="start_modal">
@@ -47,7 +53,38 @@
               Oberfeld.</span
             >
           </button>
+          <button class="start-btn start-btn-settings" id="btn_settings">
+            <span class="start-btn-title">Einstellungen</span>
+            <span class="start-btn-subtitle"
+              >Themes auswählen: Modern (aktuell) oder Original.</span
+            >
+          </button>
         </div>
+      </div>
+    </div>
+    <div class="modal modal-theme" id="theme_modal">
+      <div class="theme-modal-card">
+        <h3>Theme auswählen</h3>
+        <p>Wähle dein gewünschtes Erscheinungsbild für das Spiel.</p>
+        <div class="theme-option-list">
+          <button
+            class="theme-option"
+            id="theme_option_modern"
+            data-theme-option="modern"
+          >
+            Modern (aktuell)
+          </button>
+          <button
+            class="theme-option"
+            id="theme_option_classic"
+            data-theme-option="classic"
+          >
+            Original (klassisch)
+          </button>
+        </div>
+        <button class="theme-close-btn" id="btn_close_theme_modal">
+          Schließen
+        </button>
       </div>
     </div>
     <div class="modal modal-endgame" id="mdl_endgame">

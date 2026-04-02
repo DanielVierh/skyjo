@@ -126,6 +126,14 @@ const btn_new_game = document.getElementById("btn_new_game");
 const btn_new_game_no_help = document.getElementById("btn_new_game_no_help");
 const btn_continue_game = document.getElementById("btn_continue_game");
 const btn_multiplayer = document.getElementById("btn_multiplayer");
+const btn_settings = document.getElementById("btn_settings");
+const theme_modal = document.getElementById("theme_modal");
+const btn_close_theme_modal = document.getElementById("btn_close_theme_modal");
+const theme_option_modern = document.getElementById("theme_option_modern");
+const theme_option_classic = document.getElementById("theme_option_classic");
+const theme_original_stylesheet = document.getElementById(
+  "theme_original_stylesheet",
+);
 const btn_continue_game_title = document.getElementById(
   "btn_continue_game_title",
 );
@@ -160,6 +168,7 @@ let handHintText = "Wähle Nachziehstapel oder Ablagestapel.";
 
 const SAVEGAME_STORAGE_KEY = "skyjo_savegame";
 const GUIDANCE_MODE_STORAGE_KEY = "skyjo_no_guidance_mode";
+const THEME_STORAGE_KEY = "skyjo_theme";
 
 const PLAYER_PHASES = {
   WAITING: "waiting",
@@ -2011,6 +2020,7 @@ function showStartModalWrapper() {
   resetEndgameFlowState();
   renderEndgameStats(null);
   updateStartMenuCopy();
+  applyTheme(loadStoredTheme(), { persist: false });
 
   if (start_modal) start_modal.classList.add("active");
 
@@ -2054,6 +2064,63 @@ function showStartModalWrapper() {
     if (start_modal) start_modal.classList.remove("active");
     init();
   });
+
+  btn_settings?.addEventListener("click", () => {
+    updateThemeSelectionUI();
+    theme_modal?.classList.add("active");
+  });
+
+  btn_close_theme_modal?.addEventListener("click", () => {
+    theme_modal?.classList.remove("active");
+  });
+
+  theme_option_modern?.addEventListener("click", () => {
+    applyTheme("modern");
+    updateThemeSelectionUI();
+  });
+
+  theme_option_classic?.addEventListener("click", () => {
+    applyTheme("classic");
+    updateThemeSelectionUI();
+  });
+}
+
+function loadStoredTheme() {
+  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === "classic") return "classic";
+  return "modern";
+}
+
+function applyTheme(themeName, { persist = true } = {}) {
+  const safeTheme = themeName === "classic" ? "classic" : "modern";
+  const useClassicTheme = safeTheme === "classic";
+
+  document.body.classList.remove("theme-modern", "theme-classic");
+  document.body.classList.add(`theme-${safeTheme}`);
+  document.body.dataset.theme = safeTheme;
+
+  if (theme_original_stylesheet) {
+    theme_original_stylesheet.disabled = !useClassicTheme;
+  }
+
+  if (persist) {
+    localStorage.setItem(THEME_STORAGE_KEY, safeTheme);
+  }
+}
+
+function updateThemeSelectionUI() {
+  const activeTheme = document.body.classList.contains("theme-classic")
+    ? "classic"
+    : "modern";
+
+  theme_option_modern?.classList.toggle(
+    "is-selected",
+    activeTheme === "modern",
+  );
+  theme_option_classic?.classList.toggle(
+    "is-selected",
+    activeTheme === "classic",
+  );
 }
 
 function init() {
