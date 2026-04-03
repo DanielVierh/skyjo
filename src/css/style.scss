@@ -531,6 +531,31 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   transform: translateY(-2px);
 }
 
+body.multiplayer-mode.turn-player1 .middle-pile {
+  flex-direction: column;
+}
+
+body.multiplayer-mode.turn-player2 .middle-pile {
+  flex-direction: column-reverse;
+}
+
+body.multiplayer-mode.turn-player2 .middle-pile .middle-label,
+body.multiplayer-mode.turn-player2 .middle-pile .card {
+  transform: rotate(180deg);
+}
+
+body.multiplayer-mode.turn-player2 #player_card_ablage {
+  transform: rotate(180deg) !important;
+}
+
+body.multiplayer-mode.turn-player2 #player_card_ablage:hover {
+  transform: rotate(180deg) translateY(-2px) !important;
+}
+
+body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
+  transform: rotate(180deg) translateY(-2px) !important;
+}
+
 .player-hand {
   position: fixed;
   left: 50%;
@@ -1331,7 +1356,9 @@ body.multiplayer-mode .point-label.player2 {
 .endgame-round-score-chip {
   position: absolute;
   --chip-y: -50%;
-  transform: translate(-50%, var(--chip-y)) scale(0.82);
+  --chip-rotation: 0deg;
+  transform: translate(-50%, var(--chip-y)) scale(0.82)
+    rotate(var(--chip-rotation));
   min-width: 140px;
   padding: 10px 14px;
   border-radius: 14px;
@@ -1375,6 +1402,14 @@ body.multiplayer-mode .point-label.player2 {
     0 0 26px rgba(255, 172, 76, 0.24);
 }
 
+body.multiplayer-mode.turn-player2 .endgame-round-score-chip {
+  --chip-rotation: 180deg;
+}
+
+body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
+  --chip-rotation: 0deg;
+}
+
 .endgame-round-score-label {
   font-size: 0.7rem;
   letter-spacing: 1.8px;
@@ -1415,24 +1450,29 @@ body.multiplayer-mode .point-label.player2 {
   0% {
     opacity: 0;
     filter: blur(2px);
-    transform: translate(-50%, calc(var(--chip-y) + 10%)) scale(0.8);
+    transform: translate(-50%, calc(var(--chip-y) + 10%)) scale(0.8)
+      rotate(var(--chip-rotation));
   }
   100% {
     opacity: 1;
     filter: blur(0);
-    transform: translate(-50%, var(--chip-y)) scale(1);
+    transform: translate(-50%, var(--chip-y)) scale(1)
+      rotate(var(--chip-rotation));
   }
 }
 
 @keyframes round-score-chip-pulse {
   0% {
-    transform: translate(-50%, var(--chip-y)) scale(1);
+    transform: translate(-50%, var(--chip-y)) scale(1)
+      rotate(var(--chip-rotation));
   }
   50% {
-    transform: translate(-50%, calc(var(--chip-y) - 4%)) scale(1.05);
+    transform: translate(-50%, calc(var(--chip-y) - 4%)) scale(1.05)
+      rotate(var(--chip-rotation));
   }
   100% {
-    transform: translate(-50%, var(--chip-y)) scale(1);
+    transform: translate(-50%, var(--chip-y)) scale(1)
+      rotate(var(--chip-rotation));
   }
 }
 

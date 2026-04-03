@@ -448,6 +448,31 @@ body.multiplayer-mode .point-label.player2 {
   transform: translateY(-2px);
 }
 
+body.multiplayer-mode.turn-player1 .middle-pile {
+  flex-direction: column;
+}
+
+body.multiplayer-mode.turn-player2 .middle-pile {
+  flex-direction: column-reverse;
+}
+
+body.multiplayer-mode.turn-player2 .middle-pile .middle-label,
+body.multiplayer-mode.turn-player2 .middle-pile .card {
+  transform: rotate(180deg);
+}
+
+body.multiplayer-mode.turn-player2 #player_card_ablage {
+  transform: rotate(180deg) !important;
+}
+
+body.multiplayer-mode.turn-player2 #player_card_ablage:hover {
+  transform: rotate(180deg) translateY(-2px) !important;
+}
+
+body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
+  transform: rotate(180deg) translateY(-2px) !important;
+}
+
 .player-hand {
   position: fixed;
   left: 50%;
