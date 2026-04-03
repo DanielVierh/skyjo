@@ -305,7 +305,7 @@ function updateModeLabels() {
   }
   if (player_hand_title) {
     player_hand_title.textContent = isHumanTurn()
-      ? `Hand ${getPlayerDisplayName(currentPlayer)}`
+      ? `Handkarte ${getPlayerDisplayName(currentPlayer)}`
       : "Gezogene Karte";
   }
   if (player_turn_badge) {
