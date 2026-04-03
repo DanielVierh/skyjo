@@ -305,6 +305,9 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   opacity: 1;
   font-family: "Space Grotesk", "Sora", sans-serif;
   font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card.covered::before {
