@@ -996,6 +996,9 @@ body.multiplayer-mode .point-label.player2 {
 
 .modal.active.modal-theme {
   z-index: 1000001;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .theme-modal-card {
