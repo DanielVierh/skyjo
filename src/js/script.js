@@ -432,9 +432,12 @@ function renderEndgameStats(stats) {
       ? `${getPlayerDisplayName(stats.closingPlayerKey)} hat die Runde geschlossen und die Verdopplungsregel nicht ausgeloest.`
       : "Die Runde endete ohne Schliesser. Es wurde keine Verdopplung angewendet.";
 
+  const orderedStatCards = isMultiplayerMode()
+    ? `${playerCard(stats.player2)}${playerCard(stats.player1)}`
+    : `${playerCard(stats.player1)}${playerCard(stats.player2)}`;
+
   endgame_stats.innerHTML = `
-    ${playerCard(stats.player1)}
-    ${playerCard(stats.player2)}
+    ${orderedStatCards}
     <section class="endgame-rule-card">
       <h4>Rundenregel</h4>
       <p>${ruleText}</p>
