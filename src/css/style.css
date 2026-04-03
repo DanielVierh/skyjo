@@ -696,6 +696,11 @@ body.multiplayer-mode.turn-player2 .player-hand {
   transform: translateX(-50%) rotate(180deg);
 }
 
+body.multiplayer-mode.turn-player2 .player-hand.is-no-guidance {
+  top: auto;
+  bottom: 305px;
+}
+
 body.multiplayer-mode.turn-player2 .player-hand-copy {
   transform: none;
 }
