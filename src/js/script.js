@@ -131,6 +131,7 @@ const theme_modal = document.getElementById("theme_modal");
 const btn_close_theme_modal = document.getElementById("btn_close_theme_modal");
 const theme_option_modern = document.getElementById("theme_option_modern");
 const theme_option_classic = document.getElementById("theme_option_classic");
+const chk_show_round_points = document.getElementById("chk_show_round_points");
 const theme_original_stylesheet = document.getElementById(
   "theme_original_stylesheet",
 );
@@ -169,6 +170,7 @@ let handHintText = "Wähle Nachziehstapel oder Ablagestapel.";
 const SAVEGAME_STORAGE_KEY = "skyjo_savegame";
 const GUIDANCE_MODE_STORAGE_KEY = "skyjo_no_guidance_mode";
 const THEME_STORAGE_KEY = "skyjo_theme";
+const ROUND_POINTS_VISIBILITY_STORAGE_KEY = "skyjo_show_round_points";
 
 const PLAYER_PHASES = {
   WAITING: "waiting",
@@ -229,6 +231,7 @@ let lastDrawnCardRect = null;
 let turnTransitionTimer = null;
 let pendingEndgameSummary = null;
 let pendingEndgameResetScores = false;
+let showRoundPointsInLabels = true;
 
 function clearRoundScoreOverlay() {
   document.getElementById("endgame_round_score_layer")?.remove();
@@ -2011,6 +2014,10 @@ function getKiFirstRoundRevealIndices() {
 window.onload = showStartModalWrapper;
 
 function showStartModalWrapper() {
+  setRoundPointsVisibility(loadStoredRoundPointsVisibility(), {
+    persist: false,
+  });
+
   // lade gespeicherte Punkte, damit wir wissen, ob "Weiterspielen" sichtbar sein soll
   loadGameFromLocalStorage();
   setPlayer2Mode(loadStoredPlayer2Mode(), { persist: false });
@@ -2083,6 +2090,36 @@ function showStartModalWrapper() {
     applyTheme("classic");
     updateThemeSelectionUI();
   });
+
+  chk_show_round_points?.addEventListener("change", () => {
+    setRoundPointsVisibility(!!chk_show_round_points.checked);
+  });
+}
+
+function loadStoredRoundPointsVisibility() {
+  const stored = localStorage.getItem(ROUND_POINTS_VISIBILITY_STORAGE_KEY);
+  if (stored === null) return true;
+  return stored !== "false";
+}
+
+function updateRoundPointsCheckboxUI() {
+  if (chk_show_round_points) {
+    chk_show_round_points.checked = showRoundPointsInLabels;
+  }
+}
+
+function setRoundPointsVisibility(enabled, { persist = true } = {}) {
+  showRoundPointsInLabels = !!enabled;
+  updateRoundPointsCheckboxUI();
+
+  if (persist) {
+    localStorage.setItem(
+      ROUND_POINTS_VISIBILITY_STORAGE_KEY,
+      String(showRoundPointsInLabels),
+    );
+  }
+
+  refresh_point_label();
 }
 
 function loadStoredTheme() {
@@ -2977,8 +3014,15 @@ function refresh_point_label() {
       )
     : 0;
 
-  point_label.innerHTML = `Runde ${playerRoundSum} | Spiel ${save_object.points_player ?? 0}`;
-  point_label_ki.innerHTML = `Runde ${opponentRoundSum} | Spiel ${save_object.points_ki ?? 0}`;
+  const playerGameSum = save_object.points_player ?? 0;
+  const opponentGameSum = save_object.points_ki ?? 0;
+
+  point_label.innerHTML = showRoundPointsInLabels
+    ? `Runde ${playerRoundSum} | Spiel ${playerGameSum}`
+    : `Spiel ${playerGameSum}`;
+  point_label_ki.innerHTML = showRoundPointsInLabels
+    ? `Runde ${opponentRoundSum} | Spiel ${opponentGameSum}`
+    : `Spiel ${opponentGameSum}`;
 }
 
 //*ANCHOR - Load Game from Local Storage
