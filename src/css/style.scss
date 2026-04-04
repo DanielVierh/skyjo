@@ -705,6 +705,8 @@ body.multiplayer-mode.turn-player2 .player-hand {
   box-shadow:
     0 18px 40px rgba(4, 10, 26, 0.52),
     0 0 0 2px rgba(255, 172, 76, 0.15);
+  top: auto;
+  bottom: calc(20% + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%) rotate(180deg);
 }
 
@@ -1621,6 +1623,11 @@ body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
     bottom: auto;
     padding: 10px;
     gap: 10px;
+  }
+
+  body.multiplayer-mode.turn-player2 .player-hand {
+    top: auto;
+    bottom: calc(20% + env(safe-area-inset-bottom, 0px));
   }
 
   .player-hand.is-no-guidance {
