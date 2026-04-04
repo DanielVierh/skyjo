@@ -2480,6 +2480,7 @@ async function onCardClick(cardEl) {
 
   if (activePlayer.firstRound) {
     if (activePlayer.first_two_cards.discovered >= 2) return;
+    if (!pCard.covered) return;
     discover_card(pCard, id);
     activePlayer.first_two_cards.discovered++;
     activePlayer.first_two_cards.sum += parseInt(pCard.value, 10);
