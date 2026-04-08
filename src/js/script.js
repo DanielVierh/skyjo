@@ -254,6 +254,8 @@ let pendingEndgameResetScores = false;
 let showRoundPointsInLabels = true;
 let onlineRoundResult = null;
 let lastRenderedOnlineRoundResultId = null;
+let lastAnnouncedOnlineTurnKey = null;
+let infoModalTimeoutId = null;
 
 const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
 
@@ -314,6 +316,23 @@ function resetOnlineSession() {
     player1: false,
     player2: false,
   };
+  lastAnnouncedOnlineTurnKey = null;
+}
+
+function maybeAnnounceOnlineTurn() {
+  if (!isOnlineMode() || !onlineSession.started || gameEnded) return;
+  if (!onlineSession.playerKey) return;
+  if (currentPlayer === lastAnnouncedOnlineTurnKey) return;
+
+  lastAnnouncedOnlineTurnKey = currentPlayer;
+  const isMyTurn = currentPlayer === onlineSession.playerKey;
+  show_info_modal(
+    onlineSession.playerKey,
+    isMyTurn ? "Du bist dran" : "Gegner ist dran",
+    isMyTurn ? "Jetzt bist du am Zug." : "Bitte warte auf den Zug des Gegners.",
+    1400,
+    { forceModal: true, compact: true },
+  );
 }
 
 function isHumanPlayer(playerKey) {
@@ -755,10 +774,22 @@ function ensureOnlineListenersBound() {
   socketApi.on("roomReady", (payload) => {
     if (!onlineSession.active) return;
 
+    const wasPlayer2Connected = !!onlineSession.connectedPlayers.player2;
+
     onlineSession.connectedPlayers = {
       player1: !!payload?.connected?.player1,
       player2: !!payload?.connected?.player2,
     };
+
+    if (!wasPlayer2Connected && onlineSession.connectedPlayers.player2) {
+      show_info_modal(
+        onlineSession.playerKey,
+        "Spieler verbunden",
+        "Spieler 2 ist dem Raum beigetreten.",
+        2200,
+        { forceModal: true, compact: true },
+      );
+    }
 
     if (onlineSession.host && !onlineSession.started) {
       if (btn_online_start_game) {
@@ -793,6 +824,7 @@ function ensureOnlineListenersBound() {
       "Verbindung unterbrochen",
       `${disconnectedPlayer} ist getrennt. Reconnect-Zeitfenster: 120 Sekunden.`,
       3500,
+      { forceModal: true, compact: true },
     );
 
     if (onlineSession.host && !onlineSession.started) {
@@ -816,6 +848,7 @@ function ensureOnlineListenersBound() {
       "Wieder verbunden",
       `${reconnectedPlayer} ist wieder online.`,
       2200,
+      { forceModal: true, compact: true },
     );
   });
 
@@ -827,6 +860,7 @@ function ensureOnlineListenersBound() {
       "Match beendet",
       `${getPlayerDisplayName(winnerKey)} gewinnt durch Verbindungsabbruch.`,
       4000,
+      { forceModal: true, compact: true },
     );
     resetOnlineSession();
   });
@@ -1027,6 +1061,7 @@ async function handleOnlineStartGame() {
   }
 
   onlineSession.started = true;
+  lastAnnouncedOnlineTurnKey = null;
   if (!onlineSession.connectedPlayers.player2) {
     setOnlineModalStatus(
       "Spiel gestartet. Warte, bis ein Mitspieler beitritt.",
@@ -3076,8 +3111,10 @@ function create_player() {
 
 //*==== Info-Modal ====
 
-function show_info_modal(player, headline, text, countdown) {
-  if (noGuidanceMode) {
+function show_info_modal(player, headline, text, countdown, options = {}) {
+  const { forceModal = false, compact = false } = options;
+
+  if (noGuidanceMode && !forceModal) {
     setHandHint(text || headline || "");
     scheduleIdleHint();
     return;
@@ -3087,13 +3124,23 @@ function show_info_modal(player, headline, text, countdown) {
   const modal_info_text = document.getElementById("modal_info_text");
   if (!info_modal || !modal_info_headline || !modal_info_text) return;
 
+  if (infoModalTimeoutId) {
+    clearTimeout(infoModalTimeoutId);
+    infoModalTimeoutId = null;
+  }
+
+  info_modal.classList.toggle("force-visible", forceModal);
+  info_modal.classList.toggle("compact", compact);
   info_modal.classList.add("active");
   setModalPlayerContext(player);
 
   modal_info_headline.textContent = headline;
   modal_info_text.textContent = text;
 
-  setTimeout(() => info_modal.classList.remove("active"), countdown);
+  infoModalTimeoutId = setTimeout(() => {
+    info_modal.classList.remove("active", "force-visible", "compact");
+    infoModalTimeoutId = null;
+  }, countdown);
 }
 
 //*==== Rundensteuerung ====
@@ -3161,6 +3208,7 @@ async function show_current_player() {
 
   if (isHumanTurn()) {
     prepareHumanTurn(currentPlayer);
+    maybeAnnounceOnlineTurn();
     return;
   }
 
@@ -3182,6 +3230,7 @@ async function show_current_player() {
       player2Board?.classList.add("active");
     }
     do_disable_area();
+    maybeAnnounceOnlineTurn();
     return;
   }
 
