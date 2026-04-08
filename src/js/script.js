@@ -1651,11 +1651,11 @@ btn_endgame_winner_ok?.addEventListener("click", () => {
 // Starte eine neue Runde ohne Page-Reload. Wenn resetScores=true, werden
 // die kumulierten Punktestände zurückgesetzt.
 function startRoundWithoutModal(resetScores = false) {
-    if (onlineRoundRestartTimerId) {
-      clearTimeout(onlineRoundRestartTimerId);
-      onlineRoundRestartTimerId = null;
-    }
-    onlineScheduledRestartRoundId = null;
+  if (onlineRoundRestartTimerId) {
+    clearTimeout(onlineRoundRestartTimerId);
+    onlineRoundRestartTimerId = null;
+  }
+  onlineScheduledRestartRoundId = null;
 
   if (resetScores) {
     save_object.points_ki = 0;
