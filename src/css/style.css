@@ -980,6 +980,18 @@ body.multiplayer-mode .point-label.player2 {
   letter-spacing: 0.2px;
 }
 
+.start-player-name {
+  margin: -8px 0 2px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.start-player-name strong {
+  color: var(--text-main);
+  letter-spacing: 0.3px;
+}
+
 .modal.active.modal-start .start-buttons {
   display: grid;
   grid-template-columns: 1fr;
@@ -1226,6 +1238,35 @@ body.multiplayer-mode .point-label.player2 {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
+}
+
+.settings-name-row {
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.settings-name-row label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.settings-name-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.settings-name-controls input {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(7, 20, 43, 0.5);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 16px;
 }
 
 .settings-toggle {

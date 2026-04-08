@@ -24,6 +24,9 @@
     <div class="modal modal-start" id="start_modal">
       <div class="start-inner">
         <h2>Willkommen bei Skyjo</h2>
+        <p class="start-player-name">
+          Spieler: <strong id="lbl_start_player_name">Spieler 1</strong>
+        </p>
         <div class="start-buttons">
           <button class="start-btn" id="btn_new_game">
             <span class="start-btn-title">Neues Spiel mit Hilfe</span>
@@ -86,6 +89,25 @@
           >
             Original (klassisch)
           </button>
+        </div>
+        <div class="settings-name-row">
+          <label for="inp_player_name">Dein Name</label>
+          <div class="settings-name-controls">
+            <input
+              id="inp_player_name"
+              type="text"
+              maxlength="20"
+              autocomplete="name"
+              placeholder="Dein Name"
+            />
+            <button
+              class="theme-option"
+              id="btn_save_player_name"
+              type="button"
+            >
+              Speichern
+            </button>
+          </div>
         </div>
         <label class="settings-toggle" for="chk_show_round_points">
           <span class="settings-toggle-text">

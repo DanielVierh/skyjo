@@ -151,10 +151,13 @@ const theme_modal = document.getElementById("theme_modal");
 const btn_close_theme_modal = document.getElementById("btn_close_theme_modal");
 const theme_option_modern = document.getElementById("theme_option_modern");
 const theme_option_classic = document.getElementById("theme_option_classic");
+const inp_player_name = document.getElementById("inp_player_name");
+const btn_save_player_name = document.getElementById("btn_save_player_name");
 const chk_show_round_points = document.getElementById("chk_show_round_points");
 const theme_original_stylesheet = document.getElementById(
   "theme_original_stylesheet",
 );
+const lbl_start_player_name = document.getElementById("lbl_start_player_name");
 const btn_continue_game_title = document.getElementById(
   "btn_continue_game_title",
 );
@@ -191,6 +194,45 @@ const SAVEGAME_STORAGE_KEY = "skyjo_savegame";
 const GUIDANCE_MODE_STORAGE_KEY = "skyjo_no_guidance_mode";
 const THEME_STORAGE_KEY = "skyjo_theme";
 const ROUND_POINTS_VISIBILITY_STORAGE_KEY = "skyjo_show_round_points";
+const PLAYER_NAME_STORAGE_KEY = "skyjo_player_name";
+const DEFAULT_PLAYER_NAME = "Spieler";
+
+function normalizePlayerName(raw) {
+  const text = String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  return text.slice(0, 20) || DEFAULT_PLAYER_NAME;
+}
+
+function loadStoredPlayerName() {
+  return normalizePlayerName(localStorage.getItem(PLAYER_NAME_STORAGE_KEY));
+}
+
+let playerProfileName = loadStoredPlayerName();
+
+function getOwnPlayerName() {
+  return playerProfileName;
+}
+
+function updateStartMenuPlayerName() {
+  if (lbl_start_player_name) {
+    lbl_start_player_name.textContent = getOwnPlayerName();
+  }
+}
+
+function syncPlayerNamesToObjects() {
+  if (player1) player1.name = getPlayerDisplayName("player1");
+  if (player2) player2.name = getPlayerDisplayName("player2");
+}
+
+function savePlayerName(rawName) {
+  playerProfileName = normalizePlayerName(rawName);
+  localStorage.setItem(PLAYER_NAME_STORAGE_KEY, playerProfileName);
+  if (inp_player_name) inp_player_name.value = playerProfileName;
+  updateStartMenuPlayerName();
+  syncPlayerNamesToObjects();
+  updateModeLabels();
+}
 
 const PLAYER_PHASES = {
   WAITING: "waiting",
@@ -389,20 +431,35 @@ function getOtherPlayerKey(playerKey = currentPlayer) {
 }
 
 function getPlayerDisplayName(playerKey) {
-  if (isMultiplayerMode()) {
-    return playerKey === "player1" ? "Spieler 1" : "Spieler 2";
+  if (playerKey !== "player1" && playerKey !== "player2") {
+    return "Spieler";
   }
-  return playerKey === "player1" ? "Du" : "Computer";
+
+  if (isOnlineMode()) {
+    return playerKey === onlineSession.playerKey
+      ? getOwnPlayerName()
+      : "Gegner";
+  }
+
+  if (isMultiplayerMode()) {
+    return playerKey === "player1" ? getOwnPlayerName() : "Spieler 2";
+  }
+
+  return playerKey === "player1" ? getOwnPlayerName() : "Computer";
 }
 
 function getScoreLabel(playerKey) {
   if (isOnlineMode()) {
-    return playerKey === onlineSession.playerKey ? "Du" : "Gegner";
+    return playerKey === onlineSession.playerKey
+      ? getOwnPlayerName()
+      : "Gegner";
   }
-  if (isMultiplayerMode()) {
-    return getPlayerDisplayName(playerKey);
-  }
-  return playerKey === "player1" ? "Du" : "KI";
+
+  return playerKey === "player1"
+    ? getOwnPlayerName()
+    : isMultiplayerMode()
+      ? "Spieler 2"
+      : "KI";
 }
 
 function getPerspectiveRoundValues() {
@@ -501,7 +558,7 @@ function updateModeLabels() {
   }
   if (lbl_game_points_player_title) {
     if (isOnlineMode()) {
-      lbl_game_points_player_title.textContent = "Du";
+      lbl_game_points_player_title.textContent = getOwnPlayerName();
     } else {
       lbl_game_points_player_title.textContent = getScoreLabel("player1");
     }
@@ -517,8 +574,8 @@ function updateModeLabels() {
       player_turn_badge.textContent = `Aktiver Zug: ${getPlayerDisplayName(currentPlayer)}`;
     } else {
       player_turn_badge.textContent = isHumanTurn()
-        ? "Dein Zug"
-        : "Computerzug";
+        ? `${getOwnPlayerName()} ist am Zug`
+        : "Computer ist am Zug";
     }
   }
 }
@@ -563,6 +620,8 @@ function updateStartMenuCopy() {
         ? "Setzt eure letzte lokale Hotseat-Runde mit dem gleichen Modus fort."
         : "Laedt den zuletzt gespeicherten Stand gegen die KI.";
   }
+
+  updateStartMenuPlayerName();
 }
 
 function triggerTurnTransition() {
@@ -2807,6 +2866,7 @@ function showStartModalWrapper() {
   resetEndgameFlowState();
   renderEndgameStats(null);
   updateStartMenuCopy();
+  if (inp_player_name) inp_player_name.value = getOwnPlayerName();
   applyTheme(loadStoredTheme(), { persist: false });
 
   if (start_modal) start_modal.classList.add("active");
@@ -2892,7 +2952,18 @@ function showStartModalWrapper() {
 
   btn_settings?.addEventListener("click", () => {
     updateThemeSelectionUI();
+    if (inp_player_name) inp_player_name.value = getOwnPlayerName();
     theme_modal?.classList.add("active");
+  });
+
+  btn_save_player_name?.addEventListener("click", () => {
+    savePlayerName(inp_player_name?.value);
+  });
+
+  inp_player_name?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    savePlayerName(inp_player_name?.value);
   });
 
   btn_close_theme_modal?.addEventListener("click", () => {
