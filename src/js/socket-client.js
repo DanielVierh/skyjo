@@ -8,6 +8,7 @@
     playerDisconnected: new Set(),
     playerReconnected: new Set(),
     roomAbandoned: new Set(),
+    roomsUpdated: new Set(),
   };
 
   function ensureSocket() {
@@ -42,12 +43,60 @@
       socket.on("room:abandoned", (payload) => {
         eventHandlers.roomAbandoned.forEach((fn) => fn(payload));
       });
+
+      socket.on("rooms:updated", (payload) => {
+        eventHandlers.roomsUpdated.forEach((fn) => fn(payload));
+      });
     }
 
     return socket;
   }
 
-  function emitWithAck(eventName, payload, timeoutMs = 7000) {
+  function waitForConnection(timeoutMs = 7000) {
+    const activeSocket = ensureSocket();
+    if (activeSocket.connected) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      let settled = false;
+
+      const cleanup = () => {
+        activeSocket.off("connect", onConnect);
+        activeSocket.off("connect_error", onConnectError);
+      };
+
+      const onConnect = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        cleanup();
+        resolve();
+      };
+
+      const onConnectError = (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        cleanup();
+        reject(error || new Error("Socket Verbindung fehlgeschlagen"));
+      };
+
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error("Socket Verbindung Timeout"));
+      }, timeoutMs);
+
+      activeSocket.on("connect", onConnect);
+      activeSocket.on("connect_error", onConnectError);
+    });
+  }
+
+  async function emitWithAck(eventName, payload, timeoutMs = 7000) {
+    await waitForConnection(timeoutMs);
+
     return new Promise((resolve, reject) => {
       const activeSocket = ensureSocket();
       let settled = false;
@@ -84,6 +133,15 @@
     return response;
   }
 
+  async function listRooms() {
+    const response = await emitWithAck("rooms:list", {});
+    if (!response?.ok)
+      throw new Error(
+        response?.error || "Offene Raeume konnten nicht geladen werden.",
+      );
+    return Array.isArray(response.rooms) ? response.rooms : [];
+  }
+
   async function syncState(roomCode, state) {
     const response = await emitWithAck("state:sync", {
       roomCode,
@@ -113,6 +171,7 @@
   window.SkyjoSocket = {
     createRoom,
     joinRoom,
+    listRooms,
     syncState,
     on,
     isConnected,

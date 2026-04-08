@@ -136,6 +136,9 @@ const btn_online_create_room = document.getElementById(
 );
 const btn_online_start_game = document.getElementById("btn_online_start_game");
 const btn_online_join_room = document.getElementById("btn_online_join_room");
+const btn_online_refresh_rooms = document.getElementById(
+  "btn_online_refresh_rooms",
+);
 const btn_online_copy_room_id = document.getElementById(
   "btn_online_copy_room_id",
 );
@@ -144,6 +147,7 @@ const btn_close_online_modal = document.getElementById(
 );
 const inp_online_room_code = document.getElementById("inp_online_room_code");
 const lbl_online_room_id = document.getElementById("lbl_online_room_id");
+const online_public_rooms = document.getElementById("online_public_rooms");
 const lbl_online_modal_status = document.getElementById(
   "lbl_online_modal_status",
 );
@@ -901,6 +905,10 @@ function ensureOnlineListenersBound() {
         setOnlineModalStatus("Warte auf einen Mitspieler...", "info");
       }
     }
+
+    if (online_modal?.classList.contains("active")) {
+      void refreshPublicRooms();
+    }
   });
 
   socketApi.on("stateUpdate", (payload) => {
@@ -932,6 +940,10 @@ function ensureOnlineListenersBound() {
         "info",
       );
     }
+
+    if (online_modal?.classList.contains("active")) {
+      void refreshPublicRooms();
+    }
   });
 
   socketApi.on("playerReconnected", (payload) => {
@@ -958,6 +970,16 @@ function ensureOnlineListenersBound() {
       { forceModal: true, compact: true },
     );
     resetOnlineSession();
+
+    if (online_modal?.classList.contains("active")) {
+      void refreshPublicRooms();
+    }
+  });
+
+  socketApi.on("roomsUpdated", () => {
+    if (online_modal?.classList.contains("active")) {
+      void refreshPublicRooms();
+    }
   });
 
   onlineSession.listenersBound = true;
@@ -980,6 +1002,113 @@ function setOnlineModalStatus(text, kind = "info") {
   );
 }
 
+function renderPublicRoomList(rooms) {
+  if (!online_public_rooms) return;
+
+  online_public_rooms.innerHTML = "";
+  if (!Array.isArray(rooms) || rooms.length === 0) {
+    online_public_rooms.textContent = "Keine offenen Raeume gefunden.";
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  rooms.forEach((room) => {
+    const row = document.createElement("div");
+    row.className = "online-room-entry";
+
+    const info = document.createElement("div");
+    const code = document.createElement("strong");
+    code.textContent = room.roomCode || "------";
+
+    const details = document.createElement("small");
+    details.textContent = room.hasGameState
+      ? "Spiel laeuft"
+      : "Wartet auf Spieler";
+
+    info.appendChild(code);
+    info.appendChild(details);
+
+    const joinBtn = document.createElement("button");
+    joinBtn.type = "button";
+    joinBtn.className = "online-room-join-btn";
+    joinBtn.textContent = "Beitreten";
+    joinBtn.addEventListener("click", async () => {
+      if (inp_online_room_code) {
+        inp_online_room_code.value = String(room.roomCode || "").toUpperCase();
+      }
+      await handleOnlineJoinRoom();
+    });
+
+    row.appendChild(info);
+    row.appendChild(joinBtn);
+    fragment.appendChild(row);
+  });
+
+  online_public_rooms.appendChild(fragment);
+}
+
+async function refreshPublicRooms() {
+  const socketApi = getSocketApi();
+  if (!socketApi) {
+    setOnlineModalStatus("Socket.IO wurde nicht geladen.", "error");
+    return;
+  }
+
+  setOnlineModalStatus("Offene Raeume werden geladen...", "info");
+
+  try {
+    const rooms = await socketApi.listRooms();
+    renderPublicRoomList(rooms);
+    if (rooms.length === 0) {
+      setOnlineModalStatus(
+        "Aktuell sind keine offenen Raeume verfuegbar.",
+        "info",
+      );
+    } else {
+      setOnlineModalStatus(
+        `${rooms.length} offener ${rooms.length === 1 ? "Raum" : "Raeume"} gefunden.`,
+        "success",
+      );
+    }
+  } catch (error) {
+    try {
+      const response = await fetch("/api/rooms", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const contentType = String(response.headers.get("content-type") || "");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          "Backend-Antwort ist kein JSON (wahrscheinlich falscher Server/Port oder alter Server ohne /api/rooms).",
+        );
+      }
+
+      const payload = await response.json();
+      const rooms = Array.isArray(payload?.rooms) ? payload.rooms : [];
+      renderPublicRoomList(rooms);
+      setOnlineModalStatus(
+        rooms.length === 0
+          ? "Aktuell sind keine offenen Raeume verfuegbar."
+          : `${rooms.length} offener ${rooms.length === 1 ? "Raum" : "Raeume"} gefunden.`,
+        rooms.length === 0 ? "info" : "success",
+      );
+    } catch (fallbackError) {
+      renderPublicRoomList([]);
+      const baseMessage = error?.message || error;
+      const fallbackMessage = fallbackError?.message || fallbackError;
+      setOnlineModalStatus(
+        `Raumliste konnte nicht geladen werden: ${baseMessage}. HTTP-Fallback fehlgeschlagen: ${fallbackMessage}`,
+        "error",
+      );
+    }
+  }
+}
+
 function resetOnlineModalState() {
   if (lbl_online_room_id) {
     lbl_online_room_id.textContent = "-";
@@ -994,6 +1123,7 @@ function resetOnlineModalState() {
     btn_online_start_game.hidden = true;
     btn_online_start_game.disabled = false;
   }
+  renderPublicRoomList([]);
   setOnlineModalStatus("", "info");
 }
 
@@ -1075,6 +1205,7 @@ async function handleOnlineCreateRoom() {
       "Raum erstellt. Teile die ID und warte auf einen Mitspieler.",
       "success",
     );
+    await refreshPublicRooms();
   } catch (error) {
     resetOnlineSession();
     setOnlineModalStatus(
@@ -1179,6 +1310,7 @@ async function startOnlineMultiplayerFlow() {
   socketApi.ensureSocket();
   ensureOnlineListenersBound();
   openOnlineModal();
+  await refreshPublicRooms();
 }
 
 function countOpenCards(player) {
@@ -2934,6 +3066,10 @@ function showStartModalWrapper() {
 
   btn_online_join_room?.addEventListener("click", async () => {
     await handleOnlineJoinRoom();
+  });
+
+  btn_online_refresh_rooms?.addEventListener("click", async () => {
+    await refreshPublicRooms();
   });
 
   inp_online_room_code?.addEventListener("keydown", async (event) => {

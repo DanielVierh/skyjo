@@ -71,6 +71,37 @@ function roomSnapshot(room) {
   };
 }
 
+function isPublicJoinableRoom(room) {
+  if (!room) return false;
+  const hasHostConnected = !!room.players.player1?.socketId;
+  const slot2IsFree =
+    !room.players.player2?.socketId && !room.players.player2?.token;
+  return hasHostConnected && slot2IsFree;
+}
+
+function emitRoomsUpdated() {
+  io.emit("rooms:updated", { ts: Date.now() });
+}
+
+function getOpenRooms() {
+  const openRooms = [];
+
+  rooms.forEach((room) => {
+    if (!isPublicJoinableRoom(room)) return;
+    openRooms.push({
+      roomCode: room.roomCode,
+      hasGameState: !!room.gameState,
+    });
+  });
+
+  openRooms.sort((a, b) => a.roomCode.localeCompare(b.roomCode));
+  return openRooms;
+}
+
+app.get("/api/rooms", (_req, res) => {
+  res.json({ ok: true, rooms: getOpenRooms() });
+});
+
 function clearReconnectTimer(playerSlot) {
   if (playerSlot?.reconnectTimer) {
     clearTimeout(playerSlot.reconnectTimer);
@@ -123,6 +154,10 @@ function scheduleReconnectTimeout(roomCode, playerKey) {
 }
 
 io.on("connection", (socket) => {
+  socket.on("rooms:list", (_payload, ack) => {
+    ack?.({ ok: true, rooms: getOpenRooms() });
+  });
+
   socket.on("room:create", (_payload, ack) => {
     const room = createRoom();
     const token = assignPlayer(room, "player1", socket);
@@ -135,6 +170,8 @@ io.on("connection", (socket) => {
       reconnectTimeoutMs: RECONNECT_TIMEOUT_MS,
       room: roomSnapshot(room),
     });
+
+    emitRoomsUpdated();
   });
 
   socket.on("room:join", (payload, ack) => {
@@ -196,6 +233,7 @@ io.on("connection", (socket) => {
     });
 
     io.to(roomCode).emit("player:reconnected", { playerKey });
+    emitRoomsUpdated();
   });
 
   socket.on("state:sync", (payload, ack) => {
@@ -241,6 +279,8 @@ io.on("connection", (socket) => {
       playerKey,
       reconnectTimeoutMs: RECONNECT_TIMEOUT_MS,
     });
+
+    emitRoomsUpdated();
 
     scheduleReconnectTimeout(roomCode, playerKey);
   });
