@@ -51,7 +51,23 @@ html {
 }
 
 body {
-  background: radial-gradient(circle at 12% 20%, rgba(53, 200, 255, 0.26), transparent 42%), radial-gradient(circle at 86% 18%, rgba(255, 155, 92, 0.25), transparent 38%), radial-gradient(circle at 50% 88%, rgba(84, 240, 188, 0.22), transparent 44%), linear-gradient(145deg, #081a35 0%, #0c2750 48%, #102f48 100%);
+  background:
+    radial-gradient(
+      circle at 12% 20%,
+      rgba(53, 200, 255, 0.26),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 86% 18%,
+      rgba(255, 155, 92, 0.25),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 50% 88%,
+      rgba(84, 240, 188, 0.22),
+      transparent 44%
+    ),
+    linear-gradient(145deg, #081a35 0%, #0c2750 48%, #102f48 100%);
   color: var(--text-main);
   font-family: "Sora", "Segoe UI", sans-serif;
   min-height: 100vh;
@@ -81,7 +97,11 @@ body::before {
   inset: 12% auto auto -10%;
   width: min(62vw, 500px);
   aspect-ratio: 1;
-  background: radial-gradient(circle, rgba(53, 200, 255, 0.25), transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(53, 200, 255, 0.25),
+    transparent 70%
+  );
   filter: blur(20px);
 }
 
@@ -109,12 +129,19 @@ body.no-guidance-mode .modal-info {
   transform: translateX(-50%);
   z-index: 20;
   width: min(96vw, 460px);
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03));
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.03)
+  );
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-glow);
   backdrop-filter: blur(12px) saturate(130%);
   -webkit-backdrop-filter: blur(12px) saturate(130%);
-  transition: box-shadow 240ms ease, opacity 220ms ease, filter 220ms ease;
+  transition:
+    box-shadow 240ms ease,
+    opacity 220ms ease,
+    filter 220ms ease;
 }
 
 .p1-board {
@@ -146,7 +173,10 @@ body.multiplayer-mode.online-perspective-player2 .p2-board {
 .p1-board.active,
 .p2-board.active {
   border-color: var(--border-strong);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset, 0 0 28px rgba(110, 233, 255, 0.4), 0 20px 42px rgba(4, 10, 26, 0.56);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+    0 0 28px rgba(110, 233, 255, 0.4),
+    0 20px 42px rgba(4, 10, 26, 0.56);
 }
 
 .p1-board.deactivated,
@@ -206,7 +236,11 @@ body.is-turn-transition.turn-player2 .p2-board.active {
 }
 
 .card {
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.85), rgba(235, 244, 255, 0.62));
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.85),
+    rgba(235, 244, 255, 0.62)
+  );
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.45);
   width: var(--card-width);
@@ -221,8 +255,14 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, filter 180ms ease;
-  box-shadow: 0 8px 20px rgba(4, 10, 26, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.16) inset;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    filter 180ms ease;
+  box-shadow:
+    0 8px 20px rgba(4, 10, 26, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset;
 }
 
 .card:hover {
@@ -234,7 +274,18 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(120deg, transparent 10%, rgba(255, 255, 255, 0.26) 42%, transparent 66%), radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.34), transparent 45%);
+  background-image:
+    linear-gradient(
+      120deg,
+      transparent 10%,
+      rgba(255, 255, 255, 0.26) 42%,
+      transparent 66%
+    ),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(255, 255, 255, 0.34),
+      transparent 45%
+    );
   opacity: 0.6;
   z-index: 2;
 }
@@ -281,29 +332,54 @@ body.is-turn-transition.turn-player2 .p2-board.active {
 }
 
 .card.green {
-  background: linear-gradient(155deg, rgba(100, 232, 143, 0.95), rgba(45, 183, 105, 0.78));
+  background: linear-gradient(
+    155deg,
+    rgba(100, 232, 143, 0.95),
+    rgba(45, 183, 105, 0.78)
+  );
 }
 
 .card.yellow {
-  background: linear-gradient(155deg, rgba(255, 215, 97, 0.96), rgba(255, 188, 66, 0.82));
+  background: linear-gradient(
+    155deg,
+    rgba(255, 215, 97, 0.96),
+    rgba(255, 188, 66, 0.82)
+  );
 }
 
 .card.red {
-  background: linear-gradient(155deg, rgba(255, 124, 130, 0.96), rgba(240, 74, 115, 0.82));
+  background: linear-gradient(
+    155deg,
+    rgba(255, 124, 130, 0.96),
+    rgba(240, 74, 115, 0.82)
+  );
 }
 
 .card.lightblue {
-  background: linear-gradient(155deg, rgba(110, 233, 255, 0.95), rgba(59, 205, 233, 0.82));
+  background: linear-gradient(
+    155deg,
+    rgba(110, 233, 255, 0.95),
+    rgba(59, 205, 233, 0.82)
+  );
 }
 
 .card.blue {
-  background: linear-gradient(155deg, rgba(70, 121, 255, 0.95), rgba(46, 88, 220, 0.84));
+  background: linear-gradient(
+    155deg,
+    rgba(70, 121, 255, 0.95),
+    rgba(46, 88, 220, 0.84)
+  );
   color: white;
 }
 
 .card.covered {
   color: white;
-  background: linear-gradient(145deg, rgba(84, 240, 188, 0.78), rgba(60, 123, 255, 0.75), rgba(255, 124, 130, 0.8));
+  background: linear-gradient(
+    145deg,
+    rgba(84, 240, 188, 0.78),
+    rgba(60, 123, 255, 0.75),
+    rgba(255, 124, 130, 0.8)
+  );
 }
 
 .card.covered::after {
@@ -326,13 +402,25 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(35deg, rgba(255, 255, 255, 0.22) 12%, transparent 12.5%, transparent 88%, rgba(255, 255, 255, 0.2) 88.5%), linear-gradient(155deg, rgba(255, 255, 255, 0.12), rgba(7, 17, 29, 0.06));
+  background-image:
+    linear-gradient(
+      35deg,
+      rgba(255, 255, 255, 0.22) 12%,
+      transparent 12.5%,
+      transparent 88%,
+      rgba(255, 255, 255, 0.2) 88.5%
+    ),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.12), rgba(7, 17, 29, 0.06));
   opacity: 0.75;
   z-index: 3;
 }
 
 .card.card-stack {
-  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.35), 0 5px 0 rgba(255, 255, 255, 0.25), 0 9px 0 rgba(255, 255, 255, 0.18), 0 12px 18px rgba(4, 10, 26, 0.5);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.35),
+    0 5px 0 rgba(255, 255, 255, 0.25),
+    0 9px 0 rgba(255, 255, 255, 0.18),
+    0 12px 18px rgba(4, 10, 26, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
@@ -399,7 +487,11 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   min-height: 124px;
   border-radius: var(--radius-lg);
   padding: 14px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.07)
+  );
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-glow);
   backdrop-filter: blur(12px) saturate(135%);
@@ -416,7 +508,10 @@ body.is-turn-transition.turn-player2 .p2-board.active {
   min-height: 96px;
   border-radius: var(--radius-md);
   padding: 10px;
-  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
 }
 
 .middle-pile .middle-label {
@@ -430,7 +525,9 @@ body.is-turn-transition.turn-player2 .p2-board.active {
 
 .middle-pile.is-interactive {
   background: var(--surface-card-hover);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.24), 0 12px 26px rgba(4, 10, 26, 0.42);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.24),
+    0 12px 26px rgba(4, 10, 26, 0.42);
   transform: translateY(-2px);
 }
 
@@ -471,7 +568,11 @@ body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
   gap: 16px;
   padding: 14px 16px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(148deg, rgba(13, 25, 49, 0.84), rgba(13, 25, 49, 0.62));
+  background: linear-gradient(
+    148deg,
+    rgba(13, 25, 49, 0.84),
+    rgba(13, 25, 49, 0.62)
+  );
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(13px);
@@ -481,12 +582,20 @@ body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 170ms ease, transform 170ms ease, visibility 170ms ease, filter 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  transition:
+    opacity 170ms ease,
+    transform 170ms ease,
+    visibility 170ms ease,
+    filter 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
 
 .player-hand.is-active {
   border-color: var(--border-strong);
-  box-shadow: 0 18px 40px rgba(4, 10, 26, 0.52), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  box-shadow:
+    0 18px 40px rgba(4, 10, 26, 0.52),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -516,7 +625,11 @@ body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
   text-transform: uppercase;
   font-weight: 700;
   color: var(--text-main);
-  transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease, box-shadow 220ms ease;
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .player-turn-badge::before {
@@ -560,7 +673,9 @@ body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
 }
 
 .hand-card {
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .player-hand.is-active .hand-card {
@@ -570,7 +685,9 @@ body.multiplayer-mode.turn-player2 #player_card_ablage.highlight {
 
 body.multiplayer-mode.turn-player1 .player-hand {
   border-color: rgba(66, 210, 152, 0.42);
-  box-shadow: 0 18px 40px rgba(4, 10, 26, 0.52), 0 0 0 2px rgba(66, 210, 152, 0.15);
+  box-shadow:
+    0 18px 40px rgba(4, 10, 26, 0.52),
+    0 0 0 2px rgba(66, 210, 152, 0.15);
 }
 
 body.multiplayer-mode.turn-player1 .player-turn-badge {
@@ -585,7 +702,9 @@ body.multiplayer-mode.turn-player1 .player-turn-badge::before {
 
 body.multiplayer-mode.turn-player2 .player-hand {
   border-color: rgba(255, 172, 76, 0.46);
-  box-shadow: 0 18px 40px rgba(4, 10, 26, 0.52), 0 0 0 2px rgba(255, 172, 76, 0.15);
+  box-shadow:
+    0 18px 40px rgba(4, 10, 26, 0.52),
+    0 0 0 2px rgba(255, 172, 76, 0.15);
   top: auto;
   bottom: calc(20% + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%) rotate(180deg);
@@ -617,7 +736,11 @@ body.multiplayer-mode.turn-player2 .player-turn-badge::before {
   align-items: center;
   gap: 3px;
   border: 1px solid var(--border-soft);
-  background: linear-gradient(165deg, rgba(15, 30, 56, 0.74), rgba(60, 123, 255, 0.45));
+  background: linear-gradient(
+    165deg,
+    rgba(15, 30, 56, 0.74),
+    rgba(60, 123, 255, 0.45)
+  );
   box-shadow: var(--shadow-glow);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -761,7 +884,10 @@ body.multiplayer-mode .point-label.player2 {
   cursor: pointer;
   line-height: 1.35;
   font-size: 0.92rem;
-  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
   animation: button-animation 4s ease-in-out infinite;
 }
 
@@ -792,7 +918,11 @@ body.multiplayer-mode .point-label.player2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, rgba(8, 19, 36, 0.84), rgba(6, 13, 32, 0.7));
+  background: linear-gradient(
+    160deg,
+    rgba(8, 19, 36, 0.84),
+    rgba(6, 13, 32, 0.7)
+  );
   z-index: 1000000;
   padding: 16px;
   border-radius: 0;
@@ -800,7 +930,11 @@ body.multiplayer-mode .point-label.player2 {
 }
 
 .modal.active.modal-start .start-inner {
-  background: linear-gradient(160deg, rgba(19, 35, 63, 0.92), rgba(17, 28, 58, 0.82));
+  background: linear-gradient(
+    160deg,
+    rgba(19, 35, 63, 0.92),
+    rgba(17, 28, 58, 0.82)
+  );
   border: 1px solid rgba(255, 255, 255, 0.24);
   box-shadow: 0 28px 64px rgba(4, 10, 26, 0.56);
   backdrop-filter: blur(18px) saturate(120%);
@@ -842,7 +976,10 @@ body.multiplayer-mode .point-label.player2 {
   gap: 5px;
   text-align: left;
   color: white;
-  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
 }
 
 .modal.active.modal-start .start-btn:hover,
@@ -894,7 +1031,11 @@ body.multiplayer-mode .point-label.player2 {
 
 .theme-modal-card {
   width: min(460px, 100%);
-  background: linear-gradient(160deg, rgba(19, 35, 63, 0.94), rgba(17, 28, 58, 0.86));
+  background: linear-gradient(
+    160deg,
+    rgba(19, 35, 63, 0.94),
+    rgba(17, 28, 58, 0.86)
+  );
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 20px;
   padding: 20px;
@@ -948,10 +1089,10 @@ body.multiplayer-mode .point-label.player2 {
   line-height: 1.35;
 }
 
-.settings-toggle input[type=checkbox] {
+.settings-toggle input[type="checkbox"] {
   -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   width: 50px;
   height: 28px;
   border-radius: 999px;
@@ -959,11 +1100,14 @@ body.multiplayer-mode .point-label.player2 {
   background: rgba(255, 255, 255, 0.2);
   position: relative;
   cursor: pointer;
-  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
   flex-shrink: 0;
 }
 
-.settings-toggle input[type=checkbox]::before {
+.settings-toggle input[type="checkbox"]::before {
   content: "";
   position: absolute;
   top: 3px;
@@ -976,17 +1120,17 @@ body.multiplayer-mode .point-label.player2 {
   transition: transform 180ms ease;
 }
 
-.settings-toggle input[type=checkbox]:checked {
+.settings-toggle input[type="checkbox"]:checked {
   background: linear-gradient(140deg, #2fbe80, #6ee9ff);
   border-color: rgba(255, 255, 255, 0.58);
   box-shadow: 0 0 0 2px rgba(110, 233, 255, 0.2);
 }
 
-.settings-toggle input[type=checkbox]:checked::before {
+.settings-toggle input[type="checkbox"]:checked::before {
   transform: translateX(22px);
 }
 
-.settings-toggle input[type=checkbox]:focus-visible {
+.settings-toggle input[type="checkbox"]:focus-visible {
   outline: 2px solid rgba(110, 233, 255, 0.9);
   outline-offset: 2px;
 }
@@ -1038,7 +1182,11 @@ body.multiplayer-mode .point-label.player2 {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   border-radius: 0;
-  background: linear-gradient(165deg, rgba(6, 12, 30, 0.82), rgba(14, 27, 48, 0.74));
+  background: linear-gradient(
+    165deg,
+    rgba(6, 12, 30, 0.82),
+    rgba(14, 27, 48, 0.74)
+  );
 }
 
 .modal.active.modal-endgame.is-summary {
@@ -1096,7 +1244,11 @@ body.multiplayer-mode .point-label.player2 {
 
 .winner-card {
   width: min(420px, 100%);
-  background: linear-gradient(165deg, rgba(20, 35, 62, 0.95), rgba(18, 27, 50, 0.9));
+  background: linear-gradient(
+    165deg,
+    rgba(20, 35, 62, 0.95),
+    rgba(18, 27, 50, 0.9)
+  );
   color: var(--text-main);
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 20px;
@@ -1209,13 +1361,20 @@ body.multiplayer-mode .point-label.player2 {
   position: absolute;
   --chip-y: -50%;
   --chip-rotation: 0deg;
-  transform: translate(-50%, var(--chip-y)) scale(0.82) rotate(var(--chip-rotation));
+  transform: translate(-50%, var(--chip-y)) scale(0.82)
+    rotate(var(--chip-rotation));
   min-width: 140px;
   padding: 10px 14px;
   border-radius: 14px;
-  background: linear-gradient(155deg, rgba(8, 16, 34, 0.9), rgba(22, 40, 67, 0.92));
+  background: linear-gradient(
+    155deg,
+    rgba(8, 16, 34, 0.9),
+    rgba(22, 40, 67, 0.92)
+  );
   border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 24px 34px rgba(4, 10, 26, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  box-shadow:
+    0 24px 34px rgba(4, 10, 26, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   text-align: center;
   color: white;
   opacity: 0;
@@ -1223,7 +1382,8 @@ body.multiplayer-mode .point-label.player2 {
 }
 
 .endgame-round-score-chip.is-visible {
-  animation: round-score-chip-enter 720ms cubic-bezier(0.2, 0.85, 0.2, 1) forwards;
+  animation: round-score-chip-enter 720ms cubic-bezier(0.2, 0.85, 0.2, 1)
+    forwards;
 }
 
 .endgame-round-score-chip.is-doubling {
@@ -1232,12 +1392,18 @@ body.multiplayer-mode .point-label.player2 {
 
 .endgame-round-score-chip.player1 {
   border-color: rgba(66, 210, 152, 0.55);
-  box-shadow: 0 24px 34px rgba(4, 10, 26, 0.5), 0 0 0 1px rgba(66, 210, 152, 0.3) inset, 0 0 26px rgba(66, 210, 152, 0.24);
+  box-shadow:
+    0 24px 34px rgba(4, 10, 26, 0.5),
+    0 0 0 1px rgba(66, 210, 152, 0.3) inset,
+    0 0 26px rgba(66, 210, 152, 0.24);
 }
 
 .endgame-round-score-chip.player2 {
   border-color: rgba(255, 172, 76, 0.56);
-  box-shadow: 0 24px 34px rgba(4, 10, 26, 0.5), 0 0 0 1px rgba(255, 172, 76, 0.3) inset, 0 0 26px rgba(255, 172, 76, 0.24);
+  box-shadow:
+    0 24px 34px rgba(4, 10, 26, 0.5),
+    0 0 0 1px rgba(255, 172, 76, 0.3) inset,
+    0 0 26px rgba(255, 172, 76, 0.24);
 }
 
 body.multiplayer-mode.turn-player2 .endgame-round-score-chip {
@@ -1281,30 +1447,36 @@ body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
 }
 
 .endgame-round-score-multiplier.is-active {
-  animation: round-score-multiplier-pop 1080ms cubic-bezier(0.2, 0.85, 0.2, 1) forwards;
+  animation: round-score-multiplier-pop 1080ms cubic-bezier(0.2, 0.85, 0.2, 1)
+    forwards;
 }
 
 @keyframes round-score-chip-enter {
   0% {
     opacity: 0;
     filter: blur(2px);
-    transform: translate(-50%, calc(var(--chip-y) + 10%)) scale(0.8) rotate(var(--chip-rotation));
+    transform: translate(-50%, calc(var(--chip-y) + 10%)) scale(0.8)
+      rotate(var(--chip-rotation));
   }
   100% {
     opacity: 1;
     filter: blur(0);
-    transform: translate(-50%, var(--chip-y)) scale(1) rotate(var(--chip-rotation));
+    transform: translate(-50%, var(--chip-y)) scale(1)
+      rotate(var(--chip-rotation));
   }
 }
 @keyframes round-score-chip-pulse {
   0% {
-    transform: translate(-50%, var(--chip-y)) scale(1) rotate(var(--chip-rotation));
+    transform: translate(-50%, var(--chip-y)) scale(1)
+      rotate(var(--chip-rotation));
   }
   50% {
-    transform: translate(-50%, calc(var(--chip-y) - 4%)) scale(1.05) rotate(var(--chip-rotation));
+    transform: translate(-50%, calc(var(--chip-y) - 4%)) scale(1.05)
+      rotate(var(--chip-rotation));
   }
   100% {
-    transform: translate(-50%, var(--chip-y)) scale(1) rotate(var(--chip-rotation));
+    transform: translate(-50%, var(--chip-y)) scale(1)
+      rotate(var(--chip-rotation));
   }
 }
 @keyframes round-score-multiplier-pop {
@@ -1360,7 +1532,9 @@ body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
 }
 
 .highlight {
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.42), 0 0 20px rgba(110, 233, 255, 0.72) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.42),
+    0 0 20px rgba(110, 233, 255, 0.72) !important;
   transform: translateY(-2px);
 }
 
@@ -1467,4 +1641,4 @@ body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
   }
-}/*# sourceMappingURL=style.css.map */
+} /*# sourceMappingURL=style.css.map */
