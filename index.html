@@ -53,6 +53,12 @@
               Oberfeld.</span
             >
           </button>
+          <button class="start-btn" id="btn_online_multiplayer">
+            <span class="start-btn-title">Online-Spiel mit Raumcode</span>
+            <span class="start-btn-subtitle"
+              >Spiele 1v1 mit einem Freund ueber WebSocket.</span
+            >
+          </button>
           <button class="start-btn start-btn-settings" id="btn_settings">
             <span class="start-btn-title">Einstellungen</span>
             <span class="start-btn-subtitle"
@@ -416,6 +422,8 @@
         <div class="option" id="option_p1_2">Karte umdrehen</div>
       </div>
     </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="src/js/socket-client.js"></script>
     <script src="src/js/script.js"></script>
   </body>
 </html>

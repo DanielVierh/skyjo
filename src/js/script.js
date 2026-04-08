@@ -126,6 +126,9 @@ const btn_new_game = document.getElementById("btn_new_game");
 const btn_new_game_no_help = document.getElementById("btn_new_game_no_help");
 const btn_continue_game = document.getElementById("btn_continue_game");
 const btn_multiplayer = document.getElementById("btn_multiplayer");
+const btn_online_multiplayer = document.getElementById(
+  "btn_online_multiplayer",
+);
 const btn_settings = document.getElementById("btn_settings");
 const theme_modal = document.getElementById("theme_modal");
 const btn_close_theme_modal = document.getElementById("btn_close_theme_modal");
@@ -233,6 +236,20 @@ let pendingEndgameSummary = null;
 let pendingEndgameResetScores = false;
 let showRoundPointsInLabels = true;
 
+const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
+
+const onlineSession = {
+  active: false,
+  roomCode: "",
+  playerKey: null,
+  reconnectToken: "",
+  host: false,
+  listenersBound: false,
+  started: false,
+};
+
+let onlineApplyInProgress = false;
+
 function clearRoundScoreOverlay() {
   document.getElementById("endgame_round_score_layer")?.remove();
 }
@@ -241,11 +258,45 @@ function isMultiplayerMode() {
   return !ki_player;
 }
 
+function isOnlineMode() {
+  return onlineSession.active;
+}
+
+function getSocketApi() {
+  return window.SkyjoSocket ?? null;
+}
+
+function getReconnectStorageKey(roomCode) {
+  return `${ONLINE_RECONNECT_TOKEN_PREFIX}${String(roomCode || "").toUpperCase()}`;
+}
+
+function storeReconnectToken(roomCode, token) {
+  if (!roomCode || !token) return;
+  localStorage.setItem(getReconnectStorageKey(roomCode), token);
+}
+
+function getStoredReconnectToken(roomCode) {
+  if (!roomCode) return "";
+  return localStorage.getItem(getReconnectStorageKey(roomCode)) || "";
+}
+
+function resetOnlineSession() {
+  onlineSession.active = false;
+  onlineSession.roomCode = "";
+  onlineSession.playerKey = null;
+  onlineSession.reconnectToken = "";
+  onlineSession.host = false;
+  onlineSession.started = false;
+}
+
 function isHumanPlayer(playerKey) {
   return playerKey === "player1" || isMultiplayerMode();
 }
 
 function isHumanTurn() {
+  if (isOnlineMode()) {
+    return currentPlayer === onlineSession.playerKey;
+  }
   return isHumanPlayer(currentPlayer);
 }
 
@@ -384,6 +435,324 @@ function triggerTurnTransition() {
 function switchToPlayer(playerKey) {
   currentPlayer = playerKey;
   show_current_player();
+  maybeBroadcastOnlineState("switch-player");
+}
+
+function serializeCard(card) {
+  if (!card) return null;
+  return {
+    value: Number(card.value),
+    place: card.place,
+    covered: !!card.covered,
+  };
+}
+
+function serializePlayer(player) {
+  return {
+    name: player.name,
+    playerNumber: player.playerNumber,
+    points: player.points,
+    firstRound: !!player.firstRound,
+    first_two_cards: {
+      discovered: player.first_two_cards?.discovered ?? 0,
+      sum: player.first_two_cards?.sum ?? 0,
+    },
+    cards: player.cards.map((card) => serializeCard(card)),
+  };
+}
+
+function deserializeCard(cardLike) {
+  if (!cardLike) return null;
+  return new Card(Number(cardLike.value), cardLike.place, !!cardLike.covered);
+}
+
+function deserializePlayer(playerLike, fallbackName, fallbackNumber) {
+  const player = new Player(
+    playerLike?.name || fallbackName,
+    Number(playerLike?.playerNumber ?? fallbackNumber),
+  );
+  player.points = Number(playerLike?.points ?? 0);
+  player.firstRound = !!playerLike?.firstRound;
+  player.first_two_cards = {
+    discovered: Number(playerLike?.first_two_cards?.discovered ?? 0),
+    sum: Number(playerLike?.first_two_cards?.sum ?? 0),
+  };
+  player.cards = Array.isArray(playerLike?.cards)
+    ? playerLike.cards.map((card) => deserializeCard(card))
+    : [];
+  return player;
+}
+
+function clearSlotState(slotId) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+  slot.classList.remove("removed", "discover-effect");
+  slot.style.pointerEvents = "";
+  slot.style.cursor = "";
+  slot.setAttribute("data-status", "covered");
+  clearCardUI(slotId);
+  setSlotCovered(slotId);
+}
+
+function renderPlayerBoardFromState(playerObj) {
+  if (!playerObj) return;
+  for (let i = 0; i < 12; i++) {
+    const slotId = getBoardSlotId(playerObj.playerNumber, i);
+    if (!slotId) continue;
+
+    clearSlotState(slotId);
+    const card = playerObj.cards[i];
+    if (!card) {
+      setSlotRemoved(slotId);
+      continue;
+    }
+
+    if (card.covered) {
+      setSlotCovered(slotId);
+      continue;
+    }
+
+    discover_card(card, slotId, true);
+    setSlotDiscovered(slotId);
+  }
+}
+
+function exportOnlineState() {
+  return {
+    player1: serializePlayer(player1),
+    player2: serializePlayer(player2),
+    cardStack: cardStack.map((card) => serializeCard(card)),
+    ablageStack: ablageStack.map((card) => serializeCard(card)),
+    currentPlayer,
+    playerTurnPhase,
+    currentCard: serializeCard(current_card),
+    currentCardSource: current_card_source,
+    isSwap: !!is_Swap,
+    gameEnded: !!gameEnded,
+    lastTurn: !!lastTurn,
+    closingPlayerKey:
+      closingPlayer === player1
+        ? "player1"
+        : closingPlayer === player2
+          ? "player2"
+          : null,
+    saveObject: {
+      points_ki: Number(save_object.points_ki ?? 0),
+      points_player: Number(save_object.points_player ?? 0),
+      no_guidance_mode: !!save_object.no_guidance_mode,
+      player2_mode: PLAYER2_MODES.HUMAN,
+    },
+  };
+}
+
+function applyOnlineState(state) {
+  if (!state) return;
+
+  onlineApplyInProgress = true;
+  try {
+    player1 = deserializePlayer(state.player1, "Spieler 1", 1);
+    player2 = deserializePlayer(state.player2, "Spieler 2", 2);
+    cardStack = Array.isArray(state.cardStack)
+      ? state.cardStack.map((card) => deserializeCard(card))
+      : [];
+    ablageStack = Array.isArray(state.ablageStack)
+      ? state.ablageStack.map((card) => deserializeCard(card))
+      : [];
+    currentPlayer = state.currentPlayer === "player2" ? "player2" : "player1";
+    current_card = deserializeCard(state.currentCard);
+    current_card_source = state.currentCardSource || null;
+    is_Swap = !!state.isSwap;
+    gameEnded = !!state.gameEnded;
+    lastTurn = !!state.lastTurn;
+    closingPlayer =
+      state.closingPlayerKey === "player2"
+        ? player2
+        : state.closingPlayerKey === "player1"
+          ? player1
+          : null;
+
+    save_object.points_ki = Number(state.saveObject?.points_ki ?? 0);
+    save_object.points_player = Number(state.saveObject?.points_player ?? 0);
+    save_object.player2_mode = PLAYER2_MODES.HUMAN;
+    save_object.no_guidance_mode = true;
+
+    lbl_game_points_ki.innerHTML = save_object.points_ki;
+    lbl_game_points_player.innerHTML = save_object.points_player;
+
+    renderPlayerBoardFromState(player1);
+    renderPlayerBoardFromState(player2);
+    updateAblageUI();
+    refreshDrawPileUI();
+    setPlayerTurnPhase(
+      state.playerTurnPhase || PLAYER_PHASES.WAITING,
+      getWaitingTurnHint(currentPlayer),
+    );
+    updateHandCardUI();
+    updateModeLabels();
+    refresh_point_label();
+    show_current_player();
+  } finally {
+    onlineApplyInProgress = false;
+  }
+}
+
+async function maybeBroadcastOnlineState(reason = "") {
+  if (!isOnlineMode()) return;
+  if (onlineApplyInProgress) return;
+  if (!onlineSession.started) return;
+
+  const socketApi = getSocketApi();
+  if (!socketApi) return;
+
+  try {
+    await socketApi.syncState(onlineSession.roomCode, {
+      reason,
+      state: exportOnlineState(),
+    });
+  } catch (error) {
+    console.warn("Online-Sync fehlgeschlagen:", error?.message || error);
+  }
+}
+
+function ensureOnlineListenersBound() {
+  if (onlineSession.listenersBound) return;
+  const socketApi = getSocketApi();
+  if (!socketApi) return;
+
+  socketApi.on("roomReady", () => {
+    if (!onlineSession.active) return;
+
+    if (onlineSession.host && !onlineSession.started) {
+      onlineSession.started = true;
+      if (start_modal) start_modal.classList.remove("active");
+      init();
+      maybeBroadcastOnlineState("match-start");
+    }
+  });
+
+  socketApi.on("stateUpdate", (payload) => {
+    if (!onlineSession.active) return;
+    const rawState = payload?.state?.state ?? payload?.state;
+    applyOnlineState(rawState);
+    onlineSession.started = true;
+  });
+
+  socketApi.on("playerDisconnected", (payload) => {
+    if (!onlineSession.active) return;
+    const disconnectedPlayer =
+      payload?.playerKey === "player2" ? "Spieler 2" : "Spieler 1";
+    show_info_modal(
+      onlineSession.playerKey,
+      "Verbindung unterbrochen",
+      `${disconnectedPlayer} ist getrennt. Reconnect-Zeitfenster: 120 Sekunden.`,
+      3500,
+    );
+  });
+
+  socketApi.on("playerReconnected", (payload) => {
+    if (!onlineSession.active) return;
+    const reconnectedPlayer =
+      payload?.playerKey === "player2" ? "Spieler 2" : "Spieler 1";
+    show_info_modal(
+      onlineSession.playerKey,
+      "Wieder verbunden",
+      `${reconnectedPlayer} ist wieder online.`,
+      2200,
+    );
+  });
+
+  socketApi.on("roomAbandoned", (payload) => {
+    if (!onlineSession.active) return;
+    const winnerKey = payload?.winner === "player2" ? "player2" : "player1";
+    show_info_modal(
+      onlineSession.playerKey,
+      "Match beendet",
+      `${getPlayerDisplayName(winnerKey)} gewinnt durch Verbindungsabbruch.`,
+      4000,
+    );
+    resetOnlineSession();
+  });
+
+  onlineSession.listenersBound = true;
+}
+
+async function startOnlineMultiplayerFlow() {
+  const socketApi = getSocketApi();
+  if (!socketApi) {
+    alert("Socket.IO wurde nicht geladen.");
+    return;
+  }
+
+  socketApi.ensureSocket();
+  ensureOnlineListenersBound();
+
+  const modeInput = prompt(
+    "Online-Spiel: 'C' fuer Raum erstellen, 'J' fuer Raum beitreten.",
+    "C",
+  );
+  const mode = String(modeInput || "")
+    .trim()
+    .toUpperCase();
+
+  try {
+    if (mode === "J") {
+      const roomCodeInput = prompt("Bitte Raumcode eingeben:", "");
+      const roomCode = String(roomCodeInput || "")
+        .trim()
+        .toUpperCase();
+      if (!roomCode) return;
+
+      const storedToken = getStoredReconnectToken(roomCode);
+      const joined = await socketApi.joinRoom(roomCode, storedToken);
+
+      onlineSession.active = true;
+      onlineSession.roomCode = joined.roomCode;
+      onlineSession.playerKey = joined.playerKey;
+      onlineSession.reconnectToken = joined.reconnectToken;
+      onlineSession.host = joined.playerKey === "player1";
+      onlineSession.started = !!joined.gameState;
+      storeReconnectToken(joined.roomCode, joined.reconnectToken);
+
+      setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
+      setGuidanceMode(true, { persist: false });
+
+      if (start_modal) start_modal.classList.remove("active");
+      init();
+
+      if (joined.gameState?.state) {
+        applyOnlineState(joined.gameState.state);
+      } else {
+        show_info_modal(
+          onlineSession.playerKey,
+          "Raum beigetreten",
+          "Warte, bis der Host die Partie startet.",
+          2600,
+        );
+      }
+
+      return;
+    }
+
+    const created = await socketApi.createRoom();
+
+    onlineSession.active = true;
+    onlineSession.roomCode = created.roomCode;
+    onlineSession.playerKey = created.playerKey;
+    onlineSession.reconnectToken = created.reconnectToken;
+    onlineSession.host = true;
+    onlineSession.started = false;
+    storeReconnectToken(created.roomCode, created.reconnectToken);
+
+    setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
+    setGuidanceMode(true, { persist: false });
+
+    alert(
+      `Raum erstellt: ${created.roomCode}\nTeile den Code mit deinem Mitspieler.`,
+    );
+  } catch (error) {
+    alert(`Online-Start fehlgeschlagen: ${error?.message || error}`);
+    resetOnlineSession();
+  }
 }
 
 function countOpenCards(player) {
@@ -1111,6 +1480,7 @@ async function endGame() {
 
   //*Optional: UI sperren
   do_disable_area();
+  maybeBroadcastOnlineState("end-game");
 }
 
 //*ANCHOR - Show Winner of the game and reset local storage for new game
@@ -1212,6 +1582,7 @@ function end_of_turn(finished = null) {
 
   //*Normaler Spielerwechsel
   switchToPlayer(otherKey);
+  maybeBroadcastOnlineState("end-turn");
 }
 
 //*(kompatibler Alias, falls dein Code irgendwo end_turn() aufruft)
@@ -2035,6 +2406,7 @@ function showStartModalWrapper() {
   if (start_modal) start_modal.classList.add("active");
 
   btn_new_game?.addEventListener("click", () => {
+    resetOnlineSession();
     // Reset Scores und starte neues Spiel gegen KI
     save_object.points_ki = 0;
     save_object.points_player = 0;
@@ -2046,6 +2418,7 @@ function showStartModalWrapper() {
   });
 
   btn_new_game_no_help?.addEventListener("click", () => {
+    resetOnlineSession();
     save_object.points_ki = 0;
     save_object.points_player = 0;
     setPlayer2Mode(PLAYER2_MODES.KI, { persist: false });
@@ -2056,6 +2429,7 @@ function showStartModalWrapper() {
   });
 
   btn_continue_game?.addEventListener("click", () => {
+    resetOnlineSession();
     if (start_modal) start_modal.classList.remove("active");
     loadGameFromLocalStorage();
     setPlayer2Mode(loadStoredPlayer2Mode(), { persist: false });
@@ -2066,6 +2440,7 @@ function showStartModalWrapper() {
   });
 
   btn_multiplayer?.addEventListener("click", () => {
+    resetOnlineSession();
     save_object.points_ki = 0;
     save_object.points_player = 0;
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
@@ -2073,6 +2448,10 @@ function showStartModalWrapper() {
     save_Game_into_Storage();
     if (start_modal) start_modal.classList.remove("active");
     init();
+  });
+
+  btn_online_multiplayer?.addEventListener("click", async () => {
+    await startOnlineMultiplayerFlow();
   });
 
   btn_settings?.addEventListener("click", () => {
@@ -2164,11 +2543,16 @@ function updateThemeSelectionUI() {
 }
 
 function init() {
-  loadGameFromLocalStorage();
-  setPlayer2Mode(loadStoredPlayer2Mode(), { persist: false });
-  setGuidanceMode(ki_player ? loadStoredGuidanceMode() : true, {
-    persist: false,
-  });
+  if (!isOnlineMode()) {
+    loadGameFromLocalStorage();
+    setPlayer2Mode(loadStoredPlayer2Mode(), { persist: false });
+    setGuidanceMode(ki_player ? loadStoredGuidanceMode() : true, {
+      persist: false,
+    });
+  } else {
+    setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
+    setGuidanceMode(true, { persist: false });
+  }
   resetEndgameFlowState();
   create_player();
   create_cards();
@@ -2198,6 +2582,11 @@ function init() {
   updateHandCardUI();
 
   show_current_player();
+
+  if (isOnlineMode() && onlineSession.host) {
+    onlineSession.started = true;
+    maybeBroadcastOnlineState("host-init");
+  }
 
   //*DEBUG
   helper_show_cards(player1);
@@ -2416,6 +2805,27 @@ async function show_current_player() {
 
   if (isHumanTurn()) {
     prepareHumanTurn(currentPlayer);
+    return;
+  }
+
+  if (isOnlineMode()) {
+    setPlayerTurnPhase(
+      PLAYER_PHASES.WAITING,
+      getWaitingTurnHint(currentPlayer),
+    );
+    setModalPlayerContext(currentPlayer);
+    if (currentPlayer === "player1") {
+      player2Board?.classList.remove("active");
+      player2Board?.classList.add("deactivated");
+      player1Board?.classList.remove("deactivated");
+      player1Board?.classList.add("active");
+    } else {
+      player1Board?.classList.remove("active");
+      player1Board?.classList.add("deactivated");
+      player2Board?.classList.remove("deactivated");
+      player2Board?.classList.add("active");
+    }
+    do_disable_area();
     return;
   }
 
@@ -3031,6 +3441,14 @@ function refresh_point_label() {
 
 //*ANCHOR - Load Game from Local Storage
 function loadGameFromLocalStorage() {
+  if (isOnlineMode()) {
+    save_object.points_ki = 0;
+    save_object.points_player = 0;
+    save_object.player2_mode = PLAYER2_MODES.HUMAN;
+    save_object.no_guidance_mode = true;
+    return;
+  }
+
   const savedGame = localStorage.getItem(SAVEGAME_STORAGE_KEY);
   if (savedGame) {
     save_object = JSON.parse(savedGame);
@@ -3052,6 +3470,8 @@ function loadGameFromLocalStorage() {
 
 //*ANCHOR - Save Game into Local Storage
 function save_Game_into_Storage() {
+  if (isOnlineMode()) return;
+
   save_object.player2_mode = ki_player ? PLAYER2_MODES.KI : PLAYER2_MODES.HUMAN;
   save_object.no_guidance_mode = noGuidanceMode;
   localStorage.setItem(
