@@ -251,6 +251,8 @@ let turnTransitionTimer = null;
 let pendingEndgameSummary = null;
 let pendingEndgameResetScores = false;
 let showRoundPointsInLabels = true;
+let onlineRoundResult = null;
+let lastRenderedOnlineRoundResultId = null;
 
 const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
 
@@ -340,10 +342,67 @@ function getPlayerDisplayName(playerKey) {
 }
 
 function getScoreLabel(playerKey) {
+  if (isOnlineMode()) {
+    return playerKey === onlineSession.playerKey ? "Du" : "Gegner";
+  }
   if (isMultiplayerMode()) {
     return getPlayerDisplayName(playerKey);
   }
   return playerKey === "player1" ? "Du" : "KI";
+}
+
+function getPerspectiveRoundValues() {
+  const player1Round = player1
+    ? player1.cards.reduce(
+        (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
+        0,
+      )
+    : 0;
+  const player2Round = player2
+    ? player2.cards.reduce(
+        (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
+        0,
+      )
+    : 0;
+
+  if (isOnlineMode() && onlineSession.playerKey === "player2") {
+    return {
+      playerRoundSum: player2Round,
+      opponentRoundSum: player1Round,
+    };
+  }
+
+  return {
+    playerRoundSum: player1Round,
+    opponentRoundSum: player2Round,
+  };
+}
+
+function getPerspectiveGameValues() {
+  const player1Game = save_object.points_player ?? 0;
+  const player2Game = save_object.points_ki ?? 0;
+
+  if (isOnlineMode() && onlineSession.playerKey === "player2") {
+    return {
+      playerGameSum: player2Game,
+      opponentGameSum: player1Game,
+    };
+  }
+
+  return {
+    playerGameSum: player1Game,
+    opponentGameSum: player2Game,
+  };
+}
+
+function refreshGameScoreLayers() {
+  const { playerGameSum, opponentGameSum } = getPerspectiveGameValues();
+  if (lbl_game_points_player) {
+    lbl_game_points_player.innerHTML = playerGameSum;
+  }
+  if (lbl_game_points_ki) {
+    lbl_game_points_ki.innerHTML = opponentGameSum;
+  }
 }
 
 function getWaitingTurnHint(playerKey = currentPlayer) {
@@ -380,11 +439,20 @@ function updateModeLabels() {
   );
 
   if (lbl_game_points_opponent_title) {
-    lbl_game_points_opponent_title.textContent = getScoreLabel("player2");
+    if (isOnlineMode()) {
+      lbl_game_points_opponent_title.textContent = "Gegner";
+    } else {
+      lbl_game_points_opponent_title.textContent = getScoreLabel("player2");
+    }
   }
   if (lbl_game_points_player_title) {
-    lbl_game_points_player_title.textContent = getScoreLabel("player1");
+    if (isOnlineMode()) {
+      lbl_game_points_player_title.textContent = "Du";
+    } else {
+      lbl_game_points_player_title.textContent = getScoreLabel("player1");
+    }
   }
+  refreshGameScoreLayers();
   if (player_hand_title) {
     player_hand_title.textContent = isHumanTurn()
       ? `Handkarte ${getPlayerDisplayName(currentPlayer)}`
@@ -570,6 +638,7 @@ function exportOnlineState() {
       no_guidance_mode: !!save_object.no_guidance_mode,
       player2_mode: PLAYER2_MODES.HUMAN,
     },
+    onlineRoundResult,
   };
 }
 
@@ -603,9 +672,9 @@ function applyOnlineState(state) {
     save_object.points_player = Number(state.saveObject?.points_player ?? 0);
     save_object.player2_mode = PLAYER2_MODES.HUMAN;
     save_object.no_guidance_mode = true;
+    onlineRoundResult = state.onlineRoundResult ?? null;
 
-    lbl_game_points_ki.innerHTML = save_object.points_ki;
-    lbl_game_points_player.innerHTML = save_object.points_player;
+    refreshGameScoreLayers();
 
     renderPlayerBoardFromState(player1);
     renderPlayerBoardFromState(player2);
@@ -618,6 +687,33 @@ function applyOnlineState(state) {
     updateHandCardUI();
     updateModeLabels();
     refresh_point_label();
+
+    if (
+      onlineRoundResult?.id &&
+      gameEnded &&
+      onlineRoundResult.id !== lastRenderedOnlineRoundResultId
+    ) {
+      lastRenderedOnlineRoundResultId = onlineRoundResult.id;
+      void playEndRoundScoreAnimation([
+        {
+          playerKey: "player2",
+          label: getPlayerDisplayName("player2"),
+          boardEl: player2Board,
+          basePoints: Number(onlineRoundResult.basePoints2 ?? 0),
+          finalPoints: Number(onlineRoundResult.finalPoints2 ?? 0),
+          isDoubled: onlineRoundResult.doubledPlayerKey === "player2",
+        },
+        {
+          playerKey: "player1",
+          label: getPlayerDisplayName("player1"),
+          boardEl: player1Board,
+          basePoints: Number(onlineRoundResult.basePoints1 ?? 0),
+          finalPoints: Number(onlineRoundResult.finalPoints1 ?? 0),
+          isDoubled: onlineRoundResult.doubledPlayerKey === "player1",
+        },
+      ]);
+    }
+
     show_current_player();
   } finally {
     onlineApplyInProgress = false;
@@ -1418,6 +1514,7 @@ function startRoundWithoutModal(resetScores = false) {
 
   // Reset globale Spielzustandsvariablen
   gameEnded = false;
+  onlineRoundResult = null;
   lastTurn = false;
   closingPlayer = null;
   current_card = null;
@@ -1478,8 +1575,7 @@ function startRoundWithoutModal(resetScores = false) {
   refreshDrawPileUI();
 
   // Update cumulative score labels
-  lbl_game_points_ki.innerHTML = save_object.points_ki;
-  lbl_game_points_player.innerHTML = save_object.points_player;
+  refreshGameScoreLayers();
   refresh_point_label();
 
   // Set current player and continue
@@ -1564,8 +1660,7 @@ async function endGame() {
   //* add points to sum and save
   save_object.points_ki += points2;
   save_object.points_player += points1;
-  lbl_game_points_ki.innerHTML = save_object.points_ki;
-  lbl_game_points_player.innerHTML = save_object.points_player;
+  refreshGameScoreLayers();
   refresh_point_label();
 
   reveal_all_cards();
@@ -1589,6 +1684,15 @@ async function endGame() {
   ]);
 
   if (isOnlineMode()) {
+    onlineRoundResult = {
+      id: Date.now(),
+      basePoints1: basePoints1,
+      basePoints2: basePoints2,
+      finalPoints1: points1,
+      finalPoints2: points2,
+      doubledPlayerKey,
+    };
+
     const shouldResetScores =
       save_object.points_ki >= 100 || save_object.points_player >= 100;
     const nextRoundDelay = scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS);
@@ -3589,21 +3693,8 @@ function reveal_all_cards() {
 }
 //*ANCHOR - Show current points from discovered cards
 function refresh_point_label() {
-  const playerRoundSum = player1
-    ? player1.cards.reduce(
-        (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
-        0,
-      )
-    : 0;
-  const opponentRoundSum = player2
-    ? player2.cards.reduce(
-        (acc, c) => acc + (c && !c.covered ? parseInt(c.value, 10) : 0),
-        0,
-      )
-    : 0;
-
-  const playerGameSum = save_object.points_player ?? 0;
-  const opponentGameSum = save_object.points_ki ?? 0;
+  const { playerRoundSum, opponentRoundSum } = getPerspectiveRoundValues();
+  const { playerGameSum, opponentGameSum } = getPerspectiveGameValues();
 
   point_label.innerHTML = showRoundPointsInLabels
     ? `Runde ${playerRoundSum} | Spiel ${playerGameSum}`
@@ -3631,8 +3722,7 @@ function loadGameFromLocalStorage() {
     save_object.player2_mode = save_object.player2_mode ?? PLAYER2_MODES.KI;
     save_object.no_guidance_mode =
       save_object.no_guidance_mode ?? loadStoredGuidanceMode();
-    lbl_game_points_ki.innerHTML = save_object.points_ki;
-    lbl_game_points_player.innerHTML = save_object.points_player;
+    refreshGameScoreLayers();
     setPlayer2Mode(loadStoredPlayer2Mode(), { persist: false });
     refresh_point_label();
   } else {

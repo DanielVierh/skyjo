@@ -1554,6 +1554,10 @@ body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
   --chip-rotation: 0deg;
 }
 
+body.multiplayer-mode.online-perspective-player2 .endgame-round-score-chip {
+  --chip-rotation: 0deg;
+}
+
 .endgame-round-score-label {
   font-size: 0.7rem;
   letter-spacing: 1.8px;
