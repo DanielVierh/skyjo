@@ -322,6 +322,10 @@ const onlineSession = {
 };
 
 let onlineApplyInProgress = false;
+let onlineSyncInFlight = false;
+let onlineSyncQueued = false;
+let onlineSyncRetryTimerId = null;
+let onlineSyncLatestReason = "";
 
 function clearRoundScoreOverlay() {
   document.getElementById("endgame_round_score_layer")?.remove();
@@ -369,7 +373,63 @@ function resetOnlineSession() {
     clearTimeout(onlineRoundRestartTimerId);
     onlineRoundRestartTimerId = null;
   }
+  if (onlineSyncRetryTimerId) {
+    clearTimeout(onlineSyncRetryTimerId);
+    onlineSyncRetryTimerId = null;
+  }
+  onlineSyncInFlight = false;
+  onlineSyncQueued = false;
+  onlineSyncLatestReason = "";
   onlineScheduledRestartRoundId = null;
+}
+
+function scheduleOnlineSyncRetry(delayMs = 450) {
+  if (onlineSyncRetryTimerId) return;
+  onlineSyncRetryTimerId = setTimeout(() => {
+    onlineSyncRetryTimerId = null;
+    void flushOnlineSyncQueue();
+  }, delayMs);
+}
+
+async function flushOnlineSyncQueue() {
+  if (onlineSyncInFlight) return;
+  if (!onlineSyncQueued) return;
+  if (!isOnlineMode()) return;
+  if (onlineApplyInProgress) return;
+  if (!onlineSession.started) return;
+
+  const socketApi = getSocketApi();
+  if (!socketApi) return;
+  if (!socketApi.isConnected()) {
+    scheduleOnlineSyncRetry(550);
+    return;
+  }
+
+  onlineSyncInFlight = true;
+  onlineSyncQueued = false;
+
+  try {
+    await socketApi.syncState(onlineSession.roomCode, {
+      reason: onlineSyncLatestReason || "queued-sync",
+      state: exportOnlineState(),
+    });
+  } catch (error) {
+    const message = String(error?.message || error || "");
+    onlineSyncQueued = true;
+    scheduleOnlineSyncRetry(600);
+
+    if (message.includes("Socket ACK Timeout")) {
+      return;
+    }
+
+    console.warn("Online-Sync fehlgeschlagen:", message);
+  } finally {
+    onlineSyncInFlight = false;
+  }
+
+  if (onlineSyncQueued) {
+    void flushOnlineSyncQueue();
+  }
 }
 
 function scheduleHostOnlineRoundRestart(roundId, shouldResetScores, delayMs) {
@@ -847,22 +907,14 @@ function applyOnlineState(state) {
   }
 }
 
-async function maybeBroadcastOnlineState(reason = "") {
+function maybeBroadcastOnlineState(reason = "") {
   if (!isOnlineMode()) return;
   if (onlineApplyInProgress) return;
   if (!onlineSession.started) return;
 
-  const socketApi = getSocketApi();
-  if (!socketApi) return;
-
-  try {
-    await socketApi.syncState(onlineSession.roomCode, {
-      reason,
-      state: exportOnlineState(),
-    });
-  } catch (error) {
-    console.warn("Online-Sync fehlgeschlagen:", error?.message || error);
-  }
+  onlineSyncLatestReason = reason || onlineSyncLatestReason || "state-update";
+  onlineSyncQueued = true;
+  void flushOnlineSyncQueue();
 }
 
 function ensureOnlineListenersBound() {

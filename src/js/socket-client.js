@@ -143,10 +143,14 @@
   }
 
   async function syncState(roomCode, state) {
-    const response = await emitWithAck("state:sync", {
-      roomCode,
-      state,
-    });
+    const response = await emitWithAck(
+      "state:sync",
+      {
+        roomCode,
+        state,
+      },
+      3000,
+    );
     if (!response?.ok)
       throw new Error(
         response?.error || "Status konnte nicht synchronisiert werden.",
