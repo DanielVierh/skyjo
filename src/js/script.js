@@ -134,6 +134,7 @@ const online_modal = document.getElementById("online_modal");
 const btn_online_create_room = document.getElementById(
   "btn_online_create_room",
 );
+const btn_online_start_game = document.getElementById("btn_online_start_game");
 const btn_online_join_room = document.getElementById("btn_online_join_room");
 const btn_online_copy_room_id = document.getElementById(
   "btn_online_copy_room_id",
@@ -264,6 +265,10 @@ const onlineSession = {
   host: false,
   listenersBound: false,
   started: false,
+  connectedPlayers: {
+    player1: false,
+    player2: false,
+  },
 };
 
 let onlineApplyInProgress = false;
@@ -305,6 +310,10 @@ function resetOnlineSession() {
   onlineSession.reconnectToken = "";
   onlineSession.host = false;
   onlineSession.started = false;
+  onlineSession.connectedPlayers = {
+    player1: false,
+    player2: false,
+  };
 }
 
 function isHumanPlayer(playerKey) {
@@ -743,14 +752,28 @@ function ensureOnlineListenersBound() {
   const socketApi = getSocketApi();
   if (!socketApi) return;
 
-  socketApi.on("roomReady", () => {
+  socketApi.on("roomReady", (payload) => {
     if (!onlineSession.active) return;
 
+    onlineSession.connectedPlayers = {
+      player1: !!payload?.connected?.player1,
+      player2: !!payload?.connected?.player2,
+    };
+
     if (onlineSession.host && !onlineSession.started) {
-      onlineSession.started = true;
-      if (start_modal) start_modal.classList.remove("active");
-      init();
-      maybeBroadcastOnlineState("match-start");
+      if (btn_online_start_game) {
+        btn_online_start_game.hidden = false;
+        btn_online_start_game.disabled = false;
+      }
+
+      if (onlineSession.connectedPlayers.player2) {
+        setOnlineModalStatus(
+          "Mitspieler verbunden. Du kannst jetzt das Spiel starten.",
+          "success",
+        );
+      } else {
+        setOnlineModalStatus("Warte auf einen Mitspieler...", "info");
+      }
     }
   });
 
@@ -771,6 +794,17 @@ function ensureOnlineListenersBound() {
       `${disconnectedPlayer} ist getrennt. Reconnect-Zeitfenster: 120 Sekunden.`,
       3500,
     );
+
+    if (onlineSession.host && !onlineSession.started) {
+      onlineSession.connectedPlayers.player2 = false;
+      if (btn_online_start_game) {
+        btn_online_start_game.disabled = false;
+      }
+      setOnlineModalStatus(
+        "Mitspieler getrennt. Warte auf Reconnect...",
+        "info",
+      );
+    }
   });
 
   socketApi.on("playerReconnected", (payload) => {
@@ -826,6 +860,10 @@ function resetOnlineModalState() {
   }
   if (inp_online_room_code) {
     inp_online_room_code.value = "";
+  }
+  if (btn_online_start_game) {
+    btn_online_start_game.hidden = true;
+    btn_online_start_game.disabled = false;
   }
   setOnlineModalStatus("", "info");
 }
@@ -884,6 +922,10 @@ async function handleOnlineCreateRoom() {
     onlineSession.reconnectToken = created.reconnectToken;
     onlineSession.host = true;
     onlineSession.started = false;
+    onlineSession.connectedPlayers = {
+      player1: true,
+      player2: false,
+    };
     storeReconnectToken(created.roomCode, created.reconnectToken);
 
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
@@ -895,9 +937,13 @@ async function handleOnlineCreateRoom() {
     if (btn_online_copy_room_id) {
       btn_online_copy_room_id.disabled = false;
     }
+    if (btn_online_start_game) {
+      btn_online_start_game.hidden = false;
+      btn_online_start_game.disabled = false;
+    }
 
     setOnlineModalStatus(
-      "Raum erstellt. Teile die ID und warte auf deinen Mitspieler.",
+      "Raum erstellt. Teile die ID und warte auf einen Mitspieler.",
       "success",
     );
   } catch (error) {
@@ -937,6 +983,10 @@ async function handleOnlineJoinRoom() {
     onlineSession.reconnectToken = joined.reconnectToken;
     onlineSession.host = joined.playerKey === "player1";
     onlineSession.started = !!joined.gameState;
+    onlineSession.connectedPlayers = {
+      player1: !!joined?.room?.connected?.player1,
+      player2: !!joined?.room?.connected?.player2,
+    };
     storeReconnectToken(joined.roomCode, joined.reconnectToken);
 
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
@@ -963,6 +1013,30 @@ async function handleOnlineJoinRoom() {
       "error",
     );
   }
+}
+
+async function handleOnlineStartGame() {
+  if (!onlineSession.active || !onlineSession.host) {
+    setOnlineModalStatus("Nur der Host kann das Spiel starten.", "error");
+    return;
+  }
+
+  if (onlineSession.started) {
+    setOnlineModalStatus("Spiel wurde bereits gestartet.", "info");
+    return;
+  }
+
+  onlineSession.started = true;
+  if (!onlineSession.connectedPlayers.player2) {
+    setOnlineModalStatus(
+      "Spiel gestartet. Warte, bis ein Mitspieler beitritt.",
+      "info",
+    );
+  }
+  closeOnlineModal();
+  if (start_modal) start_modal.classList.remove("active");
+  init();
+  maybeBroadcastOnlineState("match-start");
 }
 
 async function startOnlineMultiplayerFlow() {
@@ -2712,6 +2786,10 @@ function showStartModalWrapper() {
 
   btn_online_create_room?.addEventListener("click", async () => {
     await handleOnlineCreateRoom();
+  });
+
+  btn_online_start_game?.addEventListener("click", async () => {
+    await handleOnlineStartGame();
   });
 
   btn_online_join_room?.addEventListener("click", async () => {
