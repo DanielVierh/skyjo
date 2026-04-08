@@ -1018,8 +1018,148 @@ body.multiplayer-mode .point-label.player2 {
   background: linear-gradient(140deg, #a84fe6, #f06bbb);
 }
 
+.modal.active.modal-start .start-btn#btn_online_multiplayer {
+  background: linear-gradient(140deg, #2267e7, #4ec3ff);
+}
+
 .modal.active.modal-start .start-btn.start-btn-settings {
   background: linear-gradient(140deg, #384865, #5e7aa7);
+}
+
+.modal.active.modal-online {
+  z-index: 1000002;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.online-modal-card {
+  width: min(520px, 100%);
+  background: linear-gradient(
+    160deg,
+    rgba(19, 35, 63, 0.94),
+    rgba(17, 28, 58, 0.86)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 48px rgba(4, 10, 26, 0.54);
+}
+
+.online-modal-card h3 {
+  font-size: clamp(1.2rem, 3.8vw, 1.5rem);
+  margin-bottom: 8px;
+}
+
+.online-modal-card p {
+  font-size: 0.92rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.online-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.online-action-btn {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(140deg, #2267e7, #4ec3ff);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease;
+}
+
+.online-action-btn:hover,
+.online-action-btn:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.online-room-block,
+.online-join-block {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.online-label,
+.online-join-block label {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.online-room-row,
+.online-join-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.online-room-row strong {
+  flex: 1;
+  font-family: "Space Grotesk", "Sora", sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 1.5px;
+  color: var(--text-main);
+}
+
+.online-copy-btn {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.online-copy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.online-join-row input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(7, 20, 43, 0.5);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.online-status {
+  min-height: 20px;
+  margin: 8px 0 12px;
+  font-size: 0.86rem;
+}
+
+.online-status.status-info {
+  color: var(--text-dim);
+}
+
+.online-status.status-success {
+  color: #8bffbe;
+}
+
+.online-status.status-error {
+  color: #ffb0b0;
 }
 
 .modal.active.modal-theme {
@@ -1623,6 +1763,15 @@ body.multiplayer-mode.turn-player1 .endgame-round-score-chip {
   .modal.active.modal-start .start-inner {
     border-radius: 18px;
     padding: 18px 14px;
+  }
+  .online-join-row,
+  .online-room-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .online-copy-btn,
+  .online-action-btn {
+    width: 100%;
   }
   .modal.active.modal-endgame {
     align-items: stretch;

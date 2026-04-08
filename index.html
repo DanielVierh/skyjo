@@ -105,6 +105,55 @@
         </button>
       </div>
     </div>
+    <div class="modal modal-online" id="online_modal">
+      <div class="online-modal-card">
+        <h3>Online-Spiel starten</h3>
+        <p>Erstelle einen Raumcode oder tritt einem bestehenden Raum bei.</p>
+
+        <div class="online-actions-grid">
+          <button class="online-action-btn" id="btn_online_create_room">
+            Raum erstellen
+          </button>
+        </div>
+
+        <div class="online-room-block" id="online_room_block">
+          <span class="online-label">Dein Raumcode</span>
+          <div class="online-room-row">
+            <strong id="lbl_online_room_id">-</strong>
+            <button
+              type="button"
+              class="online-copy-btn"
+              id="btn_online_copy_room_id"
+              disabled
+            >
+              ID kopieren
+            </button>
+          </div>
+        </div>
+
+        <div class="online-join-block">
+          <label for="inp_online_room_code">Raumcode eingeben</label>
+          <div class="online-join-row">
+            <input
+              id="inp_online_room_code"
+              type="text"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="z. B. A1B2C3"
+            />
+            <button class="online-action-btn" id="btn_online_join_room">
+              Beitreten
+            </button>
+          </div>
+        </div>
+
+        <p class="online-status" id="lbl_online_modal_status"></p>
+
+        <button class="theme-close-btn" id="btn_close_online_modal">
+          Schließen
+        </button>
+      </div>
+    </div>
     <div class="modal modal-endgame" id="mdl_endgame">
       <p id="lbl_finishText"></p>
       <div class="endgame-stats" id="endgame_stats"></div>

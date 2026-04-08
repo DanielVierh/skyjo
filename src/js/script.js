@@ -130,6 +130,22 @@ const btn_online_multiplayer = document.getElementById(
   "btn_online_multiplayer",
 );
 const btn_settings = document.getElementById("btn_settings");
+const online_modal = document.getElementById("online_modal");
+const btn_online_create_room = document.getElementById(
+  "btn_online_create_room",
+);
+const btn_online_join_room = document.getElementById("btn_online_join_room");
+const btn_online_copy_room_id = document.getElementById(
+  "btn_online_copy_room_id",
+);
+const btn_close_online_modal = document.getElementById(
+  "btn_close_online_modal",
+);
+const inp_online_room_code = document.getElementById("inp_online_room_code");
+const lbl_online_room_id = document.getElementById("lbl_online_room_id");
+const lbl_online_modal_status = document.getElementById(
+  "lbl_online_modal_status",
+);
 const theme_modal = document.getElementById("theme_modal");
 const btn_close_theme_modal = document.getElementById("btn_close_theme_modal");
 const theme_option_modern = document.getElementById("theme_option_modern");
@@ -688,63 +704,82 @@ function ensureOnlineListenersBound() {
   onlineSession.listenersBound = true;
 }
 
-async function startOnlineMultiplayerFlow() {
-  const socketApi = getSocketApi();
-  if (!socketApi) {
-    alert("Socket.IO wurde nicht geladen.");
-    return;
-  }
-
-  socketApi.ensureSocket();
-  ensureOnlineListenersBound();
-
-  const modeInput = prompt(
-    "Online-Spiel: 'C' fuer Raum erstellen, 'J' fuer Raum beitreten.",
-    "C",
+function setOnlineModalStatus(text, kind = "info") {
+  if (!lbl_online_modal_status) return;
+  lbl_online_modal_status.textContent = text || "";
+  lbl_online_modal_status.classList.remove(
+    "status-info",
+    "status-error",
+    "status-success",
   );
-  const mode = String(modeInput || "")
-    .trim()
-    .toUpperCase();
+  lbl_online_modal_status.classList.add(
+    kind === "error"
+      ? "status-error"
+      : kind === "success"
+        ? "status-success"
+        : "status-info",
+  );
+}
+
+function resetOnlineModalState() {
+  if (lbl_online_room_id) {
+    lbl_online_room_id.textContent = "-";
+  }
+  if (btn_online_copy_room_id) {
+    btn_online_copy_room_id.disabled = true;
+  }
+  if (inp_online_room_code) {
+    inp_online_room_code.value = "";
+  }
+  setOnlineModalStatus("", "info");
+}
+
+function closeOnlineModal() {
+  online_modal?.classList.remove("active");
+}
+
+function openOnlineModal() {
+  resetOnlineModalState();
+  online_modal?.classList.add("active");
+}
+
+async function copyRoomCodeToClipboard() {
+  const roomCode = String(lbl_online_room_id?.textContent || "").trim();
+  if (!roomCode || roomCode === "-") return;
 
   try {
-    if (mode === "J") {
-      const roomCodeInput = prompt("Bitte Raumcode eingeben:", "");
-      const roomCode = String(roomCodeInput || "")
-        .trim()
-        .toUpperCase();
-      if (!roomCode) return;
-
-      const storedToken = getStoredReconnectToken(roomCode);
-      const joined = await socketApi.joinRoom(roomCode, storedToken);
-
-      onlineSession.active = true;
-      onlineSession.roomCode = joined.roomCode;
-      onlineSession.playerKey = joined.playerKey;
-      onlineSession.reconnectToken = joined.reconnectToken;
-      onlineSession.host = joined.playerKey === "player1";
-      onlineSession.started = !!joined.gameState;
-      storeReconnectToken(joined.roomCode, joined.reconnectToken);
-
-      setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
-      setGuidanceMode(true, { persist: false });
-
-      if (start_modal) start_modal.classList.remove("active");
-      init();
-
-      if (joined.gameState?.state) {
-        applyOnlineState(joined.gameState.state);
-      } else {
-        show_info_modal(
-          onlineSession.playerKey,
-          "Raum beigetreten",
-          "Warte, bis der Host die Partie startet.",
-          2600,
-        );
-      }
-
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(roomCode);
+      setOnlineModalStatus("Raumcode wurde kopiert.", "success");
       return;
     }
 
+    if (inp_online_room_code) {
+      inp_online_room_code.value = roomCode;
+      inp_online_room_code.focus();
+      inp_online_room_code.select();
+      document.execCommand("copy");
+      setOnlineModalStatus("Raumcode wurde kopiert.", "success");
+      return;
+    }
+  } catch (error) {
+    setOnlineModalStatus(
+      `Kopieren fehlgeschlagen: ${error?.message || error}`,
+      "error",
+    );
+  }
+}
+
+async function handleOnlineCreateRoom() {
+  const socketApi = getSocketApi();
+  if (!socketApi) {
+    setOnlineModalStatus("Socket.IO wurde nicht geladen.", "error");
+    return;
+  }
+
+  setOnlineModalStatus("Raum wird erstellt...", "info");
+
+  try {
     const created = await socketApi.createRoom();
 
     onlineSession.active = true;
@@ -758,13 +793,92 @@ async function startOnlineMultiplayerFlow() {
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
     setGuidanceMode(true, { persist: false });
 
-    alert(
-      `Raum erstellt: ${created.roomCode}\nTeile den Code mit deinem Mitspieler.`,
+    if (lbl_online_room_id) {
+      lbl_online_room_id.textContent = created.roomCode;
+    }
+    if (btn_online_copy_room_id) {
+      btn_online_copy_room_id.disabled = false;
+    }
+
+    setOnlineModalStatus(
+      "Raum erstellt. Teile die ID und warte auf deinen Mitspieler.",
+      "success",
     );
   } catch (error) {
-    alert(`Online-Start fehlgeschlagen: ${error?.message || error}`);
     resetOnlineSession();
+    setOnlineModalStatus(
+      `Online-Start fehlgeschlagen: ${error?.message || error}`,
+      "error",
+    );
   }
+}
+
+async function handleOnlineJoinRoom() {
+  const socketApi = getSocketApi();
+  if (!socketApi) {
+    setOnlineModalStatus("Socket.IO wurde nicht geladen.", "error");
+    return;
+  }
+
+  const roomCode = String(inp_online_room_code?.value || "")
+    .trim()
+    .toUpperCase();
+  if (!roomCode) {
+    setOnlineModalStatus("Bitte gib einen Raumcode ein.", "error");
+    inp_online_room_code?.focus();
+    return;
+  }
+
+  setOnlineModalStatus("Beitreten...", "info");
+
+  try {
+    const storedToken = getStoredReconnectToken(roomCode);
+    const joined = await socketApi.joinRoom(roomCode, storedToken);
+
+    onlineSession.active = true;
+    onlineSession.roomCode = joined.roomCode;
+    onlineSession.playerKey = joined.playerKey;
+    onlineSession.reconnectToken = joined.reconnectToken;
+    onlineSession.host = joined.playerKey === "player1";
+    onlineSession.started = !!joined.gameState;
+    storeReconnectToken(joined.roomCode, joined.reconnectToken);
+
+    setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
+    setGuidanceMode(true, { persist: false });
+
+    closeOnlineModal();
+    if (start_modal) start_modal.classList.remove("active");
+    init();
+
+    if (joined.gameState?.state) {
+      applyOnlineState(joined.gameState.state);
+    } else {
+      show_info_modal(
+        onlineSession.playerKey,
+        "Raum beigetreten",
+        "Warte, bis der Host die Partie startet.",
+        2600,
+      );
+    }
+  } catch (error) {
+    resetOnlineSession();
+    setOnlineModalStatus(
+      `Beitritt fehlgeschlagen: ${error?.message || error}`,
+      "error",
+    );
+  }
+}
+
+async function startOnlineMultiplayerFlow() {
+  const socketApi = getSocketApi();
+  if (!socketApi) {
+    setOnlineModalStatus("Socket.IO wurde nicht geladen.", "error");
+    return;
+  }
+
+  socketApi.ensureSocket();
+  ensureOnlineListenersBound();
+  openOnlineModal();
 }
 
 function countOpenCards(player) {
@@ -2419,6 +2533,7 @@ function showStartModalWrapper() {
 
   btn_new_game?.addEventListener("click", () => {
     resetOnlineSession();
+    closeOnlineModal();
     // Reset Scores und starte neues Spiel gegen KI
     save_object.points_ki = 0;
     save_object.points_player = 0;
@@ -2431,6 +2546,7 @@ function showStartModalWrapper() {
 
   btn_new_game_no_help?.addEventListener("click", () => {
     resetOnlineSession();
+    closeOnlineModal();
     save_object.points_ki = 0;
     save_object.points_player = 0;
     setPlayer2Mode(PLAYER2_MODES.KI, { persist: false });
@@ -2442,6 +2558,7 @@ function showStartModalWrapper() {
 
   btn_continue_game?.addEventListener("click", () => {
     resetOnlineSession();
+    closeOnlineModal();
     if (start_modal) start_modal.classList.remove("active");
     loadGameFromLocalStorage();
     setPlayer2Mode(loadStoredPlayer2Mode(), { persist: false });
@@ -2453,6 +2570,7 @@ function showStartModalWrapper() {
 
   btn_multiplayer?.addEventListener("click", () => {
     resetOnlineSession();
+    closeOnlineModal();
     save_object.points_ki = 0;
     save_object.points_player = 0;
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
@@ -2464,6 +2582,28 @@ function showStartModalWrapper() {
 
   btn_online_multiplayer?.addEventListener("click", async () => {
     await startOnlineMultiplayerFlow();
+  });
+
+  btn_online_create_room?.addEventListener("click", async () => {
+    await handleOnlineCreateRoom();
+  });
+
+  btn_online_join_room?.addEventListener("click", async () => {
+    await handleOnlineJoinRoom();
+  });
+
+  inp_online_room_code?.addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    await handleOnlineJoinRoom();
+  });
+
+  btn_online_copy_room_id?.addEventListener("click", async () => {
+    await copyRoomCodeToClipboard();
+  });
+
+  btn_close_online_modal?.addEventListener("click", () => {
+    closeOnlineModal();
   });
 
   btn_settings?.addEventListener("click", () => {
