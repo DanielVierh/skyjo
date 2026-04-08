@@ -1394,6 +1394,10 @@ function bindUIActions() {
 }
 
 btn_next_game.addEventListener("click", () => {
+  if (isOnlineMode() && !onlineSession.host) {
+    return;
+  }
+
   const shouldResetScores = pendingEndgameResetScores;
   resetEndgameFlowState();
   startRoundWithoutModal(shouldResetScores);
@@ -1481,6 +1485,10 @@ function startRoundWithoutModal(resetScores = false) {
   // Set current player and continue
   currentPlayer = "player1";
   show_current_player();
+
+  if (isOnlineMode() && onlineSession.host && !onlineApplyInProgress) {
+    maybeBroadcastOnlineState("round-restart");
+  }
 
   // Debug helpers
   helper_show_cards(player1);
@@ -1579,6 +1587,20 @@ async function endGame() {
       isDoubled: doubledPlayerKey === "player1",
     },
   ]);
+
+  if (isOnlineMode()) {
+    const shouldResetScores =
+      save_object.points_ki >= 100 || save_object.points_player >= 100;
+    const nextRoundDelay = scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS);
+
+    setTimeout(() => {
+      startRoundWithoutModal(shouldResetScores);
+    }, nextRoundDelay);
+
+    do_disable_area();
+    maybeBroadcastOnlineState("end-game-auto-next-round");
+    return;
+  }
 
   if (save_object.points_ki >= 100) {
     show_winner({
