@@ -347,9 +347,21 @@ function loadStoredPlayer2Mode() {
 }
 
 function updateModeLabels() {
+  const mirroredPerspective =
+    isOnlineMode() && onlineSession.playerKey === "player2";
+  const visualTurnKey = mirroredPerspective
+    ? currentPlayer === "player1"
+      ? "player2"
+      : "player1"
+    : currentPlayer;
+
   document.body.classList.toggle("multiplayer-mode", isMultiplayerMode());
-  document.body.classList.toggle("turn-player1", currentPlayer === "player1");
-  document.body.classList.toggle("turn-player2", currentPlayer === "player2");
+  document.body.classList.toggle("turn-player1", visualTurnKey === "player1");
+  document.body.classList.toggle("turn-player2", visualTurnKey === "player2");
+  document.body.classList.toggle(
+    "online-perspective-player2",
+    mirroredPerspective,
+  );
 
   if (lbl_game_points_opponent_title) {
     lbl_game_points_opponent_title.textContent = getScoreLabel("player2");
