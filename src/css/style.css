@@ -1101,6 +1101,11 @@ body.multiplayer-mode .point-label.player2 {
     filter 160ms ease;
 }
 
+.online-action-btn-start {
+  background: linear-gradient(140deg, #4de722, #5aff4e);
+  color: black;
+}
+
 .online-action-btn:hover,
 .online-action-btn:focus-visible {
   transform: translateY(-1px);

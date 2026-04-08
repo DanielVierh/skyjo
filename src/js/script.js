@@ -256,6 +256,8 @@ let onlineRoundResult = null;
 let lastRenderedOnlineRoundResultId = null;
 let lastAnnouncedOnlineTurnKey = null;
 let infoModalTimeoutId = null;
+let onlineRoundRestartTimerId = null;
+let onlineScheduledRestartRoundId = null;
 
 const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
 
@@ -317,6 +319,30 @@ function resetOnlineSession() {
     player2: false,
   };
   lastAnnouncedOnlineTurnKey = null;
+  if (onlineRoundRestartTimerId) {
+    clearTimeout(onlineRoundRestartTimerId);
+    onlineRoundRestartTimerId = null;
+  }
+  onlineScheduledRestartRoundId = null;
+}
+
+function scheduleHostOnlineRoundRestart(roundId, shouldResetScores, delayMs) {
+  if (!isOnlineMode() || !onlineSession.host) return;
+  if (!roundId) return;
+  if (onlineScheduledRestartRoundId === roundId && onlineRoundRestartTimerId) {
+    return;
+  }
+
+  if (onlineRoundRestartTimerId) {
+    clearTimeout(onlineRoundRestartTimerId);
+  }
+
+  onlineScheduledRestartRoundId = roundId;
+  onlineRoundRestartTimerId = setTimeout(() => {
+    onlineRoundRestartTimerId = null;
+    onlineScheduledRestartRoundId = null;
+    startRoundWithoutModal(shouldResetScores);
+  }, delayMs);
 }
 
 function maybeAnnounceOnlineTurn() {
@@ -740,6 +766,16 @@ function applyOnlineState(state) {
           isDoubled: onlineRoundResult.doubledPlayerKey === "player1",
         },
       ]);
+    }
+
+    if (gameEnded && onlineRoundResult?.id) {
+      const shouldResetScores =
+        save_object.points_ki >= 100 || save_object.points_player >= 100;
+      scheduleHostOnlineRoundRestart(
+        onlineRoundResult.id,
+        shouldResetScores,
+        scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
+      );
     }
 
     show_current_player();
@@ -1615,6 +1651,12 @@ btn_endgame_winner_ok?.addEventListener("click", () => {
 // Starte eine neue Runde ohne Page-Reload. Wenn resetScores=true, werden
 // die kumulierten Punktestände zurückgesetzt.
 function startRoundWithoutModal(resetScores = false) {
+    if (onlineRoundRestartTimerId) {
+      clearTimeout(onlineRoundRestartTimerId);
+      onlineRoundRestartTimerId = null;
+    }
+    onlineScheduledRestartRoundId = null;
+
   if (resetScores) {
     save_object.points_ki = 0;
     save_object.points_player = 0;
@@ -1805,10 +1847,13 @@ async function endGame() {
     const shouldResetScores =
       save_object.points_ki >= 100 || save_object.points_player >= 100;
     const nextRoundDelay = scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS);
-
-    setTimeout(() => {
-      startRoundWithoutModal(shouldResetScores);
-    }, nextRoundDelay);
+    if (onlineSession.host) {
+      scheduleHostOnlineRoundRestart(
+        onlineRoundResult.id,
+        shouldResetScores,
+        nextRoundDelay,
+      );
+    }
 
     do_disable_area();
     maybeBroadcastOnlineState("end-game-auto-next-round");
