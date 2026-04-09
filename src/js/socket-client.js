@@ -9,6 +9,7 @@
     playerReconnected: new Set(),
     roomAbandoned: new Set(),
     roomsUpdated: new Set(),
+    chatMessage: new Set(),
   };
 
   function ensureSocket() {
@@ -46,6 +47,10 @@
 
       socket.on("rooms:updated", (payload) => {
         eventHandlers.roomsUpdated.forEach((fn) => fn(payload));
+      });
+
+      socket.on("chat:message", (payload) => {
+        eventHandlers.chatMessage.forEach((fn) => fn(payload));
       });
     }
 
@@ -158,6 +163,19 @@
     return response;
   }
 
+  async function sendChatMessage(roomCode, text, displayName = "") {
+    const response = await emitWithAck("chat:send", {
+      roomCode,
+      text,
+      displayName,
+    });
+    if (!response?.ok)
+      throw new Error(
+        response?.error || "Nachricht konnte nicht gesendet werden.",
+      );
+    return response;
+  }
+
   function on(eventName, callback) {
     const set = eventHandlers[eventName];
     if (!set) throw new Error(`Unbekanntes Event: ${eventName}`);
@@ -177,6 +195,7 @@
     joinRoom,
     listRooms,
     syncState,
+    sendChatMessage,
     on,
     isConnected,
     ensureSocket,

@@ -145,6 +145,21 @@ const btn_online_copy_room_id = document.getElementById(
 const btn_close_online_modal = document.getElementById(
   "btn_close_online_modal",
 );
+const btn_online_chat_toggle = document.getElementById("btn_online_chat_toggle");
+const lbl_online_chat_unread = document.getElementById("lbl_online_chat_unread");
+const btn_online_chat_size = document.getElementById("btn_online_chat_size");
+const btn_online_chat_minimize = document.getElementById(
+  "btn_online_chat_minimize",
+);
+const online_chat_panel = document.getElementById("online_chat_panel");
+const online_chat_messages = document.getElementById("online_chat_messages");
+const lbl_online_chat_meta = document.getElementById("lbl_online_chat_meta");
+const lbl_online_chat_status = document.getElementById(
+  "lbl_online_chat_status",
+);
+const online_chat_toast_stack = document.getElementById("online_chat_toast_stack");
+const inp_online_chat = document.getElementById("inp_online_chat");
+const btn_online_chat_send = document.getElementById("btn_online_chat_send");
 const inp_online_room_code = document.getElementById("inp_online_room_code");
 const lbl_online_room_id = document.getElementById("lbl_online_room_id");
 const online_public_rooms = document.getElementById("online_public_rooms");
@@ -306,6 +321,9 @@ let onlineRoundRestartTimerId = null;
 let onlineScheduledRestartRoundId = null;
 
 const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
+const ONLINE_CHAT_MAX_LENGTH = 300;
+const ONLINE_CHAT_MAX_ITEMS = 70;
+const ONLINE_CHAT_TOAST_MS = 3000;
 
 const onlineSession = {
   active: false,
@@ -319,6 +337,7 @@ const onlineSession = {
     player1: false,
     player2: false,
   },
+  chatMessages: [],
 };
 
 let onlineApplyInProgress = false;
@@ -326,6 +345,9 @@ let onlineSyncInFlight = false;
 let onlineSyncQueued = false;
 let onlineSyncRetryTimerId = null;
 let onlineSyncLatestReason = "";
+let onlineChatOpen = false;
+let onlineChatExpanded = false;
+let onlineChatUnread = 0;
 
 function clearRoundScoreOverlay() {
   document.getElementById("endgame_round_score_layer")?.remove();
@@ -381,6 +403,229 @@ function resetOnlineSession() {
   onlineSyncQueued = false;
   onlineSyncLatestReason = "";
   onlineScheduledRestartRoundId = null;
+  onlineSession.chatMessages = [];
+  resetOnlineChatUI();
+}
+
+function getOnlineChatMessageSender(payload) {
+  if (payload?.sender === onlineSession.playerKey) {
+    return getOwnPlayerName();
+  }
+  return String(payload?.displayName || "Gegner").trim() || "Gegner";
+}
+
+function updateOnlineChatUnreadBadge() {
+  if (!lbl_online_chat_unread) return;
+  const unread = Math.max(0, Number(onlineChatUnread || 0));
+  lbl_online_chat_unread.hidden = unread === 0;
+  lbl_online_chat_unread.textContent = unread > 99 ? "99+" : String(unread);
+}
+
+function setOnlineChatOpen(nextOpen, options = {}) {
+  const { focusInput = false } = options;
+  onlineChatOpen = !!nextOpen;
+  updateOnlineChatVisibility();
+
+  if (onlineChatOpen) {
+    onlineChatUnread = 0;
+    updateOnlineChatUnreadBadge();
+    if (focusInput) {
+      inp_online_chat?.focus();
+    }
+  }
+}
+
+function toggleOnlineChatSize() {
+  onlineChatExpanded = !onlineChatExpanded;
+  online_chat_panel?.classList.toggle("is-expanded", onlineChatExpanded);
+  online_chat_panel?.classList.toggle("is-compact", !onlineChatExpanded);
+}
+
+function showOnlineChatToast(message) {
+  if (!online_chat_toast_stack) return;
+
+  const toast = document.createElement("div");
+  toast.className = "online-chat-toast";
+
+  const sender = document.createElement("strong");
+  sender.textContent = getOnlineChatMessageSender(message);
+
+  const body = document.createElement("span");
+  body.textContent = String(message?.text || "");
+
+  toast.appendChild(sender);
+  toast.appendChild(body);
+  online_chat_toast_stack.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, ONLINE_CHAT_TOAST_MS);
+}
+
+function setOnlineChatStatus(text) {
+  if (!lbl_online_chat_status) return;
+  lbl_online_chat_status.textContent = text || "";
+}
+
+function updateOnlineChatVisibility() {
+  const isVisible = isOnlineMode() && !!onlineSession.roomCode;
+  const showPanel = isVisible && onlineChatOpen;
+  const showLauncher = isVisible && !onlineChatOpen;
+
+  if (online_chat_panel) {
+    online_chat_panel.hidden = !showPanel;
+    online_chat_panel.classList.toggle("is-expanded", onlineChatExpanded);
+    online_chat_panel.classList.toggle("is-compact", !onlineChatExpanded);
+  }
+
+  if (btn_online_chat_toggle) {
+    btn_online_chat_toggle.hidden = !showLauncher;
+  }
+
+  if (lbl_online_chat_meta) {
+    lbl_online_chat_meta.textContent = isVisible
+      ? `Raum ${onlineSession.roomCode}`
+      : "";
+  }
+
+  const canSend = showPanel;
+  if (inp_online_chat) {
+    inp_online_chat.disabled = !canSend;
+  }
+  if (btn_online_chat_send) {
+    btn_online_chat_send.disabled = !canSend;
+  }
+
+  updateOnlineChatUnreadBadge();
+}
+
+function renderOnlineChatMessages() {
+  if (!online_chat_messages) return;
+  online_chat_messages.innerHTML = "";
+
+  if (
+    !Array.isArray(onlineSession.chatMessages) ||
+    onlineSession.chatMessages.length === 0
+  ) {
+    const emptyLine = document.createElement("div");
+    emptyLine.className = "online-chat-message";
+    emptyLine.textContent = "Noch keine Nachrichten.";
+    online_chat_messages.appendChild(emptyLine);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  onlineSession.chatMessages.forEach((message) => {
+    const entry = document.createElement("div");
+    const isOwn = message.sender === onlineSession.playerKey;
+    entry.className = `online-chat-message${isOwn ? " is-own" : ""}`;
+
+    const name = document.createElement("span");
+    name.className = "online-chat-message-name";
+    name.textContent = getOnlineChatMessageSender(message);
+
+    const body = document.createElement("span");
+    body.textContent = String(message.text || "");
+
+    entry.appendChild(name);
+    entry.appendChild(body);
+    fragment.appendChild(entry);
+  });
+
+  online_chat_messages.appendChild(fragment);
+  online_chat_messages.scrollTop = online_chat_messages.scrollHeight;
+}
+
+function resetOnlineChatUI() {
+  setOnlineChatStatus("");
+  onlineChatUnread = 0;
+  onlineChatOpen = false;
+  onlineChatExpanded = false;
+  online_chat_toast_stack && (online_chat_toast_stack.innerHTML = "");
+  if (inp_online_chat) {
+    inp_online_chat.value = "";
+  }
+  renderOnlineChatMessages();
+  updateOnlineChatVisibility();
+}
+
+function addOnlineChatMessage(message) {
+  if (!message || !message.id) return;
+
+  const alreadyExists = onlineSession.chatMessages.some(
+    (entry) => entry.id === message.id,
+  );
+  if (alreadyExists) return;
+
+  onlineSession.chatMessages.push({
+    id: String(message.id),
+    sender: message.sender === "player2" ? "player2" : "player1",
+    displayName: String(message.displayName || ""),
+    text: String(message.text || "").slice(0, ONLINE_CHAT_MAX_LENGTH),
+    timestamp: Number(message.timestamp || Date.now()),
+  });
+
+  if (onlineSession.chatMessages.length > ONLINE_CHAT_MAX_ITEMS) {
+    onlineSession.chatMessages = onlineSession.chatMessages.slice(
+      onlineSession.chatMessages.length - ONLINE_CHAT_MAX_ITEMS,
+    );
+  }
+
+  renderOnlineChatMessages();
+
+  const isOwnMessage = message.sender === onlineSession.playerKey;
+  if (!isOwnMessage && isOnlineMode()) {
+    if (!onlineChatOpen) {
+      onlineChatUnread += 1;
+      updateOnlineChatUnreadBadge();
+    }
+    showOnlineChatToast(message);
+  }
+}
+
+async function handleOnlineChatSend() {
+  if (!isOnlineMode() || !onlineSession.roomCode) {
+    setOnlineChatStatus("Chat ist nur in einem Online-Raum verfuegbar.");
+    return;
+  }
+
+  const socketApi = getSocketApi();
+  if (!socketApi) {
+    setOnlineChatStatus("Socket.IO wurde nicht geladen.");
+    return;
+  }
+
+  const text = String(inp_online_chat?.value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, ONLINE_CHAT_MAX_LENGTH);
+  if (!text) {
+    setOnlineChatStatus("Bitte gib eine Nachricht ein.");
+    return;
+  }
+
+  if (btn_online_chat_send) {
+    btn_online_chat_send.disabled = true;
+  }
+
+  try {
+    await socketApi.sendChatMessage(
+      onlineSession.roomCode,
+      text,
+      getOwnPlayerName(),
+    );
+    if (inp_online_chat) {
+      inp_online_chat.value = "";
+      inp_online_chat.focus();
+    }
+    setOnlineChatStatus("");
+  } catch (error) {
+    setOnlineChatStatus(error?.message || String(error));
+  } finally {
+    if (btn_online_chat_send) {
+      btn_online_chat_send.disabled = false;
+    }
+  }
 }
 
 function scheduleOnlineSyncRetry(delayMs = 450) {
@@ -1028,6 +1273,11 @@ function ensureOnlineListenersBound() {
     }
   });
 
+  socketApi.on("chatMessage", (payload) => {
+    if (!onlineSession.active) return;
+    addOnlineChatMessage(payload);
+  });
+
   socketApi.on("roomsUpdated", () => {
     if (online_modal?.classList.contains("active")) {
       void refreshPublicRooms();
@@ -1176,6 +1426,7 @@ function resetOnlineModalState() {
     btn_online_start_game.disabled = false;
   }
   renderPublicRoomList([]);
+  updateOnlineChatVisibility();
   setOnlineModalStatus("", "info");
 }
 
@@ -1237,6 +1488,7 @@ async function handleOnlineCreateRoom() {
       player1: true,
       player2: false,
     };
+    onlineSession.chatMessages = [];
     storeReconnectToken(created.roomCode, created.reconnectToken);
 
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
@@ -1257,6 +1509,8 @@ async function handleOnlineCreateRoom() {
       "Raum erstellt. Teile die ID und warte auf einen Mitspieler.",
       "success",
     );
+    resetOnlineChatUI();
+    setOnlineChatOpen(false);
     await refreshPublicRooms();
   } catch (error) {
     resetOnlineSession();
@@ -1299,6 +1553,7 @@ async function handleOnlineJoinRoom() {
       player1: !!joined?.room?.connected?.player1,
       player2: !!joined?.room?.connected?.player2,
     };
+    onlineSession.chatMessages = [];
     storeReconnectToken(joined.roomCode, joined.reconnectToken);
 
     setPlayer2Mode(PLAYER2_MODES.HUMAN, { persist: false });
@@ -1307,6 +1562,8 @@ async function handleOnlineJoinRoom() {
     closeOnlineModal();
     if (start_modal) start_modal.classList.remove("active");
     init();
+    resetOnlineChatUI();
+    setOnlineChatOpen(false);
 
     if (joined.gameState?.state) {
       applyOnlineState(joined.gameState.state);
@@ -1362,6 +1619,8 @@ async function startOnlineMultiplayerFlow() {
   socketApi.ensureSocket();
   ensureOnlineListenersBound();
   openOnlineModal();
+  setOnlineChatOpen(false);
+  updateOnlineChatVisibility();
   await refreshPublicRooms();
 }
 
@@ -3122,6 +3381,28 @@ function showStartModalWrapper() {
 
   btn_online_refresh_rooms?.addEventListener("click", async () => {
     await refreshPublicRooms();
+  });
+
+  btn_online_chat_toggle?.addEventListener("click", () => {
+    setOnlineChatOpen(!onlineChatOpen, { focusInput: !onlineChatOpen });
+  });
+
+  btn_online_chat_size?.addEventListener("click", () => {
+    toggleOnlineChatSize();
+  });
+
+  btn_online_chat_minimize?.addEventListener("click", () => {
+    setOnlineChatOpen(false);
+  });
+
+  btn_online_chat_send?.addEventListener("click", async () => {
+    await handleOnlineChatSend();
+  });
+
+  inp_online_chat?.addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    await handleOnlineChatSend();
   });
 
   inp_online_room_code?.addEventListener("keydown", async (event) => {

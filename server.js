@@ -7,6 +7,8 @@ import crypto from "crypto";
 
 const PORT = process.env.PORT || 3000;
 const RECONNECT_TIMEOUT_MS = 120000;
+const CHAT_MAX_LENGTH = 300;
+const CHAT_RATE_LIMIT_MS = 1000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,6 +50,10 @@ function createRoom() {
       player2: null,
     },
     gameState: null,
+    chatLastMessageAt: {
+      player1: 0,
+      player2: 0,
+    },
   };
 
   rooms.set(roomCode, room);
@@ -58,6 +64,21 @@ function getPlayerKeyBySocket(room, socketId) {
   if (room.players.player1?.socketId === socketId) return "player1";
   if (room.players.player2?.socketId === socketId) return "player2";
   return null;
+}
+
+function normalizeChatText(raw) {
+  return String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, CHAT_MAX_LENGTH);
+}
+
+function normalizeChatName(raw, fallback) {
+  const safe = String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 20);
+  return safe || fallback;
 }
 
 function roomSnapshot(room) {
@@ -260,6 +281,64 @@ io.on("connection", (socket) => {
     });
 
     ack?.({ ok: true });
+  });
+
+  socket.on("chat:send", (payload, ack) => {
+    try {
+      const roomCode = String(payload?.roomCode || "")
+        .trim()
+        .toUpperCase();
+      const room = rooms.get(roomCode);
+      if (!room) {
+        ack?.({ ok: false, error: "Raum existiert nicht." });
+        return;
+      }
+
+      const senderKey = getPlayerKeyBySocket(room, socket.id);
+      if (!senderKey) {
+        ack?.({ ok: false, error: "Nicht Teil dieses Raums." });
+        return;
+      }
+
+      const text = normalizeChatText(payload?.text);
+      if (!text) {
+        ack?.({ ok: false, error: "Bitte gib eine Nachricht ein." });
+        return;
+      }
+
+      if (!room.chatLastMessageAt) {
+        room.chatLastMessageAt = { player1: 0, player2: 0 };
+      }
+
+      const now = Date.now();
+      const lastAt = Number(room.chatLastMessageAt?.[senderKey] || 0);
+      if (now - lastAt < CHAT_RATE_LIMIT_MS) {
+        ack?.({
+          ok: false,
+          error: "Bitte warte kurz vor der naechsten Nachricht.",
+        });
+        return;
+      }
+
+      room.chatLastMessageAt[senderKey] = now;
+      const fallbackName = senderKey === "player1" ? "Spieler 1" : "Spieler 2";
+      const message = {
+        id: `${now}_${Math.random().toString(16).slice(2, 8)}`,
+        sender: senderKey,
+        displayName: normalizeChatName(payload?.displayName, fallbackName),
+        text,
+        timestamp: now,
+      };
+
+      io.to(roomCode).emit("chat:message", message);
+      ack?.({ ok: true, message });
+    } catch (error) {
+      console.error("chat:send failed", error);
+      ack?.({
+        ok: false,
+        error: "Chatnachricht konnte nicht verarbeitet werden.",
+      });
+    }
   });
 
   socket.on("disconnect", () => {

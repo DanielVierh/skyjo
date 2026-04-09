@@ -211,6 +211,61 @@
         <button id="btn_endgame_winner_ok" class="winner-card-btn">OK</button>
       </div>
     </div>
+    <button
+      type="button"
+      class="online-chat-launcher"
+      id="btn_online_chat_toggle"
+      hidden
+      aria-label="Chat anzeigen"
+    >
+      <span class="online-chat-launcher-icon">C</span>
+      <span class="online-chat-unread-badge" id="lbl_online_chat_unread" hidden
+        >0</span
+      >
+    </button>
+    <div class="online-chat-panel" id="online_chat_panel" hidden>
+      <div class="online-chat-header">
+        <strong>Raum-Chat</strong>
+        <div class="online-chat-header-actions">
+          <span class="online-chat-meta" id="lbl_online_chat_meta"></span>
+          <button
+            type="button"
+            class="online-chat-header-btn"
+            id="btn_online_chat_size"
+            aria-label="Chatgroesse umschalten"
+          >
+            ◱
+          </button>
+          <button
+            type="button"
+            class="online-chat-header-btn"
+            id="btn_online_chat_minimize"
+            aria-label="Chat minimieren"
+          >
+            —
+          </button>
+        </div>
+      </div>
+      <div class="online-chat-messages" id="online_chat_messages"></div>
+      <div class="online-chat-input-row">
+        <input
+          id="inp_online_chat"
+          type="text"
+          maxlength="300"
+          autocomplete="off"
+          placeholder="Nachricht schreiben..."
+        />
+        <button
+          type="button"
+          class="online-room-join-btn"
+          id="btn_online_chat_send"
+        >
+          Senden
+        </button>
+      </div>
+      <p class="online-chat-status" id="lbl_online_chat_status"></p>
+    </div>
+    <div class="online-chat-toast-stack" id="online_chat_toast_stack"></div>
     <div class="p2-board gridfield" id="p2Board">
       <div
         class="card grid-card covered player2-card"
