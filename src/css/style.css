@@ -1279,6 +1279,10 @@ body.multiplayer-mode .point-label.player2 {
   z-index: 2147483647;
 }
 
+#inp_online_chat {
+  font-size: 16px;
+}
+
 .online-chat-launcher-icon {
   font-size: 1.2rem;
 }

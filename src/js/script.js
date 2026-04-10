@@ -145,8 +145,12 @@ const btn_online_copy_room_id = document.getElementById(
 const btn_close_online_modal = document.getElementById(
   "btn_close_online_modal",
 );
-const btn_online_chat_toggle = document.getElementById("btn_online_chat_toggle");
-const lbl_online_chat_unread = document.getElementById("lbl_online_chat_unread");
+const btn_online_chat_toggle = document.getElementById(
+  "btn_online_chat_toggle",
+);
+const lbl_online_chat_unread = document.getElementById(
+  "lbl_online_chat_unread",
+);
 const btn_online_chat_size = document.getElementById("btn_online_chat_size");
 const btn_online_chat_minimize = document.getElementById(
   "btn_online_chat_minimize",
@@ -157,7 +161,9 @@ const lbl_online_chat_meta = document.getElementById("lbl_online_chat_meta");
 const lbl_online_chat_status = document.getElementById(
   "lbl_online_chat_status",
 );
-const online_chat_toast_stack = document.getElementById("online_chat_toast_stack");
+const online_chat_toast_stack = document.getElementById(
+  "online_chat_toast_stack",
+);
 const inp_online_chat = document.getElementById("inp_online_chat");
 const btn_online_chat_send = document.getElementById("btn_online_chat_send");
 const inp_online_room_code = document.getElementById("inp_online_room_code");
