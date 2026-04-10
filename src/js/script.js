@@ -327,6 +327,7 @@ let onlineRoundRestartTimerId = null;
 let onlineScheduledRestartRoundId = null;
 
 const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
+const ONLINE_INVITE_QUERY_KEY = "join";
 const ONLINE_CHAT_MAX_LENGTH = 300;
 const ONLINE_CHAT_MAX_ITEMS = 70;
 const ONLINE_CHAT_TOAST_MS = 3000;
@@ -354,6 +355,7 @@ let onlineSyncLatestReason = "";
 let onlineChatOpen = false;
 let onlineChatExpanded = false;
 let onlineChatUnread = 0;
+let inviteAutoJoinHandled = false;
 
 function clearRoundScoreOverlay() {
   document.getElementById("endgame_round_score_layer")?.remove();
@@ -373,6 +375,35 @@ function getSocketApi() {
 
 function getReconnectStorageKey(roomCode) {
   return `${ONLINE_RECONNECT_TOKEN_PREFIX}${String(roomCode || "").toUpperCase()}`;
+}
+
+function normalizeInviteRoomCode(rawCode) {
+  const code = String(rawCode || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  return code.length === 6 ? code : "";
+}
+
+function getInviteRoomCodeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return normalizeInviteRoomCode(params.get(ONLINE_INVITE_QUERY_KEY));
+}
+
+function buildRoomInviteLink(roomCode) {
+  const normalized = normalizeInviteRoomCode(roomCode);
+  if (!normalized) return "";
+  const url = new URL(window.location.href);
+  url.searchParams.set(ONLINE_INVITE_QUERY_KEY, normalized);
+  return url.toString();
+}
+
+function removeInviteRoomCodeFromUrl() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(ONLINE_INVITE_QUERY_KEY)) return;
+  url.searchParams.delete(ONLINE_INVITE_QUERY_KEY);
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState({}, "", next);
 }
 
 function storeReconnectToken(roomCode, token) {
@@ -1449,21 +1480,27 @@ async function copyRoomCodeToClipboard() {
   const roomCode = String(lbl_online_room_id?.textContent || "").trim();
   if (!roomCode || roomCode === "-") return;
 
+  const inviteLink = buildRoomInviteLink(roomCode) || roomCode;
+
   try {
     if (navigator?.clipboard?.writeText) {
-      await navigator.clipboard.writeText(roomCode);
-      setOnlineModalStatus("Raumcode wurde kopiert.", "success");
+      await navigator.clipboard.writeText(inviteLink);
+      setOnlineModalStatus("Einladungslink wurde kopiert.", "success");
       return;
     }
 
-    if (inp_online_room_code) {
-      inp_online_room_code.value = roomCode;
-      inp_online_room_code.focus();
-      inp_online_room_code.select();
-      document.execCommand("copy");
-      setOnlineModalStatus("Raumcode wurde kopiert.", "success");
-      return;
-    }
+    const helper = document.createElement("textarea");
+    helper.value = inviteLink;
+    helper.setAttribute("readonly", "true");
+    helper.style.position = "fixed";
+    helper.style.opacity = "0";
+    helper.style.pointerEvents = "none";
+    document.body.appendChild(helper);
+    helper.focus();
+    helper.select();
+    document.execCommand("copy");
+    helper.remove();
+    setOnlineModalStatus("Einladungslink wurde kopiert.", "success");
   } catch (error) {
     setOnlineModalStatus(
       `Kopieren fehlgeschlagen: ${error?.message || error}`,
@@ -1628,6 +1665,32 @@ async function startOnlineMultiplayerFlow() {
   setOnlineChatOpen(false);
   updateOnlineChatVisibility();
   await refreshPublicRooms();
+}
+
+async function maybeAutoJoinFromInviteLink() {
+  if (inviteAutoJoinHandled) return;
+  inviteAutoJoinHandled = true;
+
+  const inviteRoomCode = getInviteRoomCodeFromUrl();
+  if (!inviteRoomCode) return;
+
+  try {
+    if (!onlineSession.active) {
+      await startOnlineMultiplayerFlow();
+    }
+
+    if (inp_online_room_code) {
+      inp_online_room_code.value = inviteRoomCode;
+    }
+
+    await handleOnlineJoinRoom();
+    removeInviteRoomCodeFromUrl();
+  } catch (error) {
+    setOnlineModalStatus(
+      `Einladungslink konnte nicht verarbeitet werden: ${error?.message || error}`,
+      "error",
+    );
+  }
 }
 
 function countOpenCards(player) {
@@ -3454,6 +3517,8 @@ function showStartModalWrapper() {
     applyTheme("classic");
     updateThemeSelectionUI();
   });
+
+  void maybeAutoJoinFromInviteLink();
 
   chk_show_round_points?.addEventListener("change", () => {
     setRoundPointsVisibility(!!chk_show_round_points.checked);
