@@ -300,6 +300,7 @@ const ANIM = {
 const ENDGAME_REVEAL_SETTLE_MS = 760;
 const ENDGAME_MODAL_DELAY_MS = 1150;
 const ENDGAME_ANIMATION_MULTIPLIER = 2;
+const MATCH_END_RETURN_DELAY_MS = 2600;
 
 function scaleEndgameAnimationMs(ms) {
   return Math.round(ms * ENDGAME_ANIMATION_MULTIPLIER);
@@ -326,6 +327,8 @@ let lastAnnouncedOnlineTurnKey = null;
 let infoModalTimeoutId = null;
 let onlineRoundRestartTimerId = null;
 let onlineScheduledRestartRoundId = null;
+let matchReturnToMenuTimerId = null;
+let matchReturnToMenuScheduled = false;
 
 const ONLINE_RECONNECT_TOKEN_PREFIX = "skyjo_online_reconnect_";
 const ONLINE_INVITE_QUERY_KEY = "join";
@@ -451,6 +454,12 @@ function resetOnlineSession() {
   onlineScheduledRestartRoundId = null;
   onlineSession.chatMessages = [];
   resetOnlineChatUI();
+
+  if (matchReturnToMenuTimerId) {
+    clearTimeout(matchReturnToMenuTimerId);
+    matchReturnToMenuTimerId = null;
+  }
+  matchReturnToMenuScheduled = false;
 }
 
 function getOnlineChatMessageSender(payload) {
@@ -1194,11 +1203,17 @@ function applyOnlineState(state) {
     if (gameEnded && onlineRoundResult?.id) {
       const shouldResetScores =
         save_object.points_ki >= 100 || save_object.points_player >= 100;
-      scheduleHostOnlineRoundRestart(
-        onlineRoundResult.id,
-        shouldResetScores,
-        scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
-      );
+      if (shouldResetScores) {
+        triggerFinalMatchEndFlow({
+          winnerKey: getOverallWinnerKeyByTotal(),
+        });
+      } else {
+        scheduleHostOnlineRoundRestart(
+          onlineRoundResult.id,
+          shouldResetScores,
+          scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
+        );
+      }
     }
 
     show_current_player();
@@ -1806,7 +1821,13 @@ function renderEndgameStats(stats) {
 
 function hideEndgameOverlays() {
   mdl_endgame?.classList.remove("active", "is-summary");
-  mdl_endgame_winner?.classList.remove("active");
+  mdl_endgame_winner?.classList.remove("active", "is-final-match");
+  mdl_endgame_winner
+    ?.querySelector(".winner-card")
+    ?.classList.remove("is-final-match");
+  if (btn_endgame_winner_ok) {
+    btn_endgame_winner_ok.hidden = false;
+  }
 }
 
 function resetEndgameFlowState() {
@@ -1846,6 +1867,9 @@ function queueEndgameFlow({
   hideEndgameOverlays();
   renderEndgameStats(null);
   btn_next_game.textContent = resetScores ? "Neues Spiel" : "Weiter";
+  if (btn_endgame_winner_ok) {
+    btn_endgame_winner_ok.hidden = false;
+  }
 
   if (lbl_endgame_winner_title) {
     lbl_endgame_winner_title.textContent = winnerTitle;
@@ -1858,6 +1882,65 @@ function queueEndgameFlow({
     mdl_endgame_winner?.classList.add("active");
     do_enable_area();
   }, initialDelayMs);
+}
+
+function getOverallWinnerKeyByTotal() {
+  return save_object.points_player <= save_object.points_ki
+    ? "player1"
+    : "player2";
+}
+
+function triggerFinalMatchEndFlow(options = {}) {
+  const {
+    winnerKey = getOverallWinnerKeyByTotal(),
+    initialDelayMs = scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
+  } = options;
+
+  if (matchReturnToMenuScheduled) return;
+  matchReturnToMenuScheduled = true;
+
+  const winnerName = getPlayerDisplayName(winnerKey);
+
+  save_object.points_ki = 0;
+  save_object.points_player = 0;
+  save_Game_into_Storage();
+  refresh_point_label();
+
+  hideEndgameOverlays();
+  renderEndgameStats(null);
+  do_disable_area();
+
+  if (lbl_endgame_winner_title) {
+    lbl_endgame_winner_title.textContent = "Spielsieger";
+  }
+  if (lbl_endgame_winner_text) {
+    lbl_endgame_winner_text.textContent = `${winnerName} gewinnt das Match.`;
+  }
+  if (btn_endgame_winner_ok) {
+    btn_endgame_winner_ok.hidden = true;
+  }
+
+  setTimeout(() => {
+    mdl_endgame_winner?.classList.add("active", "is-final-match");
+    mdl_endgame_winner
+      ?.querySelector(".winner-card")
+      ?.classList.add("is-final-match");
+
+    show_info_modal(
+      onlineSession.playerKey || winnerKey,
+      "Match beendet",
+      `${winnerName} hat gewonnen. Zurueck zum Hauptmenue...`,
+      2200,
+      { forceModal: true, compact: true },
+    );
+  }, initialDelayMs);
+
+  matchReturnToMenuTimerId = setTimeout(
+    () => {
+      window.location.reload();
+    },
+    initialDelayMs + scaleEndgameAnimationMs(MATCH_END_RETURN_DELAY_MS),
+  );
 }
 
 //*==== Klassen ====
@@ -2457,6 +2540,9 @@ async function endGame() {
     },
   ]);
 
+  const isMatchFinished =
+    save_object.points_ki >= 100 || save_object.points_player >= 100;
+
   if (isOnlineMode()) {
     onlineRoundResult = {
       id: Date.now(),
@@ -2467,10 +2553,9 @@ async function endGame() {
       doubledPlayerKey,
     };
 
-    const shouldResetScores =
-      save_object.points_ki >= 100 || save_object.points_player >= 100;
+    const shouldResetScores = isMatchFinished;
     const nextRoundDelay = scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS);
-    if (onlineSession.host) {
+    if (onlineSession.host && !shouldResetScores) {
       scheduleHostOnlineRoundRestart(
         onlineRoundResult.id,
         shouldResetScores,
@@ -2478,17 +2563,24 @@ async function endGame() {
       );
     }
 
+    if (shouldResetScores) {
+      triggerFinalMatchEndFlow({
+        winnerKey: getOverallWinnerKeyByTotal(),
+      });
+    }
+
     do_disable_area();
-    maybeBroadcastOnlineState("end-game-auto-next-round");
+    maybeBroadcastOnlineState(
+      shouldResetScores
+        ? "end-game-match-finished"
+        : "end-game-auto-next-round",
+    );
     return;
   }
 
-  if (save_object.points_ki >= 100) {
-    show_winner({
-      initialDelayMs: scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
-    });
-  } else if (save_object.points_player >= 100) {
-    show_winner({
+  if (isMatchFinished) {
+    triggerFinalMatchEndFlow({
+      winnerKey: getOverallWinnerKeyByTotal(),
       initialDelayMs: scaleEndgameAnimationMs(ENDGAME_MODAL_DELAY_MS),
     });
   } else {
@@ -2515,42 +2607,8 @@ async function endGame() {
 //*ANCHOR - Show Winner of the game and reset local storage for new game
 function show_winner(options = {}) {
   const { initialDelayMs = 900 } = options;
-  const isPlayer1Winner = save_object.points_ki > save_object.points_player;
-  const winnerKey = isPlayer1Winner ? "player1" : "player2";
-  const finalStats = {
-    player1: {
-      label: getPlayerDisplayName("player1"),
-      roundPoints: countPoints(player1),
-      totalPoints: save_object.points_player,
-      openCards: countOpenCards(player1),
-      coveredCards: countCoveredCards(player1),
-      removedCards: countRemovedCards(player1),
-      isDoubled: false,
-    },
-    player2: {
-      label: getPlayerDisplayName("player2"),
-      roundPoints: countPoints(player2),
-      totalPoints: save_object.points_ki,
-      openCards: countOpenCards(player2),
-      coveredCards: countCoveredCards(player2),
-      removedCards: countRemovedCards(player2),
-      isDoubled: false,
-    },
-    closingPlayerKey: null,
-    doubledPlayerKey: null,
-  };
-
-  save_object.points_ki = 0;
-  save_object.points_player = 0;
-  save_Game_into_Storage();
-  refresh_point_label();
-
-  queueEndgameFlow({
-    winnerTitle: "Spielsieger",
-    winnerText: `${getPlayerDisplayName(winnerKey)} hat das Spiel gewonnen.`,
-    summaryHeadline: `${getPlayerDisplayName(winnerKey)} gewinnt das Spiel`,
-    stats: finalStats,
-    resetScores: true,
+  triggerFinalMatchEndFlow({
+    winnerKey: getOverallWinnerKeyByTotal(),
     initialDelayMs,
   });
 }

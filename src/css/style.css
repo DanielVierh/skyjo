@@ -1772,6 +1772,10 @@ body.multiplayer-mode .point-label.player2 {
   box-shadow: none;
 }
 
+.modal.active.modal-endgame-winner.is-final-match {
+  animation: final-match-backdrop-pulse 1300ms ease-in-out infinite;
+}
+
 .winner-card {
   width: min(420px, 100%);
   background: linear-gradient(
@@ -1785,6 +1789,38 @@ body.multiplayer-mode .point-label.player2 {
   padding: 24px 20px;
   text-align: center;
   box-shadow: 0 24px 56px rgba(4, 10, 26, 0.56);
+}
+
+.winner-card.is-final-match {
+  animation: final-match-winner-pop 900ms cubic-bezier(0.2, 0.9, 0.2, 1)
+    forwards;
+}
+
+@keyframes final-match-backdrop-pulse {
+  0% {
+    background: rgba(5, 11, 28, 0.55);
+  }
+  50% {
+    background: rgba(14, 32, 68, 0.72);
+  }
+  100% {
+    background: rgba(5, 11, 28, 0.55);
+  }
+}
+
+@keyframes final-match-winner-pop {
+  0% {
+    transform: translateY(12px) scale(0.92);
+    opacity: 0.1;
+  }
+  65% {
+    transform: translateY(-4px) scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .winner-card-eyebrow {
