@@ -189,6 +189,9 @@ const btn_continue_game_title = document.getElementById(
 const btn_continue_game_subtitle = document.getElementById(
   "btn_continue_game_subtitle",
 );
+const btn_start_player_name_edit = document.getElementById(
+  "btn_start_player_name_edit",
+);
 const player_card_stack = document.getElementById("player_card_stack");
 const draw_pile_zone = document.getElementById("draw_pile_zone");
 const discard_pile_zone = document.getElementById("discard_pile_zone");
@@ -995,6 +998,12 @@ function updateStartMenuCopy() {
   }
 
   updateStartMenuPlayerName();
+}
+
+function openSettingsModal() {
+  updateThemeSelectionUI();
+  if (inp_player_name) inp_player_name.value = getOwnPlayerName();
+  theme_modal?.classList.add("active");
 }
 
 function triggerTurnTransition() {
@@ -3614,11 +3623,9 @@ function showStartModalWrapper() {
     closeOnlineModal();
   });
 
-  btn_settings?.addEventListener("click", () => {
-    updateThemeSelectionUI();
-    if (inp_player_name) inp_player_name.value = getOwnPlayerName();
-    theme_modal?.classList.add("active");
-  });
+  btn_settings?.addEventListener("click", openSettingsModal);
+
+  btn_start_player_name_edit?.addEventListener("click", openSettingsModal);
 
   btn_save_player_name?.addEventListener("click", () => {
     savePlayerName(inp_player_name?.value);
