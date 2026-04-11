@@ -1568,6 +1568,12 @@ async function handleOnlineCreateRoom() {
   try {
     const created = await socketApi.createRoom(getOwnPlayerName());
 
+    // Neuer Raum startet immer mit frischem Match-Score.
+    save_object.points_ki = 0;
+    save_object.points_player = 0;
+    save_Game_into_Storage();
+    refresh_point_label();
+
     onlineSession.active = true;
     onlineSession.roomCode = created.roomCode;
     onlineSession.playerKey = created.playerKey;
@@ -1704,6 +1710,12 @@ async function handleOnlineStartGame() {
     setOnlineModalStatus("Spiel wurde bereits gestartet.", "info");
     return;
   }
+
+  // Sicherheits-Reset: Match beginnt beim Start immer bei 0:0.
+  save_object.points_ki = 0;
+  save_object.points_player = 0;
+  save_Game_into_Storage();
+  refresh_point_label();
 
   onlineSession.started = true;
   lastAnnouncedOnlineTurnKey = null;
