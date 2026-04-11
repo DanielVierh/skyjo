@@ -344,6 +344,10 @@ const onlineSession = {
     player1: false,
     player2: false,
   },
+  playerNames: {
+    player1: "Spieler 1",
+    player2: "Spieler 2",
+  },
   chatMessages: [],
 };
 
@@ -426,6 +430,10 @@ function resetOnlineSession() {
   onlineSession.connectedPlayers = {
     player1: false,
     player2: false,
+  };
+  onlineSession.playerNames = {
+    player1: "Spieler 1",
+    player2: "Spieler 2",
   };
   lastAnnouncedOnlineTurnKey = null;
   if (onlineRoundRestartTimerId) {
@@ -740,10 +748,13 @@ function maybeAnnounceOnlineTurn() {
 
   lastAnnouncedOnlineTurnKey = currentPlayer;
   const isMyTurn = currentPlayer === onlineSession.playerKey;
+  const activePlayerName = getPlayerDisplayName(currentPlayer);
   show_info_modal(
     onlineSession.playerKey,
-    isMyTurn ? "Du bist dran" : "Gegner ist dran",
-    isMyTurn ? "Jetzt bist du am Zug." : "Bitte warte auf den Zug des Gegners.",
+    isMyTurn ? "Du bist dran" : `${activePlayerName} ist dran`,
+    isMyTurn
+      ? "Jetzt bist du am Zug."
+      : `Bitte warte auf den Zug von ${activePlayerName}.`,
     1400,
     { forceModal: true, compact: true },
   );
@@ -782,9 +793,12 @@ function getPlayerDisplayName(playerKey) {
   }
 
   if (isOnlineMode()) {
-    return playerKey === onlineSession.playerKey
-      ? getOwnPlayerName()
-      : "Gegner";
+    if (playerKey === onlineSession.playerKey) {
+      return getOwnPlayerName();
+    }
+    return (
+      String(onlineSession.playerNames?.[playerKey] || "").trim() || "Gegner"
+    );
   }
 
   if (isMultiplayerMode()) {
@@ -796,9 +810,12 @@ function getPlayerDisplayName(playerKey) {
 
 function getScoreLabel(playerKey) {
   if (isOnlineMode()) {
-    return playerKey === onlineSession.playerKey
-      ? getOwnPlayerName()
-      : "Gegner";
+    if (playerKey === onlineSession.playerKey) {
+      return getOwnPlayerName();
+    }
+    return (
+      String(onlineSession.playerNames?.[playerKey] || "").trim() || "Gegner"
+    );
   }
 
   return playerKey === "player1"
@@ -1213,12 +1230,24 @@ function ensureOnlineListenersBound() {
       player1: !!payload?.connected?.player1,
       player2: !!payload?.connected?.player2,
     };
+    onlineSession.playerNames = {
+      player1:
+        String(
+          payload?.names?.player1 || onlineSession.playerNames.player1,
+        ).trim() || "Spieler 1",
+      player2:
+        String(
+          payload?.names?.player2 || onlineSession.playerNames.player2,
+        ).trim() || "Spieler 2",
+    };
+    updateModeLabels();
 
     if (!wasPlayer2Connected && onlineSession.connectedPlayers.player2) {
+      const joinedPlayerName = getPlayerDisplayName("player2");
       show_info_modal(
         onlineSession.playerKey,
         "Spieler verbunden",
-        "Spieler 2 ist dem Raum beigetreten.",
+        `${joinedPlayerName} ist dem Raum beigetreten.`,
         2200,
         { forceModal: true, compact: true },
       );
@@ -1254,8 +1283,9 @@ function ensureOnlineListenersBound() {
 
   socketApi.on("playerDisconnected", (payload) => {
     if (!onlineSession.active) return;
-    const disconnectedPlayer =
-      payload?.playerKey === "player2" ? "Spieler 2" : "Spieler 1";
+    const disconnectedKey =
+      payload?.playerKey === "player2" ? "player2" : "player1";
+    const disconnectedPlayer = getPlayerDisplayName(disconnectedKey);
     show_info_modal(
       onlineSession.playerKey,
       "Verbindung unterbrochen",
@@ -1282,8 +1312,9 @@ function ensureOnlineListenersBound() {
 
   socketApi.on("playerReconnected", (payload) => {
     if (!onlineSession.active) return;
-    const reconnectedPlayer =
-      payload?.playerKey === "player2" ? "Spieler 2" : "Spieler 1";
+    const reconnectedKey =
+      payload?.playerKey === "player2" ? "player2" : "player1";
+    const reconnectedPlayer = getPlayerDisplayName(reconnectedKey);
     show_info_modal(
       onlineSession.playerKey,
       "Wieder verbunden",
@@ -1519,7 +1550,7 @@ async function handleOnlineCreateRoom() {
   setOnlineModalStatus("Raum wird erstellt...", "info");
 
   try {
-    const created = await socketApi.createRoom();
+    const created = await socketApi.createRoom(getOwnPlayerName());
 
     onlineSession.active = true;
     onlineSession.roomCode = created.roomCode;
@@ -1530,6 +1561,14 @@ async function handleOnlineCreateRoom() {
     onlineSession.connectedPlayers = {
       player1: true,
       player2: false,
+    };
+    onlineSession.playerNames = {
+      player1:
+        String(created?.room?.names?.player1 || getOwnPlayerName()).trim() ||
+        "Spieler 1",
+      player2:
+        String(created?.room?.names?.player2 || "Spieler 2").trim() ||
+        "Spieler 2",
     };
     onlineSession.chatMessages = [];
     storeReconnectToken(created.roomCode, created.reconnectToken);
@@ -1584,7 +1623,11 @@ async function handleOnlineJoinRoom() {
 
   try {
     const storedToken = getStoredReconnectToken(roomCode);
-    const joined = await socketApi.joinRoom(roomCode, storedToken);
+    const joined = await socketApi.joinRoom(
+      roomCode,
+      storedToken,
+      getOwnPlayerName(),
+    );
 
     onlineSession.active = true;
     onlineSession.roomCode = joined.roomCode;
@@ -1595,6 +1638,14 @@ async function handleOnlineJoinRoom() {
     onlineSession.connectedPlayers = {
       player1: !!joined?.room?.connected?.player1,
       player2: !!joined?.room?.connected?.player2,
+    };
+    onlineSession.playerNames = {
+      player1:
+        String(joined?.room?.names?.player1 || "Spieler 1").trim() ||
+        "Spieler 1",
+      player2:
+        String(joined?.room?.names?.player2 || "Spieler 2").trim() ||
+        "Spieler 2",
     };
     onlineSession.chatMessages = [];
     storeReconnectToken(joined.roomCode, joined.reconnectToken);
@@ -4479,12 +4530,21 @@ function refresh_point_label() {
   const { playerRoundSum, opponentRoundSum } = getPerspectiveRoundValues();
   const { playerGameSum, opponentGameSum } = getPerspectiveGameValues();
 
+  const ownName = isOnlineMode()
+    ? getOwnPlayerName()
+    : getScoreLabel("player1");
+  const opponentName = isOnlineMode()
+    ? getPlayerDisplayName(
+        getOtherPlayerKey(onlineSession.playerKey || "player1"),
+      )
+    : getScoreLabel("player2");
+
   point_label.innerHTML = showRoundPointsInLabels
-    ? `Runde ${playerRoundSum} | Spiel ${playerGameSum}`
-    : `Spiel ${playerGameSum}`;
+    ? `${ownName}: Runde ${playerRoundSum} | Spiel ${playerGameSum}`
+    : `${ownName}: Spiel ${playerGameSum}`;
   point_label_ki.innerHTML = showRoundPointsInLabels
-    ? `Runde ${opponentRoundSum} | Spiel ${opponentGameSum}`
-    : `Spiel ${opponentGameSum}`;
+    ? `${opponentName}: Runde ${opponentRoundSum} | Spiel ${opponentGameSum}`
+    : `${opponentName}: Spiel ${opponentGameSum}`;
 }
 
 //*ANCHOR - Load Game from Local Storage

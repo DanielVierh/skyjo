@@ -81,12 +81,24 @@ function normalizeChatName(raw, fallback) {
   return safe || fallback;
 }
 
+function normalizePlayerName(raw, fallback = "Spieler") {
+  const safe = String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 20);
+  return safe || fallback;
+}
+
 function roomSnapshot(room) {
   return {
     roomCode: room.roomCode,
     connected: {
       player1: !!room.players.player1?.socketId,
       player2: !!room.players.player2?.socketId,
+    },
+    names: {
+      player1: room.players.player1?.displayName || "Spieler 1",
+      player2: room.players.player2?.displayName || "Spieler 2",
     },
     hasGameState: !!room.gameState,
   };
@@ -130,7 +142,7 @@ function clearReconnectTimer(playerSlot) {
   }
 }
 
-function assignPlayer(room, playerKey, socket) {
+function assignPlayer(room, playerKey, socket, displayName = "") {
   const existing = room.players[playerKey];
   const token = existing?.token ?? randomToken();
 
@@ -140,6 +152,10 @@ function assignPlayer(room, playerKey, socket) {
     token,
     socketId: socket.id,
     reconnectTimer: null,
+    displayName: normalizePlayerName(
+      displayName,
+      playerKey === "player1" ? "Spieler 1" : "Spieler 2",
+    ),
   };
 
   socket.join(room.roomCode);
@@ -181,7 +197,8 @@ io.on("connection", (socket) => {
 
   socket.on("room:create", (_payload, ack) => {
     const room = createRoom();
-    const token = assignPlayer(room, "player1", socket);
+    const displayName = normalizePlayerName(_payload?.playerName, "Spieler 1");
+    const token = assignPlayer(room, "player1", socket, displayName);
 
     ack?.({
       ok: true,
@@ -236,7 +253,11 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const token = assignPlayer(room, playerKey, socket);
+    const displayName = normalizePlayerName(
+      payload?.playerName,
+      playerKey === "player1" ? "Spieler 1" : "Spieler 2",
+    );
+    const token = assignPlayer(room, playerKey, socket, displayName);
 
     ack?.({
       ok: true,
@@ -251,6 +272,7 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("room:ready", {
       roomCode,
       connected: roomSnapshot(room).connected,
+      names: roomSnapshot(room).names,
     });
 
     io.to(roomCode).emit("player:reconnected", { playerKey });

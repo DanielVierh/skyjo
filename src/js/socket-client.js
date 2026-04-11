@@ -121,17 +121,18 @@
     });
   }
 
-  async function createRoom() {
-    const response = await emitWithAck("room:create", {});
+  async function createRoom(playerName = "") {
+    const response = await emitWithAck("room:create", { playerName });
     if (!response?.ok)
       throw new Error(response?.error || "Raum konnte nicht erstellt werden.");
     return response;
   }
 
-  async function joinRoom(roomCode, reconnectToken = "") {
+  async function joinRoom(roomCode, reconnectToken = "", playerName = "") {
     const response = await emitWithAck("room:join", {
       roomCode,
       reconnectToken,
+      playerName,
     });
     if (!response?.ok)
       throw new Error(response?.error || "Raumbeitritt fehlgeschlagen.");
