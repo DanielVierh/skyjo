@@ -136,6 +136,18 @@
             aria-label="Rundepunkte anzeigen"
           />
         </label>
+        <label class="settings-toggle" for="chk_sound_enabled">
+          <span class="settings-toggle-text">
+            <strong>Sounds aktivieren</strong>
+            <small>Spielt Effekte fuer Ziehen, Tauschen und Siege ab.</small>
+          </span>
+          <input
+            type="checkbox"
+            id="chk_sound_enabled"
+            checked
+            aria-label="Sounds aktivieren"
+          />
+        </label>
         <button class="theme-close-btn" id="btn_close_theme_modal">
           Schließen
         </button>
@@ -588,6 +600,7 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="src/js/socket-client.js"></script>
+    <script src="src/js/sound-manager.js"></script>
     <script src="src/js/script.js"></script>
   </body>
 </html>

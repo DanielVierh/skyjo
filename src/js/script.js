@@ -179,6 +179,7 @@ const theme_option_classic = document.getElementById("theme_option_classic");
 const inp_player_name = document.getElementById("inp_player_name");
 const btn_save_player_name = document.getElementById("btn_save_player_name");
 const chk_show_round_points = document.getElementById("chk_show_round_points");
+const chk_sound_enabled = document.getElementById("chk_sound_enabled");
 const theme_original_stylesheet = document.getElementById(
   "theme_original_stylesheet",
 );
@@ -382,6 +383,51 @@ function isOnlineMode() {
 
 function getSocketApi() {
   return window.SkyjoSocket ?? null;
+}
+
+function getSoundApi() {
+  return window.SkyjoSound ?? null;
+}
+
+function playSound(soundName) {
+  const soundApi = getSoundApi();
+  if (!soundApi) return;
+  soundApi.play(soundName);
+}
+
+function updateSoundCheckboxUI() {
+  if (!chk_sound_enabled) return;
+  const soundApi = getSoundApi();
+  chk_sound_enabled.checked = soundApi ? soundApi.isEnabled() : false;
+}
+
+function setSoundEnabled(enabled) {
+  const soundApi = getSoundApi();
+  if (!soundApi) return;
+  soundApi.setEnabled(!!enabled);
+  updateSoundCheckboxUI();
+}
+
+function bindButtonClickSounds() {
+  if (!document.body || document.body.dataset.boundButtonSounds === "true") {
+    return;
+  }
+
+  document.body.dataset.boundButtonSounds = "true";
+  document.body.addEventListener(
+    "click",
+    (event) => {
+      const target =
+        event.target instanceof Element
+          ? event.target.closest(
+              "button, .action-button, .option, .theme-option",
+            )
+          : null;
+      if (!target) return;
+      playSound("click");
+    },
+    true,
+  );
 }
 
 function getReconnectStorageKey(roomCode) {
@@ -1002,6 +1048,7 @@ function updateStartMenuCopy() {
 
 function openSettingsModal() {
   updateThemeSelectionUI();
+  updateSoundCheckboxUI();
   if (inp_player_name) inp_player_name.value = getOwnPlayerName();
   theme_modal?.classList.add("active");
 }
@@ -1025,6 +1072,7 @@ function triggerTurnTransition() {
 
 function switchToPlayer(playerKey) {
   currentPlayer = playerKey;
+  playSound("turn");
   show_current_player();
   maybeBroadcastOnlineState("switch-player");
 }
@@ -1921,6 +1969,8 @@ function triggerFinalMatchEndFlow(options = {}) {
   matchReturnToMenuScheduled = true;
 
   const winnerName = getPlayerDisplayName(winnerKey);
+  const ownPlayerKey = onlineSession.playerKey || "player1";
+  playSound(winnerKey === ownPlayerKey ? "win" : "lose");
 
   save_object.points_ki = 0;
   save_object.points_player = 0;
@@ -3511,6 +3561,8 @@ function showStartModalWrapper() {
   updateStartMenuCopy();
   if (inp_player_name) inp_player_name.value = getOwnPlayerName();
   applyTheme(loadStoredTheme(), { persist: false });
+  updateSoundCheckboxUI();
+  bindButtonClickSounds();
 
   if (start_modal) start_modal.classList.add("active");
 
@@ -3655,6 +3707,10 @@ function showStartModalWrapper() {
 
   chk_show_round_points?.addEventListener("change", () => {
     setRoundPointsVisibility(!!chk_show_round_points.checked);
+  });
+
+  chk_sound_enabled?.addEventListener("change", () => {
+    setSoundEnabled(!!chk_sound_enabled.checked);
   });
 }
 
@@ -3801,6 +3857,7 @@ function give_player_cards(_player) {
 
 function discover_card(cardObj, slotId, ignoreStatus = false) {
   if (!cardObj) return;
+  const wasCovered = !!cardObj.covered;
 
   //*⛔️ nie auf entfernten Slots rendern
   if (isSlotRemoved(slotId)) return;
@@ -3815,6 +3872,10 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
   setSlotDiscovered(slotId);
   cardObj.covered = false;
   set_attributes_to_Card(slotId, cardObj.value);
+
+  if (/^player[12]_card_\d+$/.test(slotId) && (wasCovered || ignoreStatus)) {
+    playSound("flip");
+  }
 
   //*👉 Nach jedem Aufdecken: Triple-Check für den betroffenen Spieler (nicht für Ablage)
   const m =
@@ -4215,6 +4276,7 @@ async function onCardClick(cardEl) {
     activePlayer.cards[index] = current_card;
     activePlayer.cards[index].place = "board";
     activePlayer.cards[index].covered = false;
+    playSound("swap");
 
     discover_card(activePlayer.cards[index], id, true);
     setSlotDiscovered(id);
@@ -4262,6 +4324,7 @@ function onTakeFromStack() {
   current_card_source = "stack";
   refreshDrawPileUI();
   is_Swap = false;
+  playSound("draw");
 
   if (!noGuidanceMode) {
     action_modal?.classList.remove("active");
@@ -4313,6 +4376,7 @@ function onTakeFromAblage() {
   current_card.place = "hand";
   current_card.covered = false;
   current_card_source = "ablage";
+  playSound("takeDiscard");
 
   is_Swap = true;
   action_modal?.classList.remove("active");
@@ -4351,6 +4415,7 @@ async function onDiscardDrawnAndRevealOne() {
   );
 
   putOnAblage(current_card);
+  playSound("discard");
 
   current_card = null;
   current_card_source = null;
@@ -4381,6 +4446,7 @@ function onKeepDrawnAndSwap() {
   }
 
   is_Swap = true;
+  playSound("draw");
   action_modal_card_from_stack?.classList.remove("active");
   do_enable_area();
   setPlayerTurnPhase(
@@ -4526,6 +4592,7 @@ function check_and_remove_vertical_triples(player) {
       console.log(
         `🔥 Triple gefunden bei Spieler ${player.name}: Wert ${c0.value}`,
       );
+      playSound("triple");
 
       //*Karten entfernen und UI leeren
       for (const idx of col) {
