@@ -197,6 +197,7 @@ const player_turn_badge = document.getElementById("player_turn_badge");
 const player_hand_title = document.getElementById("player_hand_title");
 const player_hand_text = document.getElementById("player_hand_text");
 const player_hand_slot = document.getElementById("player_hand_slot");
+const btn_home_menu = document.getElementById("btn_home_menu");
 
 //*==== Spielzustand ====
 let player1;
@@ -3433,6 +3434,10 @@ function showStartModalWrapper() {
   applyTheme(loadStoredTheme(), { persist: false });
 
   if (start_modal) start_modal.classList.add("active");
+
+  btn_home_menu?.addEventListener("click", () => {
+    window.location.reload();
+  });
 
   btn_new_game?.addEventListener("click", () => {
     resetOnlineSession();

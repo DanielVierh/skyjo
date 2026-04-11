@@ -113,6 +113,28 @@ body::after {
   filter: blur(28px);
 }
 
+.home-menu-btn {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(8, 21, 42, 0.86);
+  color: var(--text-main);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 120;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.home-menu-btn:hover,
+.home-menu-btn:focus-visible {
+  filter: brightness(1.08);
+}
+
 body.is-turn-transition {
   overflow: hidden;
 }
