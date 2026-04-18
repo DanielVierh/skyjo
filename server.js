@@ -120,10 +120,20 @@ function getOpenRooms() {
   const openRooms = [];
 
   rooms.forEach((room) => {
-    if (!isPublicJoinableRoom(room)) return;
+    if (!room) return;
+    const hasHostConnected = !!room.players.player1?.socketId;
+    if (!hasHostConnected) return;
+
+    const slot2Taken =
+      !!room.players.player2?.socketId || !!room.players.player2?.token;
+    const playerCount = 1 + (slot2Taken ? 1 : 0);
+
     openRooms.push({
       roomCode: room.roomCode,
       hasGameState: !!room.gameState,
+      playerCount,
+      isFull: slot2Taken,
+      hostName: room.players.player1?.displayName || "Spieler 1",
     });
   });
 

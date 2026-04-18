@@ -1487,9 +1487,13 @@ function renderPublicRoomList(rooms) {
     code.textContent = room.roomCode || "------";
 
     const details = document.createElement("small");
-    details.textContent = room.hasGameState
-      ? "Spiel laeuft"
-      : "Wartet auf Spieler";
+    const playerInfo = `${room.playerCount || 1}/2`;
+    const hostLabel = room.hostName ? ` · ${room.hostName}` : "";
+    details.textContent = room.isFull
+      ? `${playerInfo} – Raum voll${hostLabel}`
+      : room.hasGameState
+        ? `${playerInfo} – Spiel laeuft${hostLabel}`
+        : `${playerInfo} – Wartet auf Spieler${hostLabel}`;
 
     info.appendChild(code);
     info.appendChild(details);
@@ -1497,13 +1501,20 @@ function renderPublicRoomList(rooms) {
     const joinBtn = document.createElement("button");
     joinBtn.type = "button";
     joinBtn.className = "online-room-join-btn";
-    joinBtn.textContent = "Beitreten";
-    joinBtn.addEventListener("click", async () => {
-      if (inp_online_room_code) {
-        inp_online_room_code.value = String(room.roomCode || "").toUpperCase();
-      }
-      await handleOnlineJoinRoom();
-    });
+    if (room.isFull) {
+      joinBtn.textContent = "Voll";
+      joinBtn.disabled = true;
+    } else {
+      joinBtn.textContent = "Beitreten";
+      joinBtn.addEventListener("click", async () => {
+        if (inp_online_room_code) {
+          inp_online_room_code.value = String(
+            room.roomCode || "",
+          ).toUpperCase();
+        }
+        await handleOnlineJoinRoom();
+      });
+    }
 
     row.appendChild(info);
     row.appendChild(joinBtn);
