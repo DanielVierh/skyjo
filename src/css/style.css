@@ -1143,6 +1143,19 @@ body.multiplayer-mode .point-label.player2 {
   margin-bottom: 12px;
 }
 
+.online-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.online-modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .online-action-btn {
   border: 1px solid rgba(255, 255, 255, 0.24);
   background: linear-gradient(140deg, #2267e7, #4ec3ff);
@@ -2219,6 +2232,9 @@ body.multiplayer-mode.online-perspective-player2 .endgame-round-score-chip {
   .online-room-row {
     flex-direction: column;
     align-items: stretch;
+  }
+  .online-choice-grid {
+    grid-template-columns: 1fr;
   }
   .online-copy-btn,
   .online-action-btn {

@@ -131,6 +131,14 @@ const btn_online_multiplayer = document.getElementById(
 );
 const btn_settings = document.getElementById("btn_settings");
 const online_modal = document.getElementById("online_modal");
+const online_create_modal = document.getElementById("online_create_modal");
+const online_join_modal = document.getElementById("online_join_modal");
+const btn_online_choose_create = document.getElementById(
+  "btn_online_choose_create",
+);
+const btn_online_choose_join = document.getElementById(
+  "btn_online_choose_join",
+);
 const btn_online_create_room = document.getElementById(
   "btn_online_create_room",
 );
@@ -144,6 +152,22 @@ const btn_online_copy_room_id = document.getElementById(
 );
 const btn_close_online_modal = document.getElementById(
   "btn_close_online_modal",
+);
+const btn_close_online_create_modal = document.getElementById(
+  "btn_close_online_create_modal",
+);
+const btn_close_online_join_modal = document.getElementById(
+  "btn_close_online_join_modal",
+);
+const btn_back_online_create = document.getElementById(
+  "btn_back_online_create",
+);
+const btn_back_online_join = document.getElementById("btn_back_online_join");
+const lbl_online_create_status = document.getElementById(
+  "lbl_online_create_status",
+);
+const lbl_online_join_status = document.getElementById(
+  "lbl_online_join_status",
 );
 const btn_online_chat_toggle = document.getElementById(
   "btn_online_chat_toggle",
@@ -169,9 +193,6 @@ const btn_online_chat_send = document.getElementById("btn_online_chat_send");
 const inp_online_room_code = document.getElementById("inp_online_room_code");
 const lbl_online_room_id = document.getElementById("lbl_online_room_id");
 const online_public_rooms = document.getElementById("online_public_rooms");
-const lbl_online_modal_status = document.getElementById(
-  "lbl_online_modal_status",
-);
 const theme_modal = document.getElementById("theme_modal");
 const btn_close_theme_modal = document.getElementById("btn_close_theme_modal");
 const theme_option_modern = document.getElementById("theme_option_modern");
@@ -1342,7 +1363,7 @@ function ensureOnlineListenersBound() {
       }
     }
 
-    if (online_modal?.classList.contains("active")) {
+    if (isAnyOnlineModalActive()) {
       void refreshPublicRooms();
     }
   });
@@ -1378,7 +1399,7 @@ function ensureOnlineListenersBound() {
       );
     }
 
-    if (online_modal?.classList.contains("active")) {
+    if (isAnyOnlineModalActive()) {
       void refreshPublicRooms();
     }
   });
@@ -1409,7 +1430,7 @@ function ensureOnlineListenersBound() {
     );
     resetOnlineSession();
 
-    if (online_modal?.classList.contains("active")) {
+    if (isAnyOnlineModalActive()) {
       void refreshPublicRooms();
     }
   });
@@ -1420,7 +1441,7 @@ function ensureOnlineListenersBound() {
   });
 
   socketApi.on("roomsUpdated", () => {
-    if (online_modal?.classList.contains("active")) {
+    if (isAnyOnlineModalActive()) {
       void refreshPublicRooms();
     }
   });
@@ -1429,14 +1450,15 @@ function ensureOnlineListenersBound() {
 }
 
 function setOnlineModalStatus(text, kind = "info") {
-  if (!lbl_online_modal_status) return;
-  lbl_online_modal_status.textContent = text || "";
-  lbl_online_modal_status.classList.remove(
-    "status-info",
-    "status-error",
-    "status-success",
-  );
-  lbl_online_modal_status.classList.add(
+  const target = online_create_modal?.classList.contains("active")
+    ? lbl_online_create_status
+    : online_join_modal?.classList.contains("active")
+      ? lbl_online_join_status
+      : null;
+  if (!target) return;
+  target.textContent = text || "";
+  target.classList.remove("status-info", "status-error", "status-success");
+  target.classList.add(
     kind === "error"
       ? "status-error"
       : kind === "success"
@@ -1568,16 +1590,48 @@ function resetOnlineModalState() {
   }
   renderPublicRoomList([]);
   updateOnlineChatVisibility();
-  setOnlineModalStatus("", "info");
+  if (lbl_online_create_status) {
+    lbl_online_create_status.textContent = "";
+  }
+  if (lbl_online_join_status) {
+    lbl_online_join_status.textContent = "";
+  }
+}
+
+function closeAllOnlineModals() {
+  online_modal?.classList.remove("active");
+  online_create_modal?.classList.remove("active");
+  online_join_modal?.classList.remove("active");
+}
+
+function isAnyOnlineModalActive() {
+  return (
+    online_modal?.classList.contains("active") ||
+    online_create_modal?.classList.contains("active") ||
+    online_join_modal?.classList.contains("active")
+  );
 }
 
 function closeOnlineModal() {
-  online_modal?.classList.remove("active");
+  closeAllOnlineModals();
 }
 
 function openOnlineModal() {
   resetOnlineModalState();
+  closeAllOnlineModals();
   online_modal?.classList.add("active");
+}
+
+function openOnlineCreateModal() {
+  closeAllOnlineModals();
+  resetOnlineModalState();
+  online_create_modal?.classList.add("active");
+}
+
+function openOnlineJoinModal() {
+  closeAllOnlineModals();
+  resetOnlineModalState();
+  online_join_modal?.classList.add("active");
 }
 
 async function copyRoomCodeToClipboard() {
@@ -1800,7 +1854,6 @@ async function startOnlineMultiplayerFlow() {
   openOnlineModal();
   setOnlineChatOpen(false);
   updateOnlineChatVisibility();
-  await refreshPublicRooms();
 }
 
 async function maybeAutoJoinFromInviteLink() {
@@ -1814,6 +1867,8 @@ async function maybeAutoJoinFromInviteLink() {
     if (!onlineSession.active) {
       await startOnlineMultiplayerFlow();
     }
+
+    openOnlineJoinModal();
 
     if (inp_online_room_code) {
       inp_online_room_code.value = inviteRoomCode;
@@ -3623,6 +3678,15 @@ function showStartModalWrapper() {
     await startOnlineMultiplayerFlow();
   });
 
+  btn_online_choose_create?.addEventListener("click", () => {
+    openOnlineCreateModal();
+  });
+
+  btn_online_choose_join?.addEventListener("click", async () => {
+    openOnlineJoinModal();
+    await refreshPublicRooms();
+  });
+
   btn_online_create_room?.addEventListener("click", async () => {
     await handleOnlineCreateRoom();
   });
@@ -3637,6 +3701,22 @@ function showStartModalWrapper() {
 
   btn_online_refresh_rooms?.addEventListener("click", async () => {
     await refreshPublicRooms();
+  });
+
+  btn_back_online_create?.addEventListener("click", () => {
+    openOnlineModal();
+  });
+
+  btn_back_online_join?.addEventListener("click", () => {
+    openOnlineModal();
+  });
+
+  btn_close_online_create_modal?.addEventListener("click", () => {
+    closeOnlineModal();
+  });
+
+  btn_close_online_join_modal?.addEventListener("click", () => {
+    closeOnlineModal();
   });
 
   btn_online_chat_toggle?.addEventListener("click", () => {

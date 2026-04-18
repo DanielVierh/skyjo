@@ -153,10 +153,31 @@
         </button>
       </div>
     </div>
+    <!-- Online: Auswahl-Modal -->
     <div class="modal modal-online" id="online_modal">
       <div class="online-modal-card">
         <h3>Online-Spiel starten</h3>
         <p>Erstelle einen Raum oder tritt einem bestehenden Raum bei.</p>
+
+        <div class="online-choice-grid">
+          <button class="online-action-btn" id="btn_online_choose_create">
+            Raum erstellen
+          </button>
+          <button class="online-action-btn" id="btn_online_choose_join">
+            Raum beitreten
+          </button>
+        </div>
+
+        <button class="theme-close-btn" id="btn_close_online_modal">
+          Schließen
+        </button>
+      </div>
+    </div>
+
+    <!-- Online: Raum erstellen Modal -->
+    <div class="modal modal-online" id="online_create_modal">
+      <div class="online-modal-card">
+        <h3>Raum erstellen</h3>
 
         <div class="online-actions-grid">
           <button class="online-action-btn" id="btn_online_create_room">
@@ -186,6 +207,24 @@
             </button>
           </div>
         </div>
+
+        <p class="online-status" id="lbl_online_create_status"></p>
+
+        <div class="online-modal-footer">
+          <button class="theme-close-btn" id="btn_back_online_create">
+            Zurück
+          </button>
+          <button class="theme-close-btn" id="btn_close_online_create_modal">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Online: Raum beitreten Modal -->
+    <div class="modal modal-online" id="online_join_modal">
+      <div class="online-modal-card">
+        <h3>Raum beitreten</h3>
 
         <div class="online-join-block">
           <label for="inp_online_room_code">Raumcode eingeben</label>
@@ -219,11 +258,16 @@
           </div>
         </div>
 
-        <p class="online-status" id="lbl_online_modal_status"></p>
+        <p class="online-status" id="lbl_online_join_status"></p>
 
-        <button class="theme-close-btn" id="btn_close_online_modal">
-          Schließen
-        </button>
+        <div class="online-modal-footer">
+          <button class="theme-close-btn" id="btn_back_online_join">
+            Zurück
+          </button>
+          <button class="theme-close-btn" id="btn_close_online_join_modal">
+            Schließen
+          </button>
+        </div>
       </div>
     </div>
     <div class="modal modal-endgame" id="mdl_endgame">
