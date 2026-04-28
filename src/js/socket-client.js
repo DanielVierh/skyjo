@@ -25,6 +25,10 @@
     if (!listenersBound) {
       listenersBound = true;
 
+      socket.on("disconnect", (reason) => {
+        alert("Verbindung zum Server getrennt: " + reason);
+      });
+
       socket.on("room:ready", (payload) => {
         eventHandlers.roomReady.forEach((fn) => fn(payload));
       });
