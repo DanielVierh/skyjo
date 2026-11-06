@@ -19,6 +19,7 @@
       id="theme_original_stylesheet"
       disabled
     />
+    <link rel="stylesheet" href="src/css/skyjo-action.css" />
   </head>
   <body>
     <button
@@ -54,6 +55,18 @@
             <span class="start-btn-title">Neues Spiel ohne Hilfe</span>
             <span class="start-btn-subtitle"
               >Gegen die KI mit direkter Steuerung über Stapel und Karten.</span
+            >
+          </button>
+          <button class="start-btn" id="btn_new_action_game">
+            <span class="start-btn-title">Skyjo Action gegen den Computer</span>
+            <span class="start-btn-subtitle"
+              >Mit Sternkarten und neun verschiedenen Aktionskarten.</span
+            >
+          </button>
+          <button class="start-btn" id="btn_continue_action_game" hidden>
+            <span class="start-btn-title">Skyjo Action weiterspielen</span>
+            <span class="start-btn-subtitle"
+              >Setzt die Action-Partie mit der nächsten Runde fort.</span
             >
           </button>
           <button class="start-btn" id="btn_continue_game">
@@ -646,5 +659,6 @@
     <script src="src/js/socket-client.js"></script>
     <script src="src/js/sound-manager.js"></script>
     <script src="src/js/script.js"></script>
+    <script type="module" src="src/js/skyjo-action-ui.js"></script>
   </body>
 </html>

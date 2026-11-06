@@ -1,0 +1,280 @@
+#btn_continue_action_game[hidden] {
+  display: none;
+}
+
+.skyjo-action-active {
+  overflow: hidden;
+}
+
+.skyjo-action {
+  --card-width: clamp(44px, min(12.5vw, 7.2dvh), 68px);
+  --card-height: calc(var(--card-width) * 1.25);
+  --sa-mini-width: clamp(44px, 11vw, 48px);
+  position: fixed;
+  inset: 0;
+  z-index: 1000000001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 4px;
+  overflow-y: auto;
+  padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 12% 20%, rgba(53, 200, 255, 0.26), transparent 42%),
+    radial-gradient(circle at 86% 18%, rgba(255, 155, 92, 0.25), transparent 38%),
+    radial-gradient(circle at 50% 88%, rgba(84, 240, 188, 0.22), transparent 44%),
+    linear-gradient(145deg, #081a35 0%, #0c2750 48%, #102f48 100%);
+  font-family: "Sora", "Segoe UI", sans-serif;
+}
+
+body.theme-classic .skyjo-action {
+  color: white;
+  background: #262626;
+  font-family: sans-serif;
+}
+
+.sa-header,
+.sa-player,
+.sa-table,
+.sa-message,
+.sa-actions {
+  flex: none;
+  width: min(100%, 520px);
+}
+
+.sa-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sa-header h1 {
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+
+.sa-header p,
+.sa-message,
+.sa-actions {
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.sa-message {
+  color: #ffe198;
+}
+
+.sa-message:empty,
+.sa-actions:empty {
+  display: none;
+}
+
+.sa-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.sa-player-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, calc(var(--card-width) * 4 + 18px));
+  min-height: 18px;
+}
+
+.sa-player-heading h2 {
+  flex: none;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.sa-board {
+  display: grid;
+  grid-template-columns: repeat(4, var(--card-width));
+  grid-template-rows: repeat(3, var(--card-height));
+  gap: clamp(3px, 1vw, 6px);
+}
+
+.skyjo-action .sa-card,
+.skyjo-action .sa-action-card {
+  padding: 0;
+  opacity: 1;
+}
+
+.skyjo-action .sa-card:disabled,
+.skyjo-action .sa-action-card:disabled {
+  cursor: default;
+}
+
+.skyjo-action .sa-card:not(.covered):not(.blue) {
+  color: inherit;
+}
+
+.skyjo-action .sa-card-star {
+  background: linear-gradient(155deg, #fff1a1, #a778db);
+}
+
+.skyjo-action .sa-interactive {
+  outline: 2px solid rgba(146, 240, 202, 0.8);
+  outline-offset: 1px;
+}
+
+.skyjo-action .sa-interactive:focus-visible,
+.sa-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.sa-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.sa-piles,
+.sa-offer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, 1vw, 6px);
+}
+
+.sa-offer {
+  max-width: 100%;
+  overflow-x: auto;
+  justify-content: safe center;
+  scrollbar-width: thin;
+}
+
+.sa-hand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.sa-hand strong {
+  flex: none;
+  color: var(--text-dim);
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+.skyjo-action .sa-action-card {
+  flex: none;
+  width: var(--sa-mini-width);
+  height: calc(var(--sa-mini-width) * 1.1);
+}
+
+.skyjo-action .sa-action-card:not(.covered) {
+  flex-direction: column;
+  gap: 1px;
+  color: #32133b;
+  background: linear-gradient(155deg, #f8d3f0, #c578ce);
+  line-height: 1;
+}
+
+.sa-action-symbol,
+.sa-action-name {
+  position: relative;
+  z-index: 4;
+  text-align: center;
+}
+
+.sa-action-symbol {
+  font-size: clamp(0.95rem, 3.8vw, 1.25rem);
+}
+
+.sa-action-name {
+  font-family: "Sora", "Segoe UI", sans-serif;
+  font-size: clamp(0.42rem, 1.8vw, 0.58rem);
+  font-weight: 700;
+}
+
+.skyjo-action .sa-action-discard {
+  opacity: 0.75;
+}
+
+.sa-button {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  padding: 8px 11px;
+  color: #fff;
+  background: #18536b;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sa-home {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 1.3rem;
+}
+
+.sa-results {
+  position: fixed;
+  z-index: 2;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 520px);
+  max-height: 80dvh;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #82c8df;
+  border-radius: 16px;
+  background: #102c42;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.7);
+}
+
+.sa-results h2,
+.sa-dialog h2 {
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.sa-results p {
+  margin: 8px 0;
+  line-height: 1.4;
+  font-size: 0.85rem;
+}
+
+.sa-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(92vw, 520px);
+  max-height: 80dvh;
+  margin: auto;
+  padding: 16px;
+  border: 1px solid #82c8df;
+  border-radius: 16px;
+  color: #fff;
+  background: #102c42;
+}
+
+.sa-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.sa-dialog-options {
+  display: grid;
+  gap: 6px;
+}
+
+.sa-dialog-options .sa-button {
+  min-height: 44px;
+}
+
+@media (max-height: 600px) {
+  .skyjo-action {
+    justify-content: flex-start;
+  }
+}

@@ -3984,7 +3984,10 @@ function discover_card(cardObj, slotId, ignoreStatus = false) {
 function set_attributes_to_Card(card_id, card_value) {
   const host = document.getElementById(card_id);
   if (!host) return;
+  renderCardFace(host, card_value);
+}
 
+function renderCardFace(host, card_value) {
   host.innerHTML = "";
 
   const vallabel = document.createElement("p");
