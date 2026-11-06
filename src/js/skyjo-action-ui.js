@@ -19,6 +19,8 @@ let counted = false;
 let matchFinished = false;
 let message = "";
 let boardDecision = null;
+let drawnDecision = null;
+let drawnPreview = null;
 
 const ACTION_APPEARANCE = Object.freeze({
   "own-swap": ["↔", "Eigen"],
@@ -151,9 +153,16 @@ function drawBoard(owner) {
   board.replaceChildren();
   state.players[owner].board.forEach((card, index) => {
     const isChoice = boardDecision?.owner === owner && boardDecision.values.has(String(index));
+    const isDrawnChoice = owner === 0 && drawnDecision && card;
     const isSetup = !busy && card?.covered && owner === 0 && state.phase === "setup" &&
       state.setupPlayer === 0 && state.pendingStarBonus === null;
     const element = makeGameCard(card, () => {
+      if (isDrawnChoice) {
+        const resolve = drawnDecision.resolve;
+        drawnDecision = null;
+        resolve(["swap", String(index)]);
+        return;
+      }
       if (isChoice) {
         const resolve = boardDecision.resolve;
         boardDecision = null;
@@ -168,9 +177,9 @@ function drawBoard(owner) {
       } catch (error) {
         showError(error);
       }
-    }, !isChoice && !isSetup,
+    }, !isChoice && !isDrawnChoice && !isSetup,
     `Reihe ${Math.floor(index / 4) + 1}, Spalte ${index % 4 + 1}: ${!card ? "entfernt" : card.covered ? "verdeckte Karte" : textForCard(card)}`,
-    isChoice || isSetup ? "sa-interactive" : "");
+    isChoice || isDrawnChoice || isSetup ? "sa-interactive" : "");
     board.append(element);
   });
 }
@@ -198,7 +207,9 @@ function render() {
     : state.closingPlayer !== null ? `Letzter Zug – ${state.closingPlayer === 0 ? "du hast" : "der Computer hat"} die Runde beendet`
     : state.activePlayer === 0 ? "Du bist am Zug" : "Computer ist am Zug";
   status.textContent = `${phase} · ${scores[0]} : ${scores[1]}`;
-  root.querySelector("#sa-message").textContent = boardDecision?.title || message;
+  root.querySelector("#sa-message").textContent = drawnDecision
+    ? `Gezogen: ${textForCard(drawnPreview.card)}. Eigene Karte${drawnDecision.canDiscard ? " oder Ablage" : ""} antippen.`
+    : boardDecision?.title || message;
   drawBoard(0);
   drawBoard(1);
   drawHand(0);
@@ -207,12 +218,28 @@ function render() {
   piles.replaceChildren();
   const canDraw = turnAvailable("game-deck");
   const canDiscard = turnAvailable("game-discard");
+  const canDiscardDrawn = drawnDecision?.canDiscard;
+  const pileCard = drawnPreview?.discarded ? drawnPreview.card
+    : state.gameDiscard.at(drawnPreview?.fromDiscard ? -2 : -1);
+  const deckCard = drawnPreview && !drawnPreview.discarded ? drawnPreview.card : { covered: true };
   piles.append(
-    makeGameCard({ covered: true }, () => void runHumanTurn("game-deck"), !canDraw,
-      `Spielkarten-Nachziehstapel: ${state.gameDeck.length} Karten`, `card-stack ${canDraw ? "sa-interactive" : ""}`),
-    makeGameCard(state.gameDiscard.at(-1), () => void runHumanTurn("game-discard"), !canDiscard,
-      `Spielkarten-Ablage: ${state.gameDiscard.length ? textForCard(state.gameDiscard.at(-1)) : "leer"}`,
-      canDiscard ? "sa-interactive" : ""),
+    makeGameCard(deckCard, () => void runHumanTurn("game-deck"), !canDraw,
+      drawnPreview && !drawnPreview.discarded ? `Gezogene Spielkarte: ${textForCard(deckCard)}`
+        : `Spielkarten-Nachziehstapel: ${state.gameDeck.length} Karten`,
+      `${drawnPreview && !drawnPreview.discarded ? "" : "card-stack"} ${canDraw ? "sa-interactive" : ""}`),
+    makeGameCard(pileCard, () => {
+      if (canDiscardDrawn) {
+        const resolve = drawnDecision.resolve;
+        drawnDecision = null;
+        drawnPreview.discarded = true;
+        resolve(["discard"]);
+      } else {
+        void runHumanTurn("game-discard");
+      }
+    }, !canDiscard && !canDiscardDrawn,
+    canDiscardDrawn ? `Gezogene Spielkarte ${textForCard(drawnPreview.card)} ablegen`
+      : `Spielkarten-Ablage: ${pileCard ? textForCard(pileCard) : "leer"}`,
+    canDiscard || canDiscardDrawn ? "sa-interactive" : ""),
   );
   const offer = root.querySelector("#sa-offer");
   offer.replaceChildren();
@@ -286,6 +313,16 @@ class NeedChoice extends Error {
 }
 
 function requestChoice(request) {
+  if (request.drawnCard) {
+    return new Promise((resolve) => {
+      drawnPreview = { card: request.drawnCard, fromDiscard: request.drawnFromDiscard, discarded: false };
+      drawnDecision = {
+        canDiscard: request.options.some((option) => option.value === "discard"),
+        resolve,
+      };
+      render();
+    });
+  }
   if (Number.isInteger(request.boardOwner)) {
     return new Promise((resolve) => {
       boardDecision = {
@@ -338,7 +375,8 @@ async function executeTurn(actor, action, initialDecisions = []) {
       }, seededRandom(seed));
     } catch (error) {
       if (!(error instanceof NeedChoice)) throw error;
-      decisions.push(await requestChoice(error.request));
+      const answer = await requestChoice(error.request);
+      decisions.push(...(Array.isArray(answer) ? answer : [answer]));
     }
   }
 }
@@ -353,6 +391,8 @@ async function runHumanTurn(action, initialDecisions = []) {
   } catch (error) {
     showError(error);
   } finally {
+    drawnDecision = null;
+    drawnPreview = null;
     busy = false;
     render();
   }
@@ -402,6 +442,8 @@ async function advance() {
         const action = chooseComputerTurn(state);
         if (!action) throw new Error("Der Computer hat keinen gültigen Zug. Bitte zum Hauptmenü zurückkehren.");
         const label = getTurnOptions(state, 1).find((option) => option.value === action).label;
+        message = `Computer wählt: ${label}.`;
+        render();
         await pause(400);
         state = await executeTurn(1, action);
         message = [`Computer: ${label}.`, ...state.events].join(" ");
@@ -439,6 +481,8 @@ function startAction(saved) {
   matchFinished = false;
   message = "";
   boardDecision = null;
+  drawnDecision = null;
+  drawnPreview = null;
   if (!root) makeRoot();
   startModal.classList.remove("active");
   for (const element of document.body.children) {

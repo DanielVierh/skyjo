@@ -8,7 +8,11 @@ der laufende Zug. Klassische Spielstände bleiben davon getrennt.
 Zu Beginn zwei eigene verdeckte Karten auswählen. Danach eine Spielkarte direkt
 vom Nachzieh- oder Ablagestapel antippen, eine offene oder verdeckte
 Aktionskarte nehmen oder eine eigene Aktionskarte antippen. Beim Tauschen und
-Aufdecken werden die möglichen Karten im Spielfeld markiert. Weitere
+Aufdecken werden die möglichen Karten im Spielfeld markiert. Eine gezogene
+Spielkarte erscheint offen am Nachziehstapel: Zum Tauschen eine eigene Karte
+antippen, zum Abwerfen den Ablagestapel und anschließend eine verdeckte eigene
+Karte. Eine vom Ablagestapel genommene Karte muss getauscht werden. Der
+Computer spielt automatisch; seine letzte Aktion wird oben angezeigt. Weitere
 Entscheidungen, etwa zum Sternbonus oder zum Auflösen von Reihen, erscheinen
 im Dialog.
 Sternkarten sind mit ★ markiert. Nicht ausgespielte Aktionskarten zählen bei der

@@ -150,14 +150,20 @@ function chooseDrawnCard(context, actor, card, canDiscard) {
   const player = context.state.players[actor];
   const options = [{ value: "swap", label: `${cardText(card)} tauschen` }];
   if (canDiscard && hasCovered(player)) options.push({ value: "discard", label: `${cardText(card)} ablegen und eine Karte aufdecken` });
-  const choice = choose(context, actor, "Gezogene Spielkarte", options);
+  const choice = choose(context, actor, "Gezogene Spielkarte", options, {
+    drawnCard: card,
+    drawnFromDiscard: !canDiscard,
+  });
   if (choice === "discard") {
     const index = chooseBoard(context, actor, actor, "Verdeckte Karte aufdecken", (item) => item.covered);
     context.state.gameDiscard.push({ ...card, covered: false });
     reveal(context, actor, index);
+    context.events.push(`${actor === 0 ? "Du" : "Computer"}: ${cardText(card)} abgelegt und Reihe ${Math.floor(index / 4) + 1}, Spalte ${index % 4 + 1} aufgedeckt (${cardText(player.board[index])}).`);
   } else {
     const index = chooseBoard(context, actor, actor, "Karte zum Tauschen wählen");
+    const replaced = player.board[index];
     replaceCard(context, actor, index, card);
+    context.events.push(`${actor === 0 ? "Du" : "Computer"}: ${cardText(card)} gegen ${cardText(replaced)} in Reihe ${Math.floor(index / 4) + 1}, Spalte ${index % 4 + 1} getauscht.`);
   }
 }
 

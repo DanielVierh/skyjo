@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createRound } from "../src/js/skyjo-action-rules.js";
 import { getTurnOptions, playTurn } from "../src/js/skyjo-action-turn.js";
+import { chooseComputerDecision, chooseComputerTurn } from "../src/js/skyjo-action-ai.js";
 
 function fixture() {
   const state = createRound(() => 0.5);
@@ -47,6 +48,38 @@ test("discarding a concealed draw reveals an own card", () => {
   assert.equal(next.players[0].board[2].covered, false);
   assert.equal(next.gameDiscard.at(-1).id, "deck-14");
   assert.equal(state.gameDeck.length, 15);
+});
+
+test("draw requests expose the drawn card and legal discard option", () => {
+  for (const [source, id, canDiscard] of [
+    ["game-deck", "deck-14", true],
+    ["game-discard", "discard", false],
+  ]) {
+    const state = fixture();
+    let request;
+    playTurn(state, 0, source, (choice) => {
+      if (choice.title === "Gezogene Spielkarte") {
+        request = choice;
+        return "swap";
+      }
+      return "2";
+    });
+    assert.equal(request.drawnCard.id, id);
+    assert.equal(request.drawnFromDiscard, source === "game-discard");
+    assert.equal(request.options.some((option) => option.value === "discard"), canDiscard);
+  }
+});
+
+test("the computer takes a legal turn after a human draw", () => {
+  const state = fixture();
+  const human = playTurn(state, 0, "game-deck", decisions("discard", "2"));
+  const move = chooseComputerTurn(human);
+  assert.ok(getTurnOptions(human, 1).some((option) => option.value === move));
+  const computer = playTurn(human, 1, move, (request) => chooseComputerDecision(request, human));
+  assert.equal(computer.turnCounts[1], 1);
+  assert.equal(computer.activePlayer, 0);
+  assert.notDeepEqual(computer.players[1].board, human.players[1].board);
+  assert.ok(computer.events.some((event) => event.startsWith("Computer:")));
 });
 
 test("taking an action uses the whole turn and delays its use", () => {
